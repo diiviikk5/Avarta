@@ -3,8 +3,8 @@ import { getReplay } from "@/lib/replay";
 
 export async function GET() {
   const replay = await getReplay();
-  const threshold = replay.verification.heavy_rain_threshold_mm_day;
-  const raster = replay.raster.forecast_mm_day;
+  const threshold = replay.verification.heavy_rain_threshold_mm_day ?? 64.5;
+  const raster = replay.raster.forecast_field ?? replay.raster.forecast_mm_day ?? [];
   let peak = { value: -1, row: 0, col: 0 };
   raster.forEach((line, row) => line.forEach((value, col) => {
     if (value > peak.value) peak = { value, row, col };
