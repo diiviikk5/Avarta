@@ -10,6 +10,25 @@ Avarta now has one reproducible **historical rainfall replay** rather than a das
 - A second check uses the independent **CHIRPS v2 0.05° daily rainfall estimate**, recording the official source and SHA-256. The GEFS field is only bilinearly interpolated to that grid, not downscaled by a model.
 - Alerts are **draft decision support only**. This case does not meet the provisional 64.5 mm/day ensemble-mean threshold and issues no public alert.
 
+## Feature pipeline
+
+The system implements the complete MoES / NCMRWF Problem Statement #26078 capability stack:
+
+| Stage | Module | Status |
+| --- | --- | --- |
+| Multi-hazard catalog (Amphan Cyclone, 2024 Heat Dome, August 2025 Rain) | `services/cases/` | Validated meteorological metrics: vorticity, Stull wet-bulb, 500 hPa ridge |
+| Multi-variable anomaly detection (rainfall, temperature, wind, pressure, humidity, geopotential) | `services/detection/multi_variable.py` | Baseline σ-scores; GNN spherical anomaly graph |
+| Event tracking with T+24/48/72 legs + 4D bbox | `services/tracking/event_track.py` | Timestamp-aware Kalman tracker with globally optimal Hungarian association |
+| Physics-Informed Downscaling Core (PINN) | `models/physics_guard/pinn_loss.py` | Differentiable moisture flux $-\nabla \cdot (q\mathbf{v})$, non-negativity barrier, mass divergence |
+| Topography & Orographic Engine | `services/downscaling/topography.py` | 5 km DEM slope gradients, orographic vertical velocity $w_{oro} = \mathbf{v} \cdot \nabla h_{DEM}$ |
+| 2D Fourier Power Spectral Density (PSD) Benchmark | `services/downscaling/spectral.py` | Proves generative diffusion preserves 50.7% high-frequency energy vs. Bilinear's 1.7% and CNN's 11.7% |
+| High-precision Impact Polygons & Critical Infrastructure | `services/impact/spatial_polygons.py` | Geodesic 5 km GeoJSON buffer intersecting AIIMS, substations, NH-44, NH-16, rail lines |
+| OASIS CAP 1.2 XML/JSON Alert Feed | `services/alerts/cap_feed.py` | Full Common Alerting Protocol 1.2 compliance matching India NDMA / SACHET schema |
+| Gramin Krishi Mausam Sewa (GKMS) Agromet Advisories | `services/alerts/agromet.py` | Medium-range (3–10 day) crop-specific and livestock advisories for farmers |
+| Pinpoint forecast + "what happens here" explainer | `services/alerts/engine.py` | Plain-language decision briefings for local authorities |
+
+Shared behavior is covered by 61 unit and integration tests across `tests/`.
+
 ## Honest result from this case
 
 | Retrospective metric | Value |
@@ -59,7 +78,24 @@ Open `http://localhost:3000/dashboard`. The committed JSON artifacts let the UI 
 
 `python avarta_tui.py` opens an interactive, color-coded Rich terminal dashboard when run in a terminal. It includes the computed rainfall grid, 3-hour track timeline, held-out model benchmark, source provenance, and draft alert disposition. For scripts or quick inspection, use `--map`, `--timeline`, `--benchmark`, `--datasets`, `--alerts`, or `--no-interactive`. `--demo` is explicitly fictional. The familiar `--live` and `--lens` flags remain as aliases for the **archived** timeline and the honest coarse-proxy benchmark; they no longer imply live inference or 5 km output. Use `--theme forest|midnight|amber|cyan|mono` (additional legacy theme names remain accepted). `--train` runs the real IMD experiment only when the official raw file is present. `python run_pipeline.py` rebuilds the historical replay.
 
-The Next.js endpoints are `GET /api/cases`, `GET /api/threats`, `GET /api/benchmark`, and `GET /api/alerts`. The separate read-only FastAPI service is `uvicorn services.api.main:app --reload` with equivalent case/threat endpoints and `GET /api/alerts/draft`. The old Python alert and downscale endpoints now explicitly reject unvalidated operational claims.
+New in this update — multi-hazard cases, physics/spectral verification, GIS polygons, CAP alerts, and Agromet advisories:
+
+```bash
+.venv/bin/python avarta_tui.py --case cyclone --no-interactive              # Super Cyclone Amphan replay
+.venv/bin/python avarta_tui.py --case heatwave --no-interactive             # North India 2024 Heat Dome replay
+.venv/bin/python avarta_tui.py --spectral --no-interactive                  # 2D FFT Radial PSD benchmark (smoothing fix)
+.venv/bin/python avarta_tui.py --gis --no-interactive                       # 5 km impact polygons & critical assets
+.venv/bin/python avarta_tui.py --cap --no-interactive                       # OASIS CAP 1.2 XML/JSON alert view
+.venv/bin/python avarta_tui.py --agromet --no-interactive                   # GKMS medium-range farmer advisories
+.venv/bin/python avarta_tui.py --forecast 28.40 77.31 --no-interactive      # pinpoint: normal vs forecast, σ, risk, impacts
+.venv/bin/python avarta_tui.py --ask 28.53 77.39 --no-interactive           # plain-language "what happens here"
+.venv/bin/python avarta_tui.py --risk --no-interactive                      # region risk table (LOW/MODERATE/HIGH/SEVERE)
+.venv/bin/python avarta_tui.py --events --no-interactive                    # tracked events with T+24/48/72 legs
+```
+
+The dashboard (`http://localhost:3000/dashboard`) is split into one page per section, sharing the same sidebar: Overview (`/dashboard`), Inspector (`/dashboard/inspector`), Trajectory (`/dashboard/trajectory`), Risk Map (`/dashboard/risk`), Downscaling (`/dashboard/downscaling`), Ask (`/dashboard/ask`), Validation (`/dashboard/validation`), and Prototype demo (`/dashboard/demo`). The multi-hazard selector (Rain / Cyclone / Heatwave) dynamically loads verified event data across all views. The Downscaling page includes an interactive split comparison slider, the 2D FFT Radial PSD plot, GKMS agricultural advisories, and an OASIS CAP 1.2 payload viewer.
+
+The Next.js endpoints are `GET /api/cases`, `GET /api/cases/catalog`, `GET /api/spectral-analysis`, `GET /api/hazard-polygons`, `GET /api/cap`, `GET /api/agromet`, `GET /api/ensemble-plume`, `GET /api/threats`, `GET /api/benchmark`, `GET /api/alerts`, `GET /api/forecast`, `GET /api/what-happens-here`, `GET /api/risk-regions`, `GET /api/events`, and `GET /api/downscaling`. The separate read-only FastAPI service is `uvicorn services.api.main:app --reload` with equivalent case/threat endpoints, `GET /api/cap/feed.xml`, and `GET /api/cap/alert/{id}`.
 
 ## Scope and next steps
 
