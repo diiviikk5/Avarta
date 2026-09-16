@@ -1,7 +1,7 @@
-import { getBenchmark, getReplay } from "@/lib/replay";
-import ReplayDashboard from "@/components/dashboard/ReplayDashboard";
+import { getReplay } from "@/lib/replay";
+import { OverviewSection } from "@/components/dashboard/ClientPages";
 
 export default async function DashboardPage() {
-  const [replay, benchmark] = await Promise.all([getReplay(), getBenchmark()]);
-  return <ReplayDashboard replay={replay} benchmark={benchmark} />;
+  const replay = await getReplay();
+  return <OverviewSection replay={replay} />;
 }
