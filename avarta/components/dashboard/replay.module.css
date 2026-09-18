@@ -14,3 +14,48 @@
 .demoPanel{padding:24px}.demoBanner{display:flex;align-items:flex-start;gap:12px;background:#fff4e6;border:1px solid #eddbbf;border-radius:8px;padding:16px;color:#9b5d30}.demoBanner div{display:grid;gap:4px}.demoBanner strong{font-size:13px}.demoBanner span{font-size:11px}.demoHeading{margin:27px 0 19px}.demoHeading p{color:#849188;font-size:12px}.demoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.demoGrid article{border:1px solid #e5ebe2;background:#f8faf6;border-radius:8px;padding:20px}.demoGrid article>span{font-size:10px;letter-spacing:1.2px;color:#a9754c;font-weight:700}.demoGrid h3{font-family:Georgia,serif;font-size:22px;font-weight:400;margin:19px 0}.demoStat{font-size:28px;font-weight:700;color:#2d5c4e}.demoStat small{font-size:12px;font-weight:500}.demoGrid p,.demoFoot{font-size:11px;color:#819087;line-height:1.6}.demoFoot{margin:21px 0 0}
 @media(max-width:1150px){.rail{width:185px}.main{padding:30px 23px}.topbar{padding:0 23px}.workspace{grid-template-columns:minmax(0,1fr)}.sideStack{display:grid;grid-template-columns:1fr 1fr}.timeline{max-height:260px}.benchmark,.crossCheck{grid-template-columns:1fr}}
 @media(max-width:760px){.shell{display:block}.rail{position:static;width:100%;height:auto;min-height:0;padding:15px 17px;display:block}.logo{padding:0}.railLabel,.railBottom{display:none}.nav{display:flex;overflow:auto;margin-top:15px}.nav a{white-space:nowrap;padding:8px 10px;font-size:11px}.topbar{height:51px;padding:0 17px}.topDate{display:none}.main{padding:23px 15px}.heading{align-items:flex-start;flex-direction:column;margin-bottom:22px}.heading h1{font-size:39px}.modeBar{overflow:auto}.modeBar button{white-space:nowrap;padding:11px 12px}.modeNote{display:none}.metrics{grid-template-columns:repeat(2,1fr);gap:8px}.metric{padding:13px}.metric strong{font-size:25px}.metricFoot{font-size:10px}.panelHead{padding:17px}.pill{display:none}.mapWrap{margin:0 8px}.mapKey{gap:9px;padding:9px;font-size:9px}.sideStack,.evidenceGrid,.demoGrid{grid-template-columns:1fr}.lowerHead,.footer{align-items:flex-start;flex-direction:column}.lower{padding:18px}}
+.askRow{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:16px 0}.askRow label{display:grid;gap:6px;font-size:11px;color:#5c6f64;font-weight:700}.askRow input{border:1px solid #d7e1d8;border-radius:7px;padding:9px 11px;font-size:13px;width:120px;color:#21463e;background:#fbfcf9}.askRow button{border:0;background:#1e635f;color:#fff;border-radius:7px;padding:10px 15px;font-size:12px;font-weight:700;cursor:pointer}.askRow button:disabled{opacity:.6;cursor:wait}.ghostBtn{background:#eef4ed !important;color:#2b5b52 !important;border:1px solid #d7e1d8 !important}.askAnswer{background:#f1f6ef;border:1px solid #d9e6d7;border-radius:8px;padding:14px 16px;font-size:12px;line-height:1.65;color:#2c4f44}
+.riskTable th,.riskTable td{white-space:nowrap}.riskTable td:first-child{font-weight:700}
+.riskTableCard{border:1px solid #e5ebe2;border-radius:9px;overflow:hidden;background:#fff;margin-bottom:6px}
+.riskTableCard .benchmarkScroll{overflow:auto}
+table.riskTable{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.riskTable thead th{text-transform:uppercase;letter-spacing:.8px;color:#839388;text-align:left;font-size:10px;font-weight:800;padding:12px 16px;background:#f4f7f1;border-bottom:1px solid #e0e8dd;white-space:nowrap}
+table.riskTable tbody td{padding:12px 16px;color:#33524a;border-top:1px solid #e9eee7;white-space:nowrap}
+table.riskTable tbody tr:first-child td{border-top:0}
+table.riskTable tbody tr{transition:background .15s ease}
+table.riskTable tbody tr:hover{background:#f2f6ef}
+.riskRegionCell{display:flex;align-items:center;gap:10px;font-weight:700;color:#21463e}
+.riskDot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 18%,transparent)}
+.bandPill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;padding:5px 11px;border-radius:100px;white-space:nowrap}
+.bandPill[data-band="LOW"]{color:#2c7a3f;background:#e5f2e6;border:1px solid #c8e2cb}
+.bandPill[data-band="MODERATE"]{color:#8a6d1a;background:#faf2d4;border:1px solid #e8d9a0}
+.bandPill[data-band="HIGH"]{color:#b25a1b;background:#fbe8d5;border:1px solid #f0c9a3}
+.bandPill[data-band="SEVERE"]{color:#b0322c;background:#f9dcdc;border:1px solid #eeb9b5}
+.risk3dWrap{background:linear-gradient(180deg,#f4f7f1,#e9efe5);border:1px solid #dce6d8;border-radius:10px;padding:14px;margin-bottom:18px;overflow:hidden}.risk3dWrap svg{display:block;width:100%;max-width:560px;height:auto;margin:auto}.risk3dGratLabel{font-family:Arial,sans-serif;font-size:10px;fill:#7f8c81}
+.risk3dPin{cursor:pointer;outline:none}.risk3dPin:focus circle{stroke:#12342c}
+.risk3dPinValue{font-family:Arial,sans-serif;font-size:10px;font-weight:800;fill:#fff;pointer-events:none}
+.risk3dLabel{font-family:Arial,sans-serif;font-size:12px;font-weight:700;fill:#2b4a41;paint-order:stroke;stroke:#f4f7f1;stroke-width:3px;pointer-events:none}
+.risk3dLabelActive{font-family:Arial,sans-serif;font-size:14px;font-weight:800;fill:#12342c;paint-order:stroke;stroke:#fff;stroke-width:4px;pointer-events:none}
+.risk3dPulse{transform-box:fill-box;transform-origin:center;animation:risk3dPulse 2.2s ease-out infinite}
+@keyframes risk3dPulse{0%{transform:scale(.45);opacity:.95}70%{transform:scale(1.9);opacity:0}100%{transform:scale(1.9);opacity:0}}
+.risk3dSweep{animation:risk3dSweep 7s linear infinite}
+@keyframes risk3dSweep{0%{transform:translateX(0)}100%{transform:translateX(1050px)}}
+.risk3dLegend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center;padding:10px 6px 2px;color:#4c6157;font-size:11px;font-weight:700}.risk3dLegend span{display:flex;align-items:center;gap:6px}.risk3dLegend i{width:11px;height:11px;border-radius:50%;display:inline-block;box-shadow:0 0 6px currentColor}.risk3dHint{font-weight:500;color:#7d8f83}
+.risk3dDetail{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;background:#f4f7f1;border:1px solid #dce8db;border-radius:8px;padding:16px 18px;margin-bottom:18px}.risk3dDetail h3{display:flex;align-items:center;gap:7px;font-family:Georgia,serif;font-size:20px;font-weight:400;margin:8px 0 6px;color:#21463e}.risk3dDetail p{font-size:11px;line-height:1.65;color:#647a6e;margin:0 0 8px}.risk3dDetail p strong{color:#265b4d}.risk3dDetail .muted{margin:0}.risk3dDetail>a{flex:none;display:inline-flex;align-items:center;gap:4px;color:#245b50;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap}
+@media(prefers-reduced-motion:reduce){.risk3dPulse,.risk3dSweep{animation:none}}
+.hazardSwitcher{display:flex;align-items:center;gap:6px;background:#eef4ee;border:1px solid #d5e0d4;border-radius:100px;padding:3px 4px}
+.hazardBtn{border:0;background:transparent;color:#4a6358;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s ease}
+.hazardBtnActive{background:#1f5c53;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+.spectralBox{margin-top:20px;background:#fff;border:1px solid #e0e8dd;border-radius:10px;padding:22px}
+.spectralGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+.spectralMetric{background:#f8faf6;border:1px solid #e2ebe0;border-radius:8px;padding:14px}
+.spectralMetric strong{display:block;font-size:20px;color:#1d5a50;margin-top:5px}
+.spectralSvgWrap{background:#f4f7f2;border:1px solid #e3ebe1;border-radius:8px;padding:16px;margin:16px 0;overflow:hidden}
+.sliderContainer{position:relative;width:100%;height:320px;border-radius:8px;overflow:hidden;margin:18px 0;background:#f3f6f1;border:1px solid #d9e4d6}
+.sliderSplit{position:absolute;top:0;left:0;bottom:0;overflow:hidden;border-right:2px solid #fff}
+.agrometBox{margin-top:20px;background:#fdfcf9;border:1px solid #e8e3d3;border-radius:10px;padding:22px}
+.agrometTable{width:100%;border-collapse:collapse;margin:14px 0}
+.agrometTable th{text-align:left;font-size:10px;text-transform:uppercase;color:#877f6b;padding:8px 12px;background:#f6f1e2}
+.agrometTable td{padding:10px 12px;border-top:1px solid #eee8d8;font-size:12px;color:#473f2c}
+.capBox{margin-top:18px;background:#182825;color:#e8f4f0;border-radius:8px;padding:16px;font-family:monospace;font-size:11px;overflow:auto;max-height:280px}
+
