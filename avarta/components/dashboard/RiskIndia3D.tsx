@@ -1,0 +1,240 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, MapPin } from "lucide-react";
+import type { ReplayCase } from "@/lib/replay";
+import { impactsFor, regionRiskRows, type RegionRiskRow } from "@/lib/forecast";
+import { INDIA_OUTLINE } from "@/lib/india-outline";
+import styles from "./replay.module.css";
+
+const BAND_COLOR: Record<string, string> = {
+  LOW: "#43a854",
+  MODERATE: "#d9a521",
+  HIGH: "#dd6f2d",
+  SEVERE: "#c03a2b",
+};
+
+// Equirectangular projection fitted to the India outline.
+const LON_MIN = 65;
+const LON_MAX = 99;
+const LAT_MIN = 5;
+const LAT_MAX = 38;
+const W = 620;
+const H = 660;
+const PAD = 30;
+
+const project = (lat: number, lon: number) => ({
+  x: PAD + ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * (W - PAD * 2),
+  y: PAD + ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * (H - PAD * 2),
+});
+
+function landPath(dy = 0) {
+  return (
+    INDIA_OUTLINE.map(([lon, lat], i) => {
+      const p = project(lat, lon);
+      return `${i === 0 ? "M" : "L"}${(p.x).toFixed(1)},${(p.y + dy).toFixed(1)}`;
+    }).join(" ") + " Z"
+  );
+}
+
+export default function RiskIndia3D({
+  replay,
+  onSelect,
+}: {
+  replay: ReplayCase;
+  onSelect: (lat: number, lon: number) => void;
+}) {
+  const rows = useMemo(() => regionRiskRows(replay), [replay]);
+  const [selectedName, setSelectedName] = useState<string>(rows[0]?.name ?? "");
+  const [tourPaused, setTourPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState<boolean>(() =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // Gentle auto-tour across regions until the user takes over.
+  useEffect(() => {
+    if (tourPaused || reducedMotion || rows.length === 0) return;
+    const timer = setInterval(() => {
+      setSelectedName((current) => {
+        const index = rows.findIndex((r) => r.name === current);
+        return rows[(index + 1) % rows.length].name;
+      });
+    }, 3200);
+    return () => clearInterval(timer);
+  }, [tourPaused, reducedMotion, rows]);
+
+  const selected: RegionRiskRow | undefined =
+    rows.find((r) => r.name === selectedName) ?? rows[0];
+
+  const pick = (row: RegionRiskRow) => {
+    setSelectedName(row.name);
+    setTourPaused(true);
+    onSelect(row.latitude, row.longitude);
+  };
+
+  const topPath = useMemo(() => landPath(0), []);
+  const graticule = useMemo(() => {
+    const lines: { x1: number; y1: number; x2: number; y2: number; label: string; vertical: boolean }[] = [];
+    for (let lon = 70; lon <= 95; lon += 5) {
+      const a = project(LAT_MIN, lon);
+      const b = project(LAT_MAX, lon);
+      lines.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, label: `${lon}°E`, vertical: true });
+    }
+    for (let lat = 10; lat <= 35; lat += 5) {
+      const a = project(lat, LON_MIN);
+      const b = project(lat, LON_MAX);
+      lines.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, label: `${lat}°N`, vertical: false });
+    }
+    return lines;
+  }, []);
+
+  return (
+    <div>
+      <div
+        className={styles.risk3dWrap}
+        onMouseEnter={() => setTourPaused(true)}
+        onMouseLeave={() => setTourPaused(false)}
+      >
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Three-dimensional risk map of India with animated regional forecast pins">
+          <defs>
+            <linearGradient id="risk3dLand" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2e6b5e" />
+              <stop offset="55%" stopColor="#1e4f45" />
+              <stop offset="100%" stopColor="#143b34" />
+            </linearGradient>
+            <linearGradient id="risk3dSweep" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="50%" stopColor="#ffffff" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="risk3dOcean" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#eef3ec" />
+              <stop offset="100%" stopColor="#dfe8dc" />
+            </linearGradient>
+            <clipPath id="risk3dClip">
+              <path d={topPath} />
+            </clipPath>
+            <filter id="risk3dGlow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          <rect x="0" y="0" width={W} height={H} rx="14" fill="url(#risk3dOcean)" />
+          {graticule.map((g, i) => (
+            <g key={i}>
+              <line x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2} stroke="#5d7a6e" strokeOpacity="0.25" strokeDasharray="3 6" />
+              <text
+                x={g.vertical ? g.x1 + 4 : 8}
+                y={g.vertical ? H - 10 : g.y1 - 5}
+                className={styles.risk3dGratLabel}
+              >
+                {g.label}
+              </text>
+            </g>
+          ))}
+
+          {/* ground shadow */}
+          <ellipse cx={W / 2} cy={H - 46} rx={W / 2 - 90} ry={26} fill="#12342c" opacity="0.18" />
+
+          {/* 3D extrusion */}
+          {[22, 15, 8].map((dy) => (
+            <path key={dy} d={landPath(dy)} fill="#0b2723" opacity={dy === 22 ? 0.85 : 0.55} />
+          ))}
+          <path d={topPath} fill="url(#risk3dLand)" stroke="#dcead9" strokeWidth="1.4" />
+
+          {/* animated light sweep across the landmass */}
+          {!reducedMotion && (
+            <g clipPath="url(#risk3dClip)">
+              <rect x="-220" y="0" width="170" height={H} fill="url(#risk3dSweep)" className={styles.risk3dSweep} />
+            </g>
+          )}
+
+          {/* region beams + pins */}
+          {rows.map((row) => {
+            const p = project(row.latitude, row.longitude);
+            const color = BAND_COLOR[row.band] ?? "#43a854";
+            const active = selected?.name === row.name;
+            const top = p.y - (active ? 64 : 48);
+            return (
+              <g
+                key={row.name}
+                className={styles.risk3dPin}
+                onClick={() => pick(row)}
+                role="button"
+                tabIndex={0}
+                aria-label={`${row.name}: forecast ${row.rainfall} millimetres per day, risk ${row.band}`}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") pick(row);
+                }}
+              >
+                <line x1={p.x} y1={p.y} x2={p.x} y2={top} stroke={color} strokeWidth={active ? 3 : 2} opacity="0.75" />
+                {!reducedMotion && (
+                  <circle cx={p.x} cy={p.y} r={active ? 12 : 9} fill="none" stroke={color} strokeWidth="2" className={styles.risk3dPulse} />
+                )}
+                <circle cx={p.x} cy={top} r={active ? 11 : 8} fill={color} stroke="#ffffff" strokeWidth="2.5" filter="url(#risk3dGlow)" />
+                <text x={p.x} y={top + 4.5} textAnchor="middle" className={styles.risk3dPinValue}>
+                  {row.rainfall.toFixed(0)}
+                </text>
+                <text
+                  x={p.x}
+                  y={top - (active ? 20 : 16)}
+                  textAnchor="middle"
+                  className={active ? styles.risk3dLabelActive : styles.risk3dLabel}
+                >
+                  {row.name}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+
+        <div className={styles.risk3dLegend}>
+          {(["LOW", "MODERATE", "HIGH", "SEVERE"] as const).map((band) => (
+            <span key={band}>
+              <i style={{ background: BAND_COLOR[band] }} /> {band}
+            </span>
+          ))}
+          <span className={styles.risk3dHint}>number = mm/day · click a pin to inspect</span>
+        </div>
+      </div>
+
+      {selected && (
+        <div className={styles.risk3dDetail}>
+          <div>
+            <div className={styles.eyebrow}>PINPOINT · PROVISIONAL</div>
+            <h3>
+              <MapPin size={16} /> {selected.name} · {selected.latitude.toFixed(1)}°N {selected.longitude.toFixed(1)}°E
+            </h3>
+            <p>
+              Forecast <strong>{selected.rainfall.toFixed(1)} mm/day</strong> · anomaly{" "}
+              <strong>
+                {selected.sigma >= 0 ? "+" : ""}
+                {selected.sigma.toFixed(1)}σ
+              </strong>{" "}
+              · risk <strong>{selected.score}</strong> ({selected.band}) · ~5 km radius
+            </p>
+            <p className={styles.muted}>
+              Expected: {impactsFor(selected.rainfall, selected.band).join(" · ")} · next 12–18 hours. Draft
+              decision support only.
+            </p>
+          </div>
+          <a href={`/api/forecast?lat=${selected.latitude}&lon=${selected.longitude}`} target="_blank" rel="noreferrer">
+            Open GET /forecast JSON <ArrowUpRight size={14} />
+          </a>
+        </div>
+      )}
+    </div>
+  );
+}
