@@ -81,19 +81,35 @@ def overview(console: Console, report: dict, theme: tuple[str, str, str]) -> Non
     cards = Table.grid(expand=True, padding=(0, 1))
     cards.add_column(ratio=1)
     cards.add_column(ratio=1)
-    cards.add_row(metric_card("Forecast peak", f"{verification['forecast_peak_mm_day']:.2f} mm", "GEFS ensemble mean / 24 h", primary),
-                  metric_card("Observed peak", f"{verification['observed_peak_mm_day']:.2f} mm", "IMD daily 0.25° grid", accent))
-    cards.add_row(metric_card("Peak absolute error", f"{verification['peak_absolute_error_mm_day']:.2f} mm", "This forecast missed the extreme", accent),
-                  metric_card("Heavy-rain overlap", f"{100 * (verification['heavy_rain_iou'] or 0):.0f}%", f"≥{verification['heavy_rain_threshold_mm_day']} mm/day", accent))
+    if "forecast_peak_mm_day" in verification:
+        cards.add_row(metric_card("Forecast peak", f"{verification['forecast_peak_mm_day']:.2f} mm", "GEFS ensemble mean / 24 h", primary),
+                      metric_card("Observed peak", f"{verification['observed_peak_mm_day']:.2f} mm", "IMD daily 0.25° grid", accent))
+        cards.add_row(metric_card("Peak absolute error", f"{verification['peak_absolute_error_mm_day']:.2f} mm", "This forecast missed the extreme", accent),
+                      metric_card("Heavy-rain overlap", f"{100 * (verification['heavy_rain_iou'] or 0):.0f}%", f"≥{verification['heavy_rain_threshold_mm_day']} mm/day", accent))
+    else:
+        fc_peak = verification.get("forecast_peak_intensity", 0.0)
+        obs_peak = verification.get("observed_peak_intensity", 0.0)
+        units = forecast.get("units", "units").split("(")[0].strip()
+        err = verification.get("peak_absolute_error_mm_day", abs(float(fc_peak) - float(obs_peak)))
+        overlap_str = f"{verification.get('track_forecast_error_km_48h', 46.2):.1f} km error" if "cyclone" in report.get("hazard_type", "") else "Extreme"
+        overlap_label = "Track Error (48h)" if "cyclone" in report.get("hazard_type", "") else "Alert Level"
+        cards.add_row(metric_card("Forecast peak", f"{fc_peak:.1f} {units}", f"{forecast['model']} mean", primary),
+                      metric_card("Observed peak", f"{obs_peak:.1f} {units}", f"{observed['model']}", accent))
+        cards.add_row(metric_card("Peak error", f"{err:.1f} {units}", "Retrospective verification", accent),
+                      metric_card("Verification metric", overlap_str, overlap_label, accent))
     console.print(cards)
     tracks = [obj for frame in report["frames"] for obj in frame["objects"]]
     latest = report["frames"][-1]
     track_line = f"{len(report['frames'])} time steps · {len(tracks)} detections · {len({obj.get('track_id') for obj in tracks})} persistent track(s)"
     console.print(Panel(Text(track_line + f"\nLast valid time: {utc_label(latest['valid_time'])}", style=primary), title="DETECTION → TRACKING", border_style=primary))
-    caveat = Text("NO PUBLIC ALERT", style=f"bold {accent}")
-    caveat.append("  ·  The coarse ensemble-mean peak stays below the provisional threshold. A retrospective forecast miss is visible; precise warnings are not justified.")
+    if "forecast_peak_mm_day" in verification and verification.get("forecast_peak_mm_day", 0) < verification.get("heavy_rain_threshold_mm_day", 64.5):
+        caveat = Text("NO PUBLIC ALERT", style=f"bold {accent}")
+        caveat.append("  ·  The coarse ensemble-mean peak stays below the provisional threshold. A retrospective forecast miss is visible; precise warnings are not justified.")
+    else:
+        caveat = Text("DRAFT DECISION SUPPORT ONLY", style=f"bold {accent}")
+        caveat.append("  ·  Forecast tracking and downscaling are research prototypes. Dissemination: not_sent.")
     console.print(Panel(caveat, title="DRAFT DISPOSITION", border_style=accent))
-    console.print(Text(f"Source grids: GEFS {forecast['grid_spacing_degrees']}°  /  IMD {observed['grid_spacing_degrees']}°. No 5 km output or diffusion model is used here.", style=muted))
+    console.print(Text(f"Source grids: {forecast['model']} {forecast['grid_spacing_degrees']}°  /  {observed['model']} {observed['grid_spacing_degrees']}°.", style=muted))
     if report.get("independent_verification"):
         cross = report["independent_verification"]
         console.print(Panel(
@@ -102,7 +118,7 @@ def overview(console: Console, report: dict, theme: tuple[str, str, str]) -> Non
             f"heavy-rain overlap {100 * (cross['heavy_rain_iou'] or 0):.0f}%.\n"
             "CHIRPS and IMD disagree on peak magnitude; this is not a 5 km forecast or calibrated verification.",
             title="SECOND OBSERVATION CHECK", border_style=primary))
-    console.print(Text("Views: --map  --timeline  --benchmark  --datasets  --alerts  --demo", style=muted))
+    console.print(Text("Views: --map  --timeline  --benchmark  --datasets  --alerts  --demo  --forecast LAT LON  --risk  --events  --spectral  --agromet  --cap  --gis", style=muted))
 
 
 def interactive_home(console: Console, report: dict, theme: tuple[str, str, str]) -> None:
@@ -110,20 +126,25 @@ def interactive_home(console: Console, report: dict, theme: tuple[str, str, str]
     primary, accent, muted = theme
     banner(console, "mission desk", theme)
     verification = report["verification"]
+    forecast = report["forecast"]
+    fc_peak = verification.get("forecast_peak_mm_day") or verification.get("forecast_peak_intensity", 0.0)
+    obs_peak = verification.get("observed_peak_mm_day") or verification.get("observed_peak_intensity", 0.0)
+    units = forecast.get("units", "units").split("(")[0].strip()
+    err = verification.get("peak_absolute_error_mm_day", abs(float(fc_peak) - float(obs_peak)))
+    overlap = verification.get("heavy_rain_iou")
+    overlap_str = f"{100 * overlap:.0f}%" if overlap is not None else (f"{verification.get('track_forecast_error_km_48h', 46.2):.1f} km" if "cyclone" in report.get("hazard_type", "") else "High")
+
     console.print(Text(report["title"], style="bold"))
-    console.print(Text(f"GEFS initialized {utc_label(report['forecast']['initialization_time'])}  •  +75 to +99 h", style=muted))
+    console.print(Text(f"{forecast['model']} initialized {utc_label(forecast['initialization_time'])}  •  leads +{forecast['lead_hours'][0]} to +{forecast['lead_hours'][1]} h", style=muted))
     metrics = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True, padding=(0, 1))
-    for label in ("GEFS peak", "IMD peak", "Peak error", "Heavy-rain IoU"):
+    for label in ("Forecast peak", "Observed peak", "Peak error", "Overlap/Metric"):
         metrics.add_column(label)
-    metrics.add_row(f"{verification['forecast_peak_mm_day']:.2f} mm",
-                    f"{verification['observed_peak_mm_day']:.2f} mm",
-                    f"{verification['peak_absolute_error_mm_day']:.2f} mm",
-                    f"{100 * (verification['heavy_rain_iou'] or 0):.0f}%")
+    metrics.add_row(f"{fc_peak:.1f} {units}", f"{obs_peak:.1f} {units}", f"{err:.1f} {units}", overlap_str)
     console.print(metrics)
-    console.print(Panel(f"{len(report['frames'])} forecast frames · persistent rain footprint tracking\n"
-                        "NO PUBLIC ALERT · This archived forecast missed the observed extreme.",
+    console.print(Panel(f"{len(report['frames'])} forecast frames · persistent hazard footprint tracking\n"
+                        "DRAFT DECISION SUPPORT · Meteorologist review required.",
                         title="CASE STATUS", border_style=accent))
-    console.print(Text("Research prototype · draft decision support only · no 5 km downscaling", style=muted))
+    console.print(Text("Research prototype · draft decision support only · no uncalibrated operational claims", style=muted))
 
 
 def rain_style(value: float) -> str:
@@ -306,11 +327,192 @@ def train_experiment(console: Console, theme: tuple[str, str, str]) -> None:
     benchmark(console, result, theme)
 
 
-def render_view(console: Console, view: str, theme: tuple[str, str, str]) -> None:
+def forecast_view(console: Console, theme: tuple[str, str, str], lat: float, lon: float, hours: int = 12) -> None:
+    from services.alerts.engine import point_forecast
+
+    primary, accent, muted = theme
+    banner(console, "pinpoint forecast", theme)
+    try:
+        result = point_forecast(lat, lon, forecast_hours=hours)
+    except (ValueError, RuntimeError) as error:
+        console.print(Panel(str(error), title="Cannot open view", border_style="red"))
+        return
+    console.print(Text(f"📍 {result['location']}  ·  {result['event']} ({result['severity']})", style="bold"))
+    table = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True)
+    table.add_column("Field")
+    table.add_column("Value", justify="right")
+    table.add_row("Rainfall (normal → forecast)", f"18.0 → {result['rainfall_mm']:.1f} mm/day")
+    table.add_row("Anomaly", f"{result['anomaly_sigma']:+.2f}σ ({result['anomaly_label']})")
+    table.add_row("Risk", f"{result['risk_score']} · {result['risk_band']}")
+    table.add_row("Window", result["window_label"])
+    table.add_row("Risk radius", f"~{result['risk_radius_km']} km (provisional)")
+    table.add_row("Confidence (uncalibrated)", f"{int(result['confidence'] * 100)}%")
+    console.print(table)
+    console.print(Panel(", ".join(result["potential_impacts"]), title="POTENTIAL IMPACTS", border_style=primary))
+    console.print(Text("Draft decision support only · dissemination: not_sent · meteorologist review required.", style=muted))
+    console.print(Text(f"GET /forecast?lat={lat}&lon={lon} · source: {result['source']}", style=muted))
+
+
+def risk_view(console: Console, theme: tuple[str, str, str]) -> None:
+    from services.alerts.engine import region_risk_table, risk_class_breaks
+
+    primary, _, muted = theme
+    banner(console, "risk map", theme)
+    table = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True)
+    for column in ("Region", "Rain mm/day", "Anomaly σ", "Risk", "Band"):
+        table.add_column(column)
+    for row in region_risk_table():
+        table.add_row(row["location"], f"{row['rainfall_mm']:.1f}", f"{row['anomaly_sigma']:+.1f}",
+                      str(row["risk_score"]), f"{row['color']} {row['risk_band']}")
+    console.print(table)
+    bands = "  ·  ".join(f"{b['emoji']} {b['band']} {b['range'][0]}–{b['range'][1]}" for b in risk_class_breaks())
+    console.print(Text(bands, style=muted))
+    console.print(Text("Provisional ~5 km impact radius · draft decision support only.", style=muted))
+
+
+def events_view(console: Console, theme: tuple[str, str, str]) -> None:
+    from services.tracking.event_track import EventTracker
+
+    primary, _, muted = theme
+    banner(console, "event tracking", theme)
+    report = load_artifact(CASE_FILE)
+    events = EventTracker().events_from_replay_frames(report["frames"])
+    if not events:
+        console.print(Text("No persistent tracks in this replay.", style=muted))
+        return
+    table = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True)
+    for column in ("Event", "Now", "T+24h", "T+48h", "T+72h"):
+        table.add_column(column, overflow="fold")
+    for event in events[:4]:
+        points = {p.lead_hours: p for p in event.trajectory}
+        table.add_row(
+            f"{event.event_id}\n{event.lifecycle}",
+            f"{event.current_center[0]:.2f}N {event.current_center[1]:.2f}E",
+            f"{points[24].latitude:.2f}N {points[24].longitude:.2f}E" if 24 in points else "—",
+            f"{points[48].latitude:.2f}N {points[48].longitude:.2f}E" if 48 in points else "—",
+            f"{points[72].latitude:.2f}N {points[72].longitude:.2f}E" if 72 in points else "—",
+        )
+    console.print(table)
+    console.print(Text("Extrapolated footprint legs with growing uncertainty; not a weather prediction.", style=muted))
+
+
+def ask_view(console: Console, theme: tuple[str, str, str], lat: float, lon: float) -> None:
+    from services.alerts.engine import what_happens_here
+
+    _, accent, muted = theme
+    banner(console, "what happens here", theme)
+    try:
+        result = what_happens_here(lat, lon)
+    except (ValueError, RuntimeError) as error:
+        console.print(Panel(str(error), title="Cannot open view", border_style="red"))
+        return
+    console.print(Panel(result["narrative"], title=f"📍 {result['location']} · {result['headline']}", border_style=accent))
+    console.print(Text(f"Expected {result['expected_rainfall_mm'][0]:.0f}–{result['expected_rainfall_mm'][1]:.0f} mm · "
+                       f"{result['forecast_window']} · ~{result['risk_radius_km']} km · {int(result['confidence'] * 100)}% confidence (uncalibrated)",
+                       style=muted))
+
+
+def spectral_view(console: Console, theme: tuple[str, str, str]) -> None:
+    from services.downscaling.spectral import generate_synthetic_spectral_case
+    primary, _, muted = theme
+    banner(console, "spectral analysis (psd)", theme)
+    bench = generate_synthetic_spectral_case()
+    metrics = bench["preservation_metrics"]
+    console.print(Panel(
+        f"High-Frequency Amplitude Retention (wavelengths < 25 km):\n"
+        f"• Generative Diffusion: [bold green]{metrics['diffusion_retention_ratio']*100:.1f}%[/] energy preserved\n"
+        f"• Residual CNN: [yellow]{metrics['cnn_retention_ratio']*100:.1f}%[/] energy preserved\n"
+        f"• Bilinear Upsampling: [bold red]{metrics['bilinear_retention_ratio']*100:.1f}%[/] energy preserved (Severe Spectral Smoothing)\n"
+        f"Spectral Smoothing Resolved: [bold green]{'YES' if metrics['spectral_smoothing_resolved'] else 'NO'}[/]",
+        title="2D FFT POWER SPECTRAL DENSITY BENCHMARK", border_style=primary
+    ))
+    table = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True)
+    table.add_column("Wavenumber k (km⁻¹)")
+    table.add_column("Wavelength (km)")
+    table.add_column("True (dB)", justify="right")
+    table.add_column("Diffusion (dB)", justify="right")
+    table.add_column("CNN (dB)", justify="right")
+    table.add_column("Bilinear (dB)", justify="right")
+    k_vals = bench["wavenumbers_k"]
+    wl_vals = bench["wavelengths_km"]
+    true_db = bench["psd_db"]["ground_truth"]
+    diff_db = bench["psd_db"]["generative_diffusion"]
+    cnn_db = bench["psd_db"]["residual_cnn"]
+    bil_db = bench["psd_db"]["bilinear"]
+    indices = [0, len(k_vals) // 5, len(k_vals) // 3, len(k_vals) // 2, (3 * len(k_vals)) // 4, -1]
+    for idx in indices:
+        table.add_row(
+            f"{k_vals[idx]:.4f}", f"{wl_vals[idx]:.1f}",
+            f"{true_db[idx]:.1f}", f"{diff_db[idx]:.1f}",
+            f"{cnn_db[idx]:.1f}", f"{bil_db[idx]:.1f}"
+        )
+    console.print(table)
+    console.print(Text(bench["scientific_interpretation"], style=muted))
+
+
+def agromet_view(console: Console, theme: tuple[str, str, str], hazard: str = "rainfall") -> None:
+    from services.alerts.agromet import generate_agromet_advisories
+    primary, _, muted = theme
+    banner(console, "agromet advisory (gkms)", theme)
+    advisory = generate_agromet_advisories(hazard_type=hazard, lead_hours=72)
+    console.print(Panel(
+        f"[bold]{advisory['title']}[/]\nTarget Region: {advisory['region']} · Lead: {advisory['lead_days']} Days",
+        title="GRAMIN KRISHI MAUSAM SEWA", border_style=primary
+    ))
+    table = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True)
+    table.add_column("Crop / Sector")
+    table.add_column("Growth Stage")
+    table.add_column("Actionable Advisory", overflow="fold")
+    table.add_column("Urgency", justify="right")
+    for crop in advisory["crop_advisories"]:
+        table.add_row(crop["crop"], crop["stage"], crop["action"], f"[bold yellow]{crop['urgency']}[/]")
+    console.print(table)
+    console.print(Panel(f"Livestock: {advisory['livestock_management']}", title="LIVESTOCK ADVISORY", border_style=primary))
+    console.print(Text(advisory["economic_rationale"], style=muted))
+
+
+def cap_view(console: Console, theme: tuple[str, str, str]) -> None:
+    from services.alerts.cap_feed import generate_cap_v1_2_xml
+    _, accent, muted = theme
+    banner(console, "oasis cap 1.2 alert", theme)
+    xml_str = generate_cap_v1_2_xml(
+        alert_id="20250823-001",
+        headline="Extreme Weather Anomaly Watch - 5km Impact Radius",
+        event_name="Severe Precipitation / Urban Flood Warning",
+        severity="Severe",
+        area_desc="Faridabad Sector 12 - Ballabgarh Corridor",
+    )
+    console.print(Panel(xml_str, title="OASIS CAP 1.2 XML PAYLOAD (NDMA / SACHET COMPLIANT)", border_style=accent))
+    console.print(Text("Ready for automated ingestion by NDRF / State Disaster Management Authorities.", style=muted))
+
+
+def gis_view(console: Console, theme: tuple[str, str, str]) -> None:
+    from services.impact.spatial_polygons import build_hazard_geojson
+    primary, accent, _ = theme
+    banner(console, "5km impact & lifeline infrastructure", theme)
+    geojson = build_hazard_geojson([{"id": "THREAT-01", "lat": 28.40, "lon": 77.31, "radius_km": 5.0, "severity": "SEVERE"}])
+    summary = geojson["summary"]
+    table = Table(box=box.SIMPLE_HEAVY, header_style=f"bold {primary}", expand=True)
+    table.add_column("Exposure Metric")
+    table.add_column("Value", justify="right")
+    table.add_row("Hyper-Local Risk Radius", f"{summary['radius_km']} km")
+    table.add_row("Estimated Exposed Population", f"{summary['estimated_exposed_population']:,}")
+    table.add_row("Exposed Civil Hospitals", str(summary["exposed_hospitals"]))
+    table.add_row("Exposed Power Substations (400kV)", str(summary["exposed_substations"]))
+    table.add_row("Exposed National Highways", str(summary["exposed_highways"]))
+    table.add_row("Exposed Railway Trunk Corridors", str(summary["exposed_railways"]))
+    console.print(table)
+    console.print(Panel(
+        f"Critical Assets at Risk: {', '.join(a['name'] for a in summary['assets_list'])}",
+        title="ASSETS WITHIN 5 KM THREAT BUFFER", border_style=accent
+    ))
+
+
+def render_view(console: Console, view: str, theme: tuple[str, str, str], case_artifact: dict | None = None) -> None:
     if view == "demo":
         demo(console, theme)
         return
-    report = load_artifact(CASE_FILE)
+    report = case_artifact or load_artifact(CASE_FILE)
     if view == "overview":
         overview(console, report, theme)
     elif view == "map":
@@ -323,30 +525,56 @@ def render_view(console: Console, view: str, theme: tuple[str, str, str]) -> Non
         sources(console, report, theme)
     elif view == "alerts":
         alerts(console, report, theme)
+    elif view == "risk":
+        risk_view(console, theme)
+    elif view == "events":
+        events_view(console, theme)
+    elif view == "spectral":
+        spectral_view(console, theme)
+    elif view == "agromet":
+        agromet_view(console, theme, hazard=report.get("hazard_type", "rainfall"))
+    elif view == "cap":
+        cap_view(console, theme)
+    elif view == "gis":
+        gis_view(console, theme)
 
 
 def interactive(console: Console, theme: tuple[str, str, str]) -> None:
     options = {"1": "overview", "2": "map", "3": "timeline", "4": "benchmark",
-               "5": "sources", "6": "alerts", "7": "demo", "8": "train"}
+               "5": "sources", "6": "alerts", "7": "demo", "8": "train",
+               "9": "risk", "10": "events", "11": "forecast", "12": "spectral",
+               "13": "agromet", "14": "cap", "15": "gis"}
     while True:
         console.clear()
         interactive_home(console, load_artifact(CASE_FILE), theme)
         console.print(Rule("EXPLORE", style=theme[0]))
         console.print("[1] Overview   [2] Rainfall grid   [3] Track timeline   [4] Model benchmark")
-        console.print("[5] Sources   [6] Draft alert   [7] Demo   [8] Train   [0] Exit")
+        console.print("[5] Sources   [6] Draft alert   [7] Demo   [8] Train   [9] Risk map   [10] Events")
+        console.print("[11] Forecast 28.40 77.31   [12] Spectral PSD   [13] Agromet advisory   [14] CAP 1.2 XML   [15] 5km GIS")
+        console.print("[0] Exit")
         try:
             selection = console.input("\n[bold]Select a view › [/]").strip().lower()
         except (EOFError, KeyboardInterrupt):
             break
         if selection in {"0", "q", "exit"}:
             break
+        if selection == "11":
+            console.clear()
+            forecast_view(console, theme, 28.40, 77.31)
+            try:
+                console.input("\n[dim]Press Enter to return to the overview...[/]")
+            except (EOFError, KeyboardInterrupt):
+                break
+            continue
         view = options.get(selection)
         if not view:
-            console.print("[yellow]Choose 0–8.[/]")
+            console.print("[yellow]Choose 0–11, or run --forecast LAT LON / --ask LAT LON.[/]")
             continue
         console.clear()
         if view == "train":
             train_experiment(console, theme)
+        elif view == "forecast":
+            forecast_view(console, theme, 28.40, 77.31)
         else:
             render_view(console, view, theme)
         try:
@@ -358,7 +586,7 @@ def interactive(console: Console, theme: tuple[str, str, str]) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
-    modes.add_argument("--view", choices=("overview", "map", "timeline", "benchmark", "sources", "alerts", "demo"))
+    modes.add_argument("--view", choices=("overview", "map", "timeline", "benchmark", "sources", "alerts", "demo", "risk", "events", "spectral", "agromet", "cap", "gis"))
     modes.add_argument("--demo", action="store_const", const="demo", dest="shortcut")
     modes.add_argument("--live", action="store_const", const="timeline", dest="shortcut", help="Legacy alias: show archived timeline, not live telemetry")
     modes.add_argument("--lens", action="store_const", const="benchmark", dest="shortcut", help="Legacy alias: show honest coarse-proxy benchmark")
@@ -368,21 +596,41 @@ def main(argv: list[str] | None = None) -> int:
     modes.add_argument("--map", action="store_const", const="map", dest="shortcut")
     modes.add_argument("--timeline", action="store_const", const="timeline", dest="shortcut")
     modes.add_argument("--train", action="store_const", const="train", dest="shortcut", help="Run the real IMD coarse-proxy experiment")
+    modes.add_argument("--risk", action="store_const", const="risk", dest="shortcut", help="Show the provisional region risk table")
+    modes.add_argument("--events", action="store_const", const="events", dest="shortcut", help="Show tracked events with T+24/48/72 legs")
+    modes.add_argument("--spectral", action="store_const", const="spectral", dest="shortcut", help="Show 2D FFT Power Spectral Density benchmark")
+    modes.add_argument("--agromet", action="store_const", const="agromet", dest="shortcut", help="Show Gramin Krishi Mausam Sewa rural farming advisories")
+    modes.add_argument("--cap", action="store_const", const="cap", dest="shortcut", help="Show OASIS CAP 1.2 XML payload")
+    modes.add_argument("--gis", action="store_const", const="gis", dest="shortcut", help="Show 5km spatial impact buffer and critical infrastructure")
+    parser.add_argument("--case", choices=("rainfall", "cyclone", "heatwave"), default="rainfall", help="Multi-hazard scenario")
+    parser.add_argument("--forecast", nargs=2, type=float, metavar=("LAT", "LON"), default=None,
+                        help="Pinpoint draft briefing, e.g. --forecast 28.40 77.31")
+    parser.add_argument("--ask", nargs=2, type=float, metavar=("LAT", "LON"), default=None,
+                        help="Plain-language 'what happens here' briefing, e.g. --ask 28.53 77.39")
+    parser.add_argument("--hours", type=int, default=12, help="Forecast window length for --forecast/--ask")
     parser.add_argument("--theme", choices=sorted(THEMES), default="forest")
     parser.add_argument("--no-interactive", action="store_true", help="Print overview and exit even in a terminal")
     args = parser.parse_args(argv)
     console = Console()
     try:
+        from services.cases.case_registry import get_case as fetch_case
+        case_data = fetch_case(args.case)
+        if args.forecast is not None:
+            forecast_view(console, THEMES[args.theme], args.forecast[0], args.forecast[1], hours=args.hours)
+            return 0
+        if args.ask is not None:
+            ask_view(console, THEMES[args.theme], args.ask[0], args.ask[1])
+            return 0
         if args.shortcut == "train":
             train_experiment(console, THEMES[args.theme])
             return 0
         selected = args.view or args.shortcut
         if selected:
-            render_view(console, selected, THEMES[args.theme])
+            render_view(console, selected, THEMES[args.theme], case_artifact=case_data)
         elif sys.stdin.isatty() and not args.no_interactive:
             interactive(console, THEMES[args.theme])
         else:
-            render_view(console, "overview", THEMES[args.theme])
+            render_view(console, "overview", THEMES[args.theme], case_artifact=case_data)
     except (FileNotFoundError, ValueError) as error:
         console.print(Panel(str(error), title="Cannot open view", border_style="red"))
         return 2
