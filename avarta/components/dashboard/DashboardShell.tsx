@@ -3,10 +3,23 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { CalendarDays, ChevronRight, CloudRain, FlaskConical, Layers3, MapPin, Moon, Navigation, Radar, Sparkles, Sun, Thermometer, Wind } from "lucide-react";
+import {
+  CloudRain,
+  FlaskConical,
+  Layers3,
+  MapPin,
+  Moon,
+  Navigation,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Radar,
+  Sparkles,
+  Sun,
+  Thermometer,
+  Wind,
+} from "lucide-react";
 import styles from "./replay.module.css";
 import AssistantWidget from "./AssistantWidget";
-
 
 const LINKS = [
   { href: "/dashboard", label: "Overview", icon: Layers3, exact: true },
@@ -60,7 +73,7 @@ function ThemeToggle() {
   );
 }
 
-function HazardControls({ isDemo, pathname }: { isDemo: boolean; pathname: string }) {
+function SidebarHazardControls({ pathname }: { pathname: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentCase = searchParams.get("case") || "rainfall";
@@ -71,58 +84,71 @@ function HazardControls({ isDemo, pathname }: { isDemo: boolean; pathname: strin
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  const getCaseDateLabel = () => {
-    if (currentCase.includes("live")) return "Live Operational NWP";
-    if (currentCase.includes("cyclone")) return "16–21 May 2020";
-    if (currentCase.includes("heat")) return "23–28 May 2024";
-    return "23 August 2025";
-  };
-
   return (
-    <>
-      <div className={styles.hazardSwitcher}>
-        <button
-          className={`${styles.hazardBtn} ${currentCase.includes("live") ? styles.hazardBtnActive : ""}`}
-          onClick={() => handleCaseChange("live")}
-          title="Live Operational Real-Time NWP Across India"
-        >
-          <span className={styles.livePulseDot} /> Live
-        </button>
-        <button
-          className={`${styles.hazardBtn} ${currentCase === "rainfall" ? styles.hazardBtnActive : ""}`}
-          onClick={() => handleCaseChange("rainfall")}
-          title="23 August 2025 Northwest India Rain"
-        >
-          <CloudRain size={12} /> Rain
-        </button>
-        <button
-          className={`${styles.hazardBtn} ${currentCase.includes("cyclone") ? styles.hazardBtnActive : ""}`}
-          onClick={() => handleCaseChange("cyclone")}
-          title="May 2020 Super Cyclone Amphan"
-        >
-          <Wind size={12} /> Cyclone
-        </button>
-        <button
-          className={`${styles.hazardBtn} ${currentCase.includes("heat") ? styles.hazardBtnActive : ""}`}
-          onClick={() => handleCaseChange("heatwave")}
-          title="May 2024 North India Severe Heat Dome"
-        >
-          <Thermometer size={12} /> Heatwave
-        </button>
-      </div>
-
-      {!isDemo && (
-        <span className={styles.topDate}>
-          <CalendarDays size={14} /> {getCaseDateLabel()}
-        </span>
-      )}
-    </>
+    <div className={styles.sidebarHazardPills}>
+      <button
+        className={`${styles.sidebarHazardBtn} ${currentCase.includes("live") ? styles.sidebarHazardBtnActive : ""}`}
+        onClick={() => handleCaseChange("live")}
+        title="Live Operational Assimilation"
+      >
+        <span className={styles.livePulseDot} /> Live
+      </button>
+      <button
+        className={`${styles.sidebarHazardBtn} ${currentCase === "rainfall" ? styles.sidebarHazardBtnActive : ""}`}
+        onClick={() => handleCaseChange("rainfall")}
+        title="23 August 2025 Northwest Rain"
+      >
+        <CloudRain size={12} /> Rain
+      </button>
+      <button
+        className={`${styles.sidebarHazardBtn} ${currentCase.includes("cyclone") ? styles.sidebarHazardBtnActive : ""}`}
+        onClick={() => handleCaseChange("cyclone")}
+        title="May 2020 Super Cyclone Amphan"
+      >
+        <Wind size={12} /> Cyclone
+      </button>
+      <button
+        className={`${styles.sidebarHazardBtn} ${currentCase.includes("heat") ? styles.sidebarHazardBtnActive : ""}`}
+        onClick={() => handleCaseChange("heatwave")}
+        title="May 2024 North India Severe Heat Dome"
+      >
+        <Thermometer size={12} /> Heat
+      </button>
+    </div>
   );
 }
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("avarta-sidebar-open");
+    if (saved !== null) {
+      setIsSidebarOpen(saved === "true");
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem("avarta-sidebar-open", String(next));
+      return next;
+    });
+  };
+
+  // Keyboard shortcut Ctrl+B / Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -135,19 +161,34 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => observer.disconnect();
   }, []);
 
-  const isDemo = pathname === "/dashboard/demo";
-  const current = [...LINKS].reverse().find((link) =>
-    link.exact ? pathname === link.href : pathname.startsWith(link.href),
-  ) ?? LINKS[0];
-
   return (
     <div className={`${styles.shell} ${theme === "dark" ? styles.shellDark : ""}`} data-theme={theme}>
-      <aside className={styles.rail}>
-        <Link href="/dashboard" className={styles.logo} aria-label="Avarta home">
-          <span className={styles.logoMark}>a</span>
-          <span>avarta<span className={styles.logoDot}>.</span></span>
-        </Link>
-        <p className={styles.railLabel}>WORKSPACE</p>
+      {/* Collapsible Left Rail Sidebar */}
+      <aside className={`${styles.rail} ${!isSidebarOpen ? styles.railClosed : ""}`}>
+        <div className={styles.sidebarHeader}>
+          <Link href="/dashboard" className={styles.logo} aria-label="Avarta home">
+            <span className={styles.logoMark}>a</span>
+            <span>avarta<span className={styles.logoDot}>.</span></span>
+          </Link>
+          <button
+            onClick={toggleSidebar}
+            className={styles.sidebarToggleBtn}
+            title="Collapse sidebar (Ctrl+B)"
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose size={18} />
+          </button>
+        </div>
+
+        {/* Hazard Selector in Sidebar */}
+        <div className={styles.sidebarHazardGroup}>
+          <div className={styles.sidebarHazardLabel}>SURVEILLANCE MODE</div>
+          <Suspense fallback={null}>
+            <SidebarHazardControls pathname={pathname} />
+          </Suspense>
+        </div>
+
+        <p className={styles.railLabel} style={{ margin: "14px 12px 10px" }}>WORKSPACE</p>
         <nav className={styles.nav}>
           {LINKS.map((link) => {
             const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
@@ -159,32 +200,39 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             );
           })}
         </nav>
+
+        {/* Theme Toggle in Sidebar */}
+        <div style={{ marginTop: "auto", paddingTop: "14px", paddingLeft: "4px", paddingRight: "4px" }}>
+          <ThemeToggle />
+        </div>
+
         <div className={styles.railBottom}>
           <span className={styles.railPulse} />
           <span>Research prototype<br /><small>MoES / NCMRWF 26078</small></span>
         </div>
       </aside>
+
+      {/* Floating Sidebar Reopen Controls (When Sidebar is Collapsed) */}
+      {!isSidebarOpen && (
+        <div className={styles.floatingControlGroup}>
+          <button
+            onClick={toggleSidebar}
+            className={styles.floatingSidebarOpener}
+            title="Open sidebar (Ctrl+B)"
+            aria-label="Open sidebar"
+          >
+            <PanelLeftOpen size={16} />
+            <span>Open Menu</span>
+          </button>
+          <ThemeToggle />
+        </div>
+      )}
+
+      {/* Content Area - No Topbar Header */}
       <div className={styles.content}>
-        <header className={styles.topbar}>
-          <div className={styles.breadcrumb}>
-            Avarta <ChevronRight size={13} /> Weather intelligence <ChevronRight size={13} /> <strong>{current.label}</strong>
-          </div>
-          <div className={styles.topRight}>
-            <Suspense fallback={
-              <div className={styles.hazardSwitcher}>
-                <button className={`${styles.hazardBtn} ${styles.hazardBtnActive}`}>
-                  <CloudRain size={12} /> Rain
-                </button>
-              </div>
-            }>
-              <HazardControls isDemo={isDemo} pathname={pathname} />
-            </Suspense>
-            <span className={styles.status}>{isDemo ? "SYNTHETIC DEMO" : "HISTORICAL REPLAY"}</span>
-            <ThemeToggle />
-          </div>
-        </header>
         <main className={styles.main}>{children}</main>
       </div>
+
       <AssistantWidget />
     </div>
   );
