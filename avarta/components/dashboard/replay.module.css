@@ -287,8 +287,8 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .overviewMetricRow div strong{font-size:14px;color:#173d36}
 .overviewCardLink{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#1b6859;text-decoration:none;margin-top:10px;transition:gap .15s ease}
 .overviewCardLink:hover{gap:8px;color:#144e43}
-.quickNavGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
-@media(max-width:900px){.quickNavGrid{grid-template-columns:repeat(2,1fr)}}
+.quickNavGrid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin:18px 0}
+@media(max-width:700px){.quickNavGrid{grid-template-columns:1fr}}
 .quickNavCard{background:#ffffff;border:1px solid #e1e9df;border-radius:8px;padding:14px;text-decoration:none;display:flex;flex-direction:column;justify-content:space-between;transition:all .15s ease}
 .quickNavCard:hover{border-color:#5bc5b2;background:#f8faf8;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.06)}
 .quickNavCard strong{display:flex;align-items:center;gap:6px;font-size:13px;color:#173c35;margin-bottom:4px}

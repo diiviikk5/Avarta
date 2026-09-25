@@ -17,6 +17,7 @@ import {
   Sun,
   Thermometer,
   Wind,
+  Terminal,
 } from "lucide-react";
 import styles from "./replay.module.css";
 import AssistantWidget from "./AssistantWidget";
@@ -27,6 +28,7 @@ const LINKS = [
   { href: "/dashboard/trajectory", label: "Trajectory", icon: Navigation },
   { href: "/dashboard/risk", label: "Risk Map", icon: Thermometer },
   { href: "/dashboard/downscaling", label: "Downscaling", icon: Radar },
+  { href: "/dashboard/terminal", label: "Terminal / CLI", icon: Terminal },
   { href: "/dashboard/ask", label: "Ask", icon: Sparkles },
   { href: "/dashboard/validation", label: "Validation", icon: FlaskConical },
   { href: "/dashboard/demo", label: "Prototype demo", icon: CloudRain },

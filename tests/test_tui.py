@@ -48,3 +48,29 @@ def test_alert_view_never_sends_warning():
     assert "draft_decision_support" in output
     assert "not_sent" in output
     assert "NO PUBLIC ALERT" in output
+
+
+def test_tui_api_bridge_views():
+    from services.tui_api_bridge import execute_tui_command
+
+    # Test overview
+    res_overview = execute_tui_command("overview", case_name="rainfall", theme_name="forest")
+    assert res_overview["status"] == "ok"
+    assert "<span" in res_overview["html"]
+    assert "CASE OVERVIEW" in res_overview["raw"]
+
+    # Test spectral
+    res_spectral = execute_tui_command("spectral", case_name="cyclone", theme_name="cyan")
+    assert res_spectral["status"] == "ok"
+    assert "SPECTRAL" in res_spectral["raw"]
+
+    # Test numeric shortcut '2' (map)
+    res_map = execute_tui_command("2", case_name="rainfall", theme_name="forest")
+    assert res_map["status"] == "ok"
+    assert res_map["view"] == "map"
+
+    # Test forecast
+    res_fc = execute_tui_command("forecast 28.40 77.31", case_name="rainfall")
+    assert res_fc["status"] == "ok"
+    assert res_fc["view"] == "forecast"
+

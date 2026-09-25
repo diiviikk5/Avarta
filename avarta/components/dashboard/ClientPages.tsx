@@ -15,6 +15,7 @@ import {
   Sparkles,
   Thermometer,
   Wind,
+  Terminal,
 } from "lucide-react";
 import type { ReplayCase } from "@/lib/replay";
 import { AskPanel, ForecastMap, LocationInspector, RiskPanel, TrajectoryPanel } from "@/components/dashboard/ReplayDashboard";
@@ -374,6 +375,16 @@ function OverviewInner({ initialReplay }: { initialReplay: ReplayCase }) {
             </div>
             <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#1b6859", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               Launch Simulator <ArrowUpRight size={12} />
+            </span>
+          </Link>
+
+          <Link href="/dashboard/terminal" className={styles.quickNavCard}>
+            <div>
+              <strong><Terminal size={15} color="#1b6859" /> Terminal & CLI Console</strong>
+              <p>Interactive web TUI running avarta_tui.py with rich ASCII maps, spectral diagnostics, and CAP alerts.</p>
+            </div>
+            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#1b6859", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              Open Terminal <ArrowUpRight size={12} />
             </span>
           </Link>
         </div>
