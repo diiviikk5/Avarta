@@ -1,0 +1,39 @@
+{
+  "alert": {
+    "@xmlns": "urn:oasis:names:tc:emergency:cap:1.2",
+    "identifier": "AVARTA-CAP-AVT-2026-00001-1790349338",
+    "sender": "intelligence@avarta.met.ai",
+    "sent": "2026-09-25T15:15:38.501838+00:00",
+    "status": "Actual",
+    "msgType": "Alert",
+    "scope": "Public",
+    "info": {
+      "category": "Met",
+      "event": "Extratropical Cyclonic Vortex",
+      "urgency": "Immediate",
+      "severity": "Extreme",
+      "certainty": "Observed",
+      "eventCode": {
+        "valueName": "SAME",
+        "value": "SVR"
+      },
+      "headline": "Targeted 5 km Pinpoint Warning: Visakhapatnam Coastal Sector",
+      "description": "5km physics-verified downscaled hazard track indicates immediate impact zone.",
+      "instruction": "Mobilize NDRF Level-3 Battalions. Stand down harbor operations.",
+      "area": {
+        "areaDesc": "Identified 4D Threat Corridor Contour",
+        "polygon": "17.5,83.2 18.1,84.0 17.2,83.9 17.5,83.2"
+      },
+      "parameter": [
+        {
+          "valueName": "AvartaEngine",
+          "value": "CorrDiff-Diffusion-5km"
+        },
+        {
+          "valueName": "PhysicsGuard",
+          "value": "MoistureFluxConservation-Verified"
+        }
+      ]
+    }
+  }
+}
