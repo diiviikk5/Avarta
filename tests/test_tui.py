@@ -2,7 +2,8 @@ from io import StringIO
 
 from rich.console import Console
 
-from avarta_tui import CASE_FILE, THEMES, load_artifact, render_view
+from avarta_tui import (CASE_FILE, THEMES, load_artifact, render_view,
+                        resolve_theme_choice, theme_selector)
 
 
 def capture(view: str, width: int = 80) -> str:
@@ -48,3 +49,19 @@ def test_alert_view_never_sends_warning():
     assert "draft_decision_support" in output
     assert "not_sent" in output
     assert "NO PUBLIC ALERT" in output
+
+
+def test_original_style_theme_screen_is_available_without_false_live_claims():
+    buffer = StringIO()
+    console = Console(file=buffer, width=100, force_terminal=False, color_system=None)
+    theme_selector(console, "amber")
+    output = buffer.getvalue()
+    assert "AVARTA COLOR THEME SWITCHER" in output
+    assert "Solar Thermal Gold" in output
+    assert "● CURRENT" in output
+    assert "CONDITIONAL DDPM" not in output  # label is explicit and lowercase
+    assert "untrained" in output
+    assert "RESEARCH ONLY" in output
+    assert "TENSOR ENGINE SYNCHRONIZED" not in output
+    assert resolve_theme_choice("amber", "1") == "cyan"
+    assert resolve_theme_choice("amber", "") == "amber"

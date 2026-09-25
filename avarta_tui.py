@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from rich import box
+from rich.align import Align
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.rule import Rule
@@ -40,6 +41,66 @@ THEMES = {
     "synthwave": ("#a158ad", "#df7e8e", "#a39ab0"),
     "mono": ("#666666", "#888888", "#777777"),
 }
+
+# The seven numbered palettes and ASCII wordmark mirror the original TUI.
+# Extra names above remain valid for scripts that already use --theme.
+THEME_CHOICES = (
+    ("cyan", "Cyber Icy Cyan", "CYBER-CYAN", "cyan", ("#e0f2fe", "#7dd3fc", "#38bdf8", "#0284c7", "#0369a1", "#0284c7")),
+    ("emerald", "Matrix Deep Emerald", "MATRIX-EMERALD", "green", ("#d1fae5", "#6ee7b7", "#34d399", "#10b981", "#059669", "#047857")),
+    ("amber", "Solar Thermal Gold", "SOLAR-AMBER", "yellow", ("#fef3c7", "#fde047", "#f59e0b", "#d97706", "#ea580c", "#c2410c")),
+    ("aurora", "Nordic Aurora Borealis", "AURORA", "#14b8a6", ("#22d3ee", "#06b6d4", "#14b8a6", "#10b981", "#34d399", "#6ee7b7")),
+    ("stealth", "Titanium Stealth HUD", "STEALTH-HUD", "white", ("#ffffff", "#f1f5f9", "#cbd5e1", "#94a3b8", "#64748b", "#94a3b8")),
+    ("crimson", "Catastrophe Red Alert", "CRIMSON-ALERT", "red", ("#fee2e2", "#fca5a5", "#f87171", "#ef4444", "#dc2626", "#b91c1c")),
+    ("synthwave", "Synthwave Violet", "SYNTHWAVE", "#c084fc", ("#38bdf8", "#818cf8", "#a78bfa", "#c084fc", "#e879f9", "#f43f5e")),
+)
+
+ASCII_WORDMARK = (
+    "  █████╗ ██╗   ██╗ █████╗ ██████╗ ████████╗ █████╗ ",
+    " ██╔══██╗██║   ██║██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗",
+    " ███████║██║   ██║███████║██████╔╝   ██║   ███████║",
+    " ██╔══██║╚██╗ ██╔╝██╔══██║██╔══██╗   ██║   ██╔══██║",
+    " ██║  ██║ ╚████╔╝ ██║  ██║██║  ██║   ██║   ██║  ██║",
+    " ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝",
+)
+
+
+def splash_banner(theme_key: str) -> Panel:
+    """Original-style terminal wordmark with truthful research status."""
+    selected = next((entry for entry in THEME_CHOICES if entry[0] == theme_key), THEME_CHOICES[0])
+    _, name, tag, border, gradient = selected
+    content = Text()
+    for line, color in zip(ASCII_WORDMARK, gradient):
+        content.append(line + "\n", style=f"bold {color}")
+    content.append("\n4D SPATIO-TEMPORAL EXTREME WEATHER ANOMALY TRACKING\n", style="bold white")
+    content.append("[spherical mesh] · [conditional DDPM: untrained] · [draft alerts]\n", style=f"bold {gradient[2]}")
+    content.append(f"SIH 26078 · HISTORICAL REPLAY · RESEARCH ONLY · [{tag}]", style="dim white")
+    return Panel(Align.center(content), box=box.DOUBLE, border_style=border,
+                 subtitle=f"[bold white]AVARTA[/] · [green]● ARCHIVED CASE READY[/] · [dim]{name.upper()}[/]",
+                 subtitle_align="right")
+
+
+def theme_selector(console: Console, current_key: str) -> None:
+    """Draw the numbered theme screen; input is handled separately."""
+    console.print(splash_banner(current_key))
+    console.print("\n[bold cyan]🎨 AVARTA COLOR THEME SWITCHER[/]\n")
+    table = Table(title="Available Color Themes", box=box.ROUNDED, border_style="cyan")
+    table.add_column("Key", justify="center", style="bold white")
+    table.add_column("Theme Name", style="bold white")
+    table.add_column("Identifier", style="cyan")
+    table.add_column("Palette Style", style="yellow")
+    table.add_column("Active", justify="center", style="green")
+    for index, (key, name, tag, border, _) in enumerate(THEME_CHOICES, 1):
+        table.add_row(str(index), name, tag, f"Border: bold {border}",
+                      "● CURRENT" if key == current_key else "")
+    console.print(table)
+
+
+def resolve_theme_choice(current_key: str, choice: str) -> str:
+    if not choice.strip():
+        return current_key
+    if choice.strip().isdigit() and 1 <= int(choice.strip()) <= len(THEME_CHOICES):
+        return THEME_CHOICES[int(choice.strip()) - 1][0]
+    raise ValueError("Choose a theme number from 1 to 7, or press Enter to keep the current theme")
 
 
 def load_artifact(path: Path) -> dict[str, Any]:
@@ -105,10 +166,10 @@ def overview(console: Console, report: dict, theme: tuple[str, str, str]) -> Non
     console.print(Text("Views: --map  --timeline  --benchmark  --datasets  --alerts  --demo", style=muted))
 
 
-def interactive_home(console: Console, report: dict, theme: tuple[str, str, str]) -> None:
-    """A compact home screen that keeps the menu visible on a 24-line terminal."""
+def interactive_home(console: Console, report: dict, theme: tuple[str, str, str], theme_key: str) -> None:
+    """Evidence-backed mission menu beneath the original-style wordmark."""
     primary, accent, muted = theme
-    banner(console, "mission desk", theme)
+    console.print(splash_banner(theme_key))
     verification = report["verification"]
     console.print(Text(report["title"], style="bold"))
     console.print(Text(f"GEFS initialized {utc_label(report['forecast']['initialization_time'])}  •  +75 to +99 h", style=muted))
@@ -325,24 +386,37 @@ def render_view(console: Console, view: str, theme: tuple[str, str, str]) -> Non
         alerts(console, report, theme)
 
 
-def interactive(console: Console, theme: tuple[str, str, str]) -> None:
+def interactive(console: Console, theme_key: str) -> None:
     options = {"1": "overview", "2": "map", "3": "timeline", "4": "benchmark",
                "5": "sources", "6": "alerts", "7": "demo", "8": "train"}
     while True:
+        theme = THEMES[theme_key]
         console.clear()
-        interactive_home(console, load_artifact(CASE_FILE), theme)
+        interactive_home(console, load_artifact(CASE_FILE), theme, theme_key)
         console.print(Rule("EXPLORE", style=theme[0]))
         console.print("[1] Overview   [2] Rainfall grid   [3] Track timeline   [4] Model benchmark")
-        console.print("[5] Sources   [6] Draft alert   [7] Demo   [8] Train   [0] Exit")
+        console.print("[5] Sources   [6] Draft alert   [7] Demo   [8] Train   [C] Themes   [0] Exit")
         try:
             selection = console.input("\n[bold]Select a view › [/]").strip().lower()
         except (EOFError, KeyboardInterrupt):
             break
         if selection in {"0", "q", "exit"}:
             break
+        if selection in {"c", "theme", "themes"}:
+            console.clear()
+            theme_selector(console, theme_key)
+            try:
+                choice = console.input("\nEnter theme number (1–7), or press Enter to keep current:\n[bold cyan]Select Theme > [/]")
+                theme_key = resolve_theme_choice(theme_key, choice)
+            except (EOFError, KeyboardInterrupt):
+                break
+            except ValueError as error:
+                console.print(f"[yellow]{error}[/]")
+                console.input("[dim]Press Enter to return to the menu...[/]")
+            continue
         view = options.get(selection)
         if not view:
-            console.print("[yellow]Choose 0–8.[/]")
+            console.print("[yellow]Choose 0–8 or C.[/]")
             continue
         console.clear()
         if view == "train":
@@ -368,7 +442,8 @@ def main(argv: list[str] | None = None) -> int:
     modes.add_argument("--map", action="store_const", const="map", dest="shortcut")
     modes.add_argument("--timeline", action="store_const", const="timeline", dest="shortcut")
     modes.add_argument("--train", action="store_const", const="train", dest="shortcut", help="Run the real IMD coarse-proxy experiment")
-    parser.add_argument("--theme", choices=sorted(THEMES), default="forest")
+    modes.add_argument("--themes", action="store_const", const="themes", dest="shortcut", help="Open the original-style numbered color theme screen")
+    parser.add_argument("--theme", choices=sorted(THEMES), default="cyan")
     parser.add_argument("--no-interactive", action="store_true", help="Print overview and exit even in a terminal")
     args = parser.parse_args(argv)
     console = Console()
@@ -377,10 +452,15 @@ def main(argv: list[str] | None = None) -> int:
             train_experiment(console, THEMES[args.theme])
             return 0
         selected = args.view or args.shortcut
-        if selected:
+        if selected == "themes":
+            theme_selector(console, args.theme)
+            if sys.stdin.isatty():
+                choice = console.input("\nEnter theme number (1–7), or press Enter to keep current:\n[bold cyan]Select Theme > [/]")
+                interactive(console, resolve_theme_choice(args.theme, choice))
+        elif selected:
             render_view(console, selected, THEMES[args.theme])
         elif sys.stdin.isatty() and not args.no_interactive:
-            interactive(console, THEMES[args.theme])
+            interactive(console, args.theme)
         else:
             render_view(console, "overview", THEMES[args.theme])
     except (FileNotFoundError, ValueError) as error:
