@@ -19,13 +19,13 @@ export default function DashboardPage() {
   const selectedThreat = MOCK_THREATS.find((t) => t.id === selectedThreatId) || MOCK_THREATS[0];
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--canvas)] text-[var(--ink)] font-sans antialiased relative overflow-x-hidden selection:bg-[#f4c5a8]/40 selection:text-[var(--ink)]">
-      {/* Editorial Pastel Atmospheric Atmosphere (Drifting Orbs) */}
-      <div className="orb orb-mint -top-40 -left-40 pointer-events-none fixed" />
-      <div className="orb orb-sky top-1/3 -right-40 pointer-events-none fixed" />
-      <div className="orb orb-peach -bottom-40 left-1/3 pointer-events-none fixed" />
+    <div className="flex flex-col min-h-screen bg-[#0c0a09] text-[#f5f5f5] font-sans antialiased relative overflow-x-hidden selection:bg-[#f4c5a8]/25 selection:text-white">
+      {/* Editorial Pastel Atmospheric Luminescence (Low Opacity in Dark Canvas) */}
+      <div className="orb orb-mint -top-40 -left-40 pointer-events-none fixed opacity-20" />
+      <div className="orb orb-sky top-1/3 -right-40 pointer-events-none fixed opacity-20" />
+      <div className="orb orb-peach -bottom-40 left-1/3 pointer-events-none fixed opacity-20" />
 
-      {/* Top Editorial Telemetry Header */}
+      {/* Top Editorial Telemetry Header (Dark) */}
       <DashboardHeader activeThreatCount={MOCK_THREATS.length} />
 
       {/* Main Editorial Workspace */}
@@ -38,19 +38,19 @@ export default function DashboardPage() {
         />
 
         {/* Center Editorial Stage */}
-        <div className="flex-1 flex flex-col min-w-0 border-r border-stone-200/80 bg-white/40 backdrop-blur-sm">
+        <div className="flex-1 flex flex-col min-w-0 border-r border-[#292524] bg-[#0c0a09]/80 backdrop-blur-sm">
           {/* Editorial Stage Navigation Strip */}
-          <div className="flex items-center justify-between px-6 py-2.5 bg-white/80 border-b border-stone-200/80 backdrop-blur-md">
-            <div className="flex items-center gap-1.5 p-1 bg-stone-100/80 rounded-full border border-stone-200/60 shadow-xs">
+          <div className="flex items-center justify-between px-6 py-2.5 bg-[#141210]/95 border-b border-[#292524] backdrop-blur-md">
+            <div className="flex items-center gap-1.5 p-1 bg-[#1c1917] rounded-full border border-stone-800 shadow-xs">
               <button
                 onClick={() => setActiveCenterTab("map")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   activeCenterTab === "map"
-                    ? "bg-[var(--ink)] text-white shadow-xs"
-                    : "text-stone-600 hover:text-stone-900 hover:bg-white/60"
+                    ? "bg-white text-black shadow-xs font-semibold"
+                    : "text-stone-400 hover:text-white hover:bg-stone-800/60"
                 }`}
               >
-                <Layers size={13} className={activeCenterTab === "map" ? "text-white" : "text-stone-500"} />
+                <Layers size={13} className={activeCenterTab === "map" ? "text-black" : "text-stone-400"} />
                 <span>4D Corridor</span>
               </button>
 
@@ -58,11 +58,11 @@ export default function DashboardPage() {
                 onClick={() => setActiveCenterTab("downscaling")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   activeCenterTab === "downscaling"
-                    ? "bg-[var(--ink)] text-white shadow-xs"
-                    : "text-stone-600 hover:text-stone-900 hover:bg-white/60"
+                    ? "bg-white text-black shadow-xs font-semibold"
+                    : "text-stone-400 hover:text-white hover:bg-stone-800/60"
                 }`}
               >
-                <Sparkles size={13} className={activeCenterTab === "downscaling" ? "text-white" : "text-stone-500"} />
+                <Sparkles size={13} className={activeCenterTab === "downscaling" ? "text-black" : "text-stone-400"} />
                 <span>12km → 5km Downscaler</span>
               </button>
 
@@ -70,11 +70,11 @@ export default function DashboardPage() {
                 onClick={() => setActiveCenterTab("physics")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   activeCenterTab === "physics"
-                    ? "bg-[var(--ink)] text-white shadow-xs"
-                    : "text-stone-600 hover:text-stone-900 hover:bg-white/60"
+                    ? "bg-white text-black shadow-xs font-semibold"
+                    : "text-stone-400 hover:text-white hover:bg-stone-800/60"
                 }`}
               >
-                <ShieldCheck size={13} className={activeCenterTab === "physics" ? "text-white" : "text-stone-500"} />
+                <ShieldCheck size={13} className={activeCenterTab === "physics" ? "text-black" : "text-stone-400"} />
                 <span>Physics Conservation</span>
               </button>
 
@@ -82,11 +82,11 @@ export default function DashboardPage() {
                 onClick={() => setActiveCenterTab("models")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   activeCenterTab === "models"
-                    ? "bg-[var(--ink)] text-white shadow-xs"
-                    : "text-stone-600 hover:text-stone-900 hover:bg-white/60"
+                    ? "bg-white text-black shadow-xs font-semibold"
+                    : "text-stone-400 hover:text-white hover:bg-stone-800/60"
                 }`}
               >
-                <Cpu size={13} className={activeCenterTab === "models" ? "text-white" : "text-stone-500"} />
+                <Cpu size={13} className={activeCenterTab === "models" ? "text-black" : "text-stone-400"} />
                 <span>Foundation Models</span>
               </button>
 
@@ -94,18 +94,18 @@ export default function DashboardPage() {
                 onClick={() => setActiveCenterTab("agent")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   activeCenterTab === "agent"
-                    ? "bg-[var(--ink)] text-white shadow-xs"
-                    : "text-stone-600 hover:text-stone-900 hover:bg-white/60"
+                    ? "bg-white text-black shadow-xs font-semibold"
+                    : "text-stone-400 hover:text-white hover:bg-stone-800/60"
                 }`}
               >
-                <Bot size={13} className={activeCenterTab === "agent" ? "text-white" : "text-stone-500"} />
+                <Bot size={13} className={activeCenterTab === "agent" ? "text-black" : "text-stone-400"} />
                 <span>Copilot Synthesis</span>
               </button>
             </div>
 
             {/* Editorial Status Tag */}
-            <div className="hidden lg:flex items-center gap-2 text-xs text-stone-500 font-mono tracking-tight">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <div className="hidden lg:flex items-center gap-2 text-xs text-stone-400 font-mono tracking-tight">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>ERA5 Climatology Engine Synced</span>
             </div>
           </div>

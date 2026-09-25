@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ThreatObject, AgentChatMessage } from "@/types/threat";
-import { Bot, Send, User, Check, X, Terminal, AlertTriangle, Sparkles } from "lucide-react";
+import { Send, Check, X, Terminal, AlertTriangle } from "lucide-react";
 
 interface AgentCopilotProps {
   threat: ThreatObject;
@@ -147,27 +147,27 @@ export default function AgentCopilot({ threat }: AgentCopilotProps) {
   };
 
   return (
-    <div className="p-6 sm:p-8 bg-[#f5f5f5] space-y-6">
+    <div className="p-6 sm:p-8 bg-[#0c0a09] space-y-6 text-stone-100">
       {/* Editorial Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4 pb-5 border-b border-[#e7e5e4]">
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-5 border-b border-[#292524]">
         <div>
-          <span className="text-[11px] font-medium tracking-wider uppercase text-[#777169] block mb-1">
+          <span className="text-[11px] font-medium tracking-wider uppercase text-stone-400 block mb-1">
             Agentic Response Harness · LangGraph Intelligence Core
           </span>
           <h2
-            className="text-2xl sm:text-3xl font-light text-[#0c0a09] tracking-tight"
+            className="text-2xl sm:text-3xl font-light text-white tracking-tight"
             style={{ fontFamily: "var(--font-serif)" }}
           >
             Meteorological Copilot & Decision Protocol
           </h2>
-          <p className="text-sm text-[#4e4e4e] max-w-2xl mt-1 leading-relaxed">
+          <p className="text-sm text-stone-400 max-w-2xl mt-1 leading-relaxed">
             The agent operates strictly on structured Threat Intelligence Objects rather than raw unconstrained tensors, ensuring explainable reasoning with mandatory human-in-the-loop sign-off for national alerts.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#e7e5e4] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="text-xs font-medium text-[#292524]">
+        <div className="flex items-center gap-2 bg-[#141210] px-4 py-2 rounded-full border border-stone-800 shadow-xs">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-medium text-stone-200">
             Human-in-the-Loop Protocol Enforced
           </span>
         </div>
@@ -179,86 +179,86 @@ export default function AgentCopilot({ threat }: AgentCopilotProps) {
           <button
             key={prompt}
             onClick={() => handleSendMessage(prompt)}
-            className="text-xs font-medium bg-white hover:bg-[#fafafa] border border-[#e7e5e4] hover:border-[#d6d3d1] text-[#292524] px-4 py-2 rounded-full transition-all cursor-pointer shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
+            className="text-xs font-medium bg-[#141210] hover:bg-[#1c1917] border border-[#292524] hover:border-stone-700 text-stone-300 px-4 py-2 rounded-full transition-all cursor-pointer shadow-xs"
           >
             {prompt}
           </button>
         ))}
       </div>
 
-      {/* Dialogue Thread */}
-      <div className="bg-white rounded-[20px] border border-[#e7e5e4] shadow-[0_2px_8px_rgba(0,0,0,0.02)] p-6 max-h-[460px] overflow-y-auto space-y-4">
+      {/* Dialogue Thread (Dark) */}
+      <div className="bg-[#141210] rounded-[20px] border border-[#292524] shadow-xs p-6 max-h-[460px] overflow-y-auto space-y-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`p-4 rounded-[16px] space-y-2.5 ${
               msg.sender === "user"
-                ? "bg-[#fafafa] border border-[#e7e5e4] ml-12"
-                : "bg-[#fbfaf8] border border-[#e7e5e4] mr-12"
+                ? "bg-[#1c1917] border border-stone-800 ml-12"
+                : "bg-[#0f0e0d] border border-stone-800/80 mr-12"
             }`}
           >
-            <div className="flex items-center justify-between text-xs text-[#777169]">
-              <span className="font-semibold text-[#0c0a09]">
+            <div className="flex items-center justify-between text-xs text-stone-400">
+              <span className="font-semibold text-white">
                 {msg.sender === "user" ? "Forecaster In-Charge" : "Avarta Weather Agent"}
               </span>
               <span>{msg.timestamp}</span>
             </div>
 
-            <p className="text-sm text-[#292524] leading-relaxed">
+            <p className="text-sm text-stone-200 leading-relaxed">
               {msg.content}
             </p>
 
             {/* Tool Invocations */}
             {msg.tool_call && (
-              <div className="bg-[#f5f5f5] p-3 rounded-lg border border-[#e7e5e4] text-xs font-mono space-y-1">
-                <div className="text-[#0c0a09] font-semibold flex items-center gap-1.5">
-                  <Terminal size={13} />
+              <div className="bg-black/50 p-3 rounded-lg border border-stone-800 text-xs font-mono space-y-1">
+                <div className="text-white font-semibold flex items-center gap-1.5">
+                  <Terminal size={13} className="text-sky-400" />
                   <span>Tool: {msg.tool_call.tool_name}()</span>
                 </div>
-                <div className="text-[#777169] text-[11px]">
+                <div className="text-stone-400 text-[11px]">
                   Parameters: {JSON.stringify(msg.tool_call.arguments)}
                 </div>
               </div>
             )}
 
-            {/* Human-in-the-Loop Review Box */}
+            {/* Human-in-the-Loop Review Box (Dark) */}
             {msg.pending_approval && (
-              <div className="bg-white border-2 border-[#0c0a09] p-5 rounded-[16px] shadow-[0_8px_24px_rgba(0,0,0,0.06)] space-y-3 mt-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#0c0a09] uppercase tracking-wider">
-                  <AlertTriangle size={15} />
+              <div className="bg-[#1c1917] border-2 border-white p-5 rounded-[16px] shadow-xl space-y-3 mt-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-white uppercase tracking-wider">
+                  <AlertTriangle size={15} className="text-amber-400" />
                   <span>Executive Review Required Prior to External Transmission</span>
                 </div>
-                <p className="text-sm text-[#292524] font-medium leading-relaxed">
+                <p className="text-sm text-stone-200 font-medium leading-relaxed">
                   {msg.pending_approval.details}
                 </p>
-                <div className="text-xs text-[#777169]">
-                  Destination Agency: <strong className="text-[#0c0a09]">{msg.pending_approval.target_agency}</strong>
+                <div className="text-xs text-stone-400">
+                  Destination Agency: <strong className="text-white">{msg.pending_approval.target_agency}</strong>
                 </div>
 
                 {msg.pending_approval.approved === undefined ? (
                   <div className="flex items-center gap-3 pt-2">
                     <button
                       onClick={() => handleApproveAction(msg.id)}
-                      className="px-5 py-2.5 rounded-full bg-[#0c0a09] hover:bg-[#292524] text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-full bg-white text-black hover:bg-stone-200 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2 shadow-sm"
                     >
                       <Check size={14} />
                       <span>Approve & Broadcast Directive</span>
                     </button>
                     <button
                       onClick={() => handleRejectAction(msg.id)}
-                      className="px-5 py-2.5 rounded-full bg-white hover:bg-[#f5f5f5] text-[#0c0a09] border border-[#d6d3d1] text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-full bg-transparent hover:bg-stone-800 text-white border border-stone-700 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2"
                     >
                       <X size={14} />
                       <span>Reject / Revise Directive</span>
                     </button>
                   </div>
                 ) : msg.pending_approval.approved ? (
-                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-full border border-emerald-200 w-fit">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-emerald-300 bg-emerald-950/60 px-3.5 py-2 rounded-full border border-emerald-800/40 w-fit">
                     <Check size={14} />
                     <span>Approved & Dispatched to NDRF Command at {msg.pending_approval.executed_at}</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#777169] bg-[#f0efed] px-3.5 py-2 rounded-full border border-[#e7e5e4] w-fit">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-stone-400 bg-stone-800/80 px-3.5 py-2 rounded-full border border-stone-700 w-fit">
                     <X size={14} />
                     <span>Rejected by Forecaster at {msg.pending_approval.executed_at}</span>
                   </div>
@@ -268,8 +268,8 @@ export default function AgentCopilot({ threat }: AgentCopilotProps) {
           </div>
         ))}
         {isProcessing && (
-          <div className="text-xs text-[#777169] flex items-center gap-2 p-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0c0a09] animate-pulse" />
+          <div className="text-xs text-stone-400 flex items-center gap-2 p-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             <span>Evaluating meteorological telemetry...</span>
           </div>
         )}
@@ -283,12 +283,12 @@ export default function AgentCopilot({ threat }: AgentCopilotProps) {
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="Consult Avarta Agent on ensemble trajectories, physics validation, or NDRF directives..."
-          className="flex-1 bg-white border border-[#e7e5e4] rounded-full px-5 py-3 text-sm text-[#0c0a09] placeholder:text-[#a8a29e] outline-none focus:border-[#0c0a09] shadow-[0_2px_8px_rgba(0,0,0,0.02)]"
+          className="flex-1 bg-[#141210] border border-[#292524] rounded-full px-5 py-3 text-sm text-white placeholder:text-stone-500 outline-none focus:border-white shadow-xs"
         />
         <button
           onClick={() => handleSendMessage()}
           disabled={isProcessing}
-          className="bg-[#0c0a09] hover:bg-[#292524] disabled:opacity-50 text-white px-6 py-3 rounded-full text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2"
+          className="bg-white hover:bg-stone-200 text-black disabled:opacity-50 px-6 py-3 rounded-full text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2 shadow-sm"
         >
           <Send size={14} />
           <span>Submit</span>

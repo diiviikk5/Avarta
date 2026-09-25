@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Cpu, ExternalLink, Sparkles, Layers, ShieldCheck, BarChart3, Database } from "lucide-react";
+import { ExternalLink, Sparkles, Database } from "lucide-react";
 
 interface FoundationModelSpec {
   id: string;
@@ -97,31 +97,31 @@ export default function FoundationModelsExplorer() {
   const selectedModel = FOUNDATION_MODELS.find((m) => m.id === selectedModelId) || FOUNDATION_MODELS[0];
 
   return (
-    <div className="p-6 sm:p-8 bg-[#f5f5f5] space-y-6">
+    <div className="p-6 sm:p-8 bg-[#0c0a09] space-y-6 text-stone-100">
       {/* Editorial Header */}
-      <div className="pb-5 border-b border-[#e7e5e4] flex flex-wrap items-end justify-between gap-4">
+      <div className="pb-5 border-b border-[#292524] flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="text-[11px] font-medium tracking-wider uppercase text-[#777169] block mb-1">
+          <span className="text-[11px] font-medium tracking-wider uppercase text-stone-400 block mb-1">
             Planetary Weather AI Taxonomy · Curated from Awesome-Weather-Forecast
           </span>
           <h2
-            className="text-2xl sm:text-3xl font-light text-[#0c0a09] tracking-tight"
+            className="text-2xl sm:text-3xl font-light text-white tracking-tight"
             style={{ fontFamily: "var(--font-serif)" }}
           >
             Spatio-Temporal Foundation Models Architecture Dossier
           </h2>
-          <p className="text-sm text-[#4e4e4e] max-w-2xl mt-1 leading-relaxed">
+          <p className="text-sm text-stone-400 max-w-2xl mt-1 leading-relaxed">
             Avarta synthesizes the latest advances from leading planetary foundation models, bridging global spherical GNN representation with localized generative residual diffusion.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-[#e7e5e4] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-          <Database size={13} className="text-[#0c0a09]" />
-          <span className="text-xs font-medium text-[#292524]">5 Foundation Architectures Audited</span>
+        <div className="flex items-center gap-2 bg-[#141210] px-4 py-2 rounded-full border border-stone-800 shadow-xs">
+          <Database size={13} className="text-stone-300" />
+          <span className="text-xs font-medium text-stone-300">5 Foundation Architectures Audited</span>
         </div>
       </div>
 
-      {/* Model Selection Pills */}
+      {/* Model Selection Pills (Dark) */}
       <div className="flex flex-wrap gap-2">
         {FOUNDATION_MODELS.map((model) => (
           <button
@@ -129,8 +129,8 @@ export default function FoundationModelsExplorer() {
             onClick={() => setSelectedModelId(model.id)}
             className={`px-4 py-2 rounded-full text-xs font-medium transition-all cursor-pointer border ${
               selectedModelId === model.id
-                ? "bg-[#0c0a09] text-white border-[#0c0a09] shadow-xs"
-                : "bg-white text-[#4e4e4e] border-[#e7e5e4] hover:border-[#d6d3d1]"
+                ? "bg-white text-black border-white shadow-xs font-semibold"
+                : "bg-[#1c1917] text-stone-300 border-stone-800 hover:border-stone-700"
             }`}
           >
             <span>{model.name}</span>
@@ -139,22 +139,22 @@ export default function FoundationModelsExplorer() {
         ))}
       </div>
 
-      {/* Selected Model Deep Dive Card */}
-      <div className="bg-white rounded-[20px] border border-[#e7e5e4] p-7 shadow-[0_2px_8px_rgba(0,0,0,0.02)] space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#f0efed]">
+      {/* Selected Model Deep Dive Card (Dark) */}
+      <div className="bg-[#141210] rounded-[20px] border border-[#292524] p-7 shadow-xs space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-stone-800/80">
           <div>
             <div className="flex items-center gap-2.5">
               <h3
-                className="text-2xl font-light text-[#0c0a09]"
+                className="text-2xl font-light text-white"
                 style={{ fontFamily: "var(--font-serif)" }}
               >
                 {selectedModel.name}
               </h3>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#f0efed] text-[11px] font-mono text-[#0c0a09]">
+              <span className="px-2.5 py-0.5 rounded-full bg-stone-800 text-[11px] font-mono text-stone-300">
                 {selectedModel.venue}
               </span>
             </div>
-            <span className="text-xs text-[#777169] mt-0.5 block">
+            <span className="text-xs text-stone-400 mt-0.5 block">
               Developed by {selectedModel.developer}
             </span>
           </div>
@@ -163,30 +163,30 @@ export default function FoundationModelsExplorer() {
             href={selectedModel.paperUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-[#d6d3d1] hover:bg-[#fafafa] text-xs font-medium text-[#0c0a09] transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-stone-700 hover:bg-stone-800 text-xs font-medium text-white transition-colors"
           >
             <span>View Publication</span>
             <ExternalLink size={12} />
           </a>
         </div>
 
-        {/* Specifications Quadrant */}
+        {/* Specifications Quadrant (Dark) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-[#fafafa] p-4 rounded-[14px] border border-[#e7e5e4]">
-            <span className="text-[10px] font-mono uppercase text-[#777169] block mb-1">Spatial Resolution</span>
-            <span className="text-sm font-medium text-[#0c0a09] block">{selectedModel.spatialResolution}</span>
+          <div className="bg-[#1c1917] p-4 rounded-[14px] border border-stone-800">
+            <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">Spatial Resolution</span>
+            <span className="text-sm font-medium text-white block">{selectedModel.spatialResolution}</span>
           </div>
 
-          <div className="bg-[#fafafa] p-4 rounded-[14px] border border-[#e7e5e4]">
-            <span className="text-[10px] font-mono uppercase text-[#777169] block mb-1">Temporal Step & Horizon</span>
-            <span className="text-sm font-medium text-[#0c0a09] block">
+          <div className="bg-[#1c1917] p-4 rounded-[14px] border border-stone-800">
+            <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">Temporal Step & Horizon</span>
+            <span className="text-sm font-medium text-white block">
               {selectedModel.temporalStep} (Up to {selectedModel.leadTimeLimit})
             </span>
           </div>
 
-          <div className="bg-[#fafafa] p-4 rounded-[14px] border border-[#e7e5e4]">
-            <span className="text-[10px] font-mono uppercase text-[#777169] block mb-1">5-Day Z500 RMSE</span>
-            <span className="text-sm font-medium text-[#0c0a09] block">
+          <div className="bg-[#1c1917] p-4 rounded-[14px] border border-stone-800">
+            <span className="text-[10px] font-mono uppercase text-stone-400 block mb-1">5-Day Z500 RMSE</span>
+            <span className="text-sm font-medium text-white block">
               {selectedModel.z500RmseDay5} m²/s² (ERA5 Verified)
             </span>
           </div>
@@ -195,30 +195,30 @@ export default function FoundationModelsExplorer() {
         {/* Mechanism & Spectral Preservation */}
         <div className="space-y-4">
           <div>
-            <h4 className="text-xs font-mono uppercase tracking-wider text-[#777169] mb-1.5">
+            <h4 className="text-xs font-mono uppercase tracking-wider text-stone-400 mb-1.5">
               Core Neural Architecture
             </h4>
-            <p className="text-sm text-[#292524] leading-relaxed">
+            <p className="text-sm text-stone-300 leading-relaxed">
               {selectedModel.coreMechanism}
             </p>
           </div>
 
           <div>
-            <h4 className="text-xs font-mono uppercase tracking-wider text-[#777169] mb-1.5">
+            <h4 className="text-xs font-mono uppercase tracking-wider text-stone-400 mb-1.5">
               Spectral Power Preservation
             </h4>
-            <p className="text-sm text-[#292524] leading-relaxed">
+            <p className="text-sm text-stone-300 leading-relaxed">
               {selectedModel.spectralPreservation}
             </p>
           </div>
 
           {/* Avarta Operational Synthesis */}
-          <div className="bg-[#fbfaf8] border-l-2 border-[#0c0a09] p-4 rounded-r-[14px] border-y border-r border-[#e7e5e4]">
-            <div className="text-xs font-mono uppercase tracking-wider text-[#0c0a09] font-semibold mb-1 flex items-center gap-1.5">
-              <Sparkles size={13} />
+          <div className="bg-[#1c1917] border-l-2 border-white p-4 rounded-r-[14px] border-y border-r border-stone-800">
+            <div className="text-xs font-mono uppercase tracking-wider text-white font-semibold mb-1 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-sky-400" />
               <span>Avarta Operational Pipeline Role</span>
             </div>
-            <p className="text-xs text-[#4e4e4e] leading-relaxed">
+            <p className="text-xs text-stone-300 leading-relaxed">
               {selectedModel.avartaIntegration}
             </p>
           </div>
