@@ -72,6 +72,7 @@ function HazardControls({ isDemo, pathname }: { isDemo: boolean; pathname: strin
   };
 
   const getCaseDateLabel = () => {
+    if (currentCase.includes("live")) return "Live Operational NWP";
     if (currentCase.includes("cyclone")) return "16–21 May 2020";
     if (currentCase.includes("heat")) return "23–28 May 2024";
     return "23 August 2025";
@@ -80,6 +81,13 @@ function HazardControls({ isDemo, pathname }: { isDemo: boolean; pathname: strin
   return (
     <>
       <div className={styles.hazardSwitcher}>
+        <button
+          className={`${styles.hazardBtn} ${currentCase.includes("live") ? styles.hazardBtnActive : ""}`}
+          onClick={() => handleCaseChange("live")}
+          title="Live Operational Real-Time NWP Across India"
+        >
+          <span className={styles.livePulseDot} /> Live
+        </button>
         <button
           className={`${styles.hazardBtn} ${currentCase === "rainfall" ? styles.hazardBtnActive : ""}`}
           onClick={() => handleCaseChange("rainfall")}

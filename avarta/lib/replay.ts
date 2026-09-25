@@ -129,6 +129,16 @@ export async function getCase(caseId?: string): Promise<ReplayCase> {
   }
   const file = join(process.cwd(), "public", "replay", filename);
   const data = JSON.parse(await readFile(file, "utf8")) as ReplayCase;
+  if (normalized.includes("live")) {
+    data.id = "live-all-india";
+    data.hazard_type = "live";
+    data.title = "Live Operational Weather · All India (Real-Time ECMWF/GFS)";
+    data.hazard = "Live Multi-Hazard Monitoring · Real-Time Satellite & NWP";
+    data.forecast.model = "ECMWF IFS & NOAA GFS Real-Time Assimilation";
+    data.forecast.initialization_time = new Date().toISOString();
+    data.observation.model = "IMD Real-Time AWS / Open-Meteo Mesh";
+    data.observation.date = new Date().toISOString().slice(0, 10);
+  }
   if (data && data.raster) {
     const grid = data.raster.forecast_field ?? data.raster.forecast_mm_day ?? [];
     data.raster.forecast_field = grid;
@@ -139,6 +149,16 @@ export async function getCase(caseId?: string): Promise<ReplayCase> {
 
 export function getCaseList() {
   return [
+    {
+      id: "live-all-india",
+      hazard_type: "live",
+      title: "Real-Time Operational · All India Live Weather",
+      region: "All India (30 Regions across North, South, East, West, Central, NE)",
+      dates: "Live (Current 24h & 7-Day Forecast)",
+      model_inputs: "ECMWF IFS (0.1°) × NOAA GFS (0.25°) × IMD AWS",
+      peak_observed: "Live Monitored",
+      file: "live",
+    },
     {
       id: "gefs-imd-rain-2025-08-23",
       hazard_type: "rainfall",

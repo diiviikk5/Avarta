@@ -241,5 +241,10 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .shellDark .assistantSendBtn{background:#256a5c}
 .shellDark .assistantSendBtn:hover:not(:disabled){background:#2e7f6f}
 
+/* Live Operational Pulse Dot */
+.livePulseDot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.4);display:inline-block;animation:liveDotPulse 2s infinite ease-in-out;flex:none}
+@keyframes liveDotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.6}}
+
+
 
 

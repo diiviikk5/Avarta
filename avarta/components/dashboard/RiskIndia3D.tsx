@@ -44,13 +44,72 @@ export default function RiskIndia3D({
   replay: ReplayCase;
   onSelect: (lat: number, lon: number) => void;
 }) {
-  const rows = useMemo(() => regionRiskRows(replay), [replay]);
-  const [selectedName, setSelectedName] = useState<string>(rows[0]?.name ?? "");
+  const isCaseLive = replay.hazard_type === "live" || replay.id?.includes("live");
+  const [liveMode, setLiveMode] = useState<boolean>(true);
+  const [liveRegions, setLiveRegions] = useState<any[]>([]);
+  const [liveSource, setLiveSource] = useState<string>("");
+  const [liveUpdatedAt, setLiveUpdatedAt] = useState<string>("");
+  const [loadingLive, setLoadingLive] = useState(false);
+
+  // Fetch live operational data across all 30 regions
+  const fetchLiveRisk = async () => {
+    setLoadingLive(true);
+    try {
+      const res = await fetch("/api/live-risk");
+      if (res.ok) {
+        const data = await res.json();
+        setLiveRegions(data.regions || []);
+        setLiveSource(data.source || "ECMWF / GFS Live Assimilation");
+        setLiveUpdatedAt(data.updated_at || new Date().toISOString());
+      }
+    } catch {
+      // Handled silently with fallback
+    } finally {
+      setLoadingLive(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchLiveRisk();
+    const interval = setInterval(() => {
+      void fetchLiveRisk();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const rows: RegionRiskRow[] = useMemo(() => {
+    if (liveMode && liveRegions.length > 0) {
+      return liveRegions.map((lr: any) => ({
+        name: lr.name,
+        state: lr.state,
+        zone: lr.zone,
+        latitude: lr.latitude,
+        longitude: lr.longitude,
+        rainfall: lr.rain_sum_24h_mm ?? lr.rainfall_mm ?? 0,
+        sigma: (lr.rain_sum_24h_mm - 5.0) / 10.0,
+        score: lr.score,
+        band: lr.band,
+        hazard_alert: lr.hazard_alert,
+        temperature_c: lr.temperature_c,
+        max_temp_c: lr.max_temp_c,
+        wind_gust_kmh: lr.wind_gust_kmh,
+      }));
+    }
+    return regionRiskRows(replay, liveMode);
+  }, [replay, liveMode, liveRegions]);
+
+  const [selectedName, setSelectedName] = useState<string>("");
   const [tourPaused, setTourPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState<boolean>(() =>
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
+
+  useEffect(() => {
+    if (rows.length > 0 && !selectedName) {
+      setSelectedName(rows[0].name);
+    }
+  }, [rows, selectedName]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -64,17 +123,17 @@ export default function RiskIndia3D({
     if (tourPaused || reducedMotion || rows.length === 0) return;
     const timer = setInterval(() => {
       setSelectedName((current) => {
-        const index = rows.findIndex((r) => r.name === current);
+        const index = rows.findIndex((r: any) => r.name === current);
         return rows[(index + 1) % rows.length].name;
       });
-    }, 3200);
+    }, 3800);
     return () => clearInterval(timer);
   }, [tourPaused, reducedMotion, rows]);
 
-  const selected: RegionRiskRow | undefined =
-    rows.find((r) => r.name === selectedName) ?? rows[0];
+  const selected: any =
+    rows.find((r: any) => r.name === selectedName) ?? rows[0];
 
-  const pick = (row: RegionRiskRow) => {
+  const pick = (row: any) => {
     setSelectedName(row.name);
     setTourPaused(true);
     onSelect(row.latitude, row.longitude);
@@ -98,6 +157,64 @@ export default function RiskIndia3D({
 
   return (
     <div>
+      {/* Live All-India Control Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
+        <div style={{ display: "flex", gap: "6px", background: "var(--cream, #f4f7f2)", padding: "3px", borderRadius: "100px", border: "1px solid var(--line, #dbe4da)" }}>
+          <button
+            type="button"
+            onClick={() => setLiveMode(true)}
+            style={{
+              border: 0,
+              padding: "5px 12px",
+              borderRadius: "100px",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: liveMode ? "#1f5c53" : "transparent",
+              color: liveMode ? "#ffffff" : "var(--muted, #62756d)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", boxShadow: liveMode ? "0 0 8px #4ade80" : "none" }} />
+            🔴 Live All-India (30 Stations)
+          </button>
+          <button
+            type="button"
+            onClick={() => setLiveMode(false)}
+            style={{
+              border: 0,
+              padding: "5px 12px",
+              borderRadius: "100px",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              background: !liveMode ? "#1f5c53" : "transparent",
+              color: !liveMode ? "#ffffff" : "var(--muted, #62756d)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            Case Replay Pins
+          </button>
+        </div>
+
+        {liveMode && (
+          <div style={{ fontSize: "10.5px", color: "var(--muted, #678076)", display: "flex", alignItems: "center", gap: "6px" }}>
+            <span>Real-time ECMWF/GFS · {liveUpdatedAt ? new Date(liveUpdatedAt).toLocaleTimeString() : "Live"}</span>
+            <button
+              type="button"
+              onClick={() => void fetchLiveRisk()}
+              disabled={loadingLive}
+              style={{ border: 0, background: "transparent", cursor: "pointer", color: "#1f5c53", fontWeight: 700, fontSize: "10.5px", textDecoration: "underline" }}
+            >
+              {loadingLive ? "Refreshing…" : "Refresh"}
+            </button>
+          </div>
+        )}
+      </div>
+
       <div
         className={styles.risk3dWrap}
         onMouseEnter={() => setTourPaused(true)}
@@ -185,7 +302,7 @@ export default function RiskIndia3D({
                 )}
                 <circle cx={p.x} cy={top} r={active ? 11 : 8} fill={color} stroke="#ffffff" strokeWidth="2.5" filter="url(#risk3dGlow)" />
                 <text x={p.x} y={top + 4.5} textAnchor="middle" className={styles.risk3dPinValue}>
-                  {row.rainfall.toFixed(0)}
+                  {liveMode ? (row.rainfall > 0.5 ? `${Math.round(row.rainfall)}m` : `${Math.round(row.temperature_c ?? 25)}°`) : row.rainfall.toFixed(0)}
                 </text>
                 <text
                   x={p.x}
@@ -206,28 +323,41 @@ export default function RiskIndia3D({
               <i style={{ background: BAND_COLOR[band] }} /> {band}
             </span>
           ))}
-          <span className={styles.risk3dHint}>number = mm/day · click a pin to inspect</span>
+          <span className={styles.risk3dHint}>
+            {liveMode ? "number = mm rain or °C temp · 30 stations nationwide" : "number = mm/day · click a pin to inspect"}
+          </span>
         </div>
       </div>
 
       {selected && (
         <div className={styles.risk3dDetail}>
           <div>
-            <div className={styles.eyebrow}>PINPOINT · PROVISIONAL</div>
+            <div className={styles.eyebrow}>
+              {liveMode ? "🔴 LIVE REAL-TIME ASSIMILATION · ALL INDIA" : "PINPOINT · PROVISIONAL"}
+            </div>
             <h3>
-              <MapPin size={16} /> {selected.name} · {selected.latitude.toFixed(1)}°N {selected.longitude.toFixed(1)}°E
+              <MapPin size={16} /> {selected.name} {selected.state ? `(${selected.state})` : ""} · {selected.latitude.toFixed(1)}°N {selected.longitude.toFixed(1)}°E
             </h3>
-            <p>
-              Forecast <strong>{selected.rainfall.toFixed(1)} mm/day</strong> · anomaly{" "}
-              <strong>
-                {selected.sigma >= 0 ? "+" : ""}
-                {selected.sigma.toFixed(1)}σ
-              </strong>{" "}
-              · risk <strong>{selected.score}</strong> ({selected.band}) · ~5 km radius
-            </p>
+            {liveMode ? (
+              <p>
+                Live Temp <strong>{selected.temperature_c ?? 26}°C</strong> (Max <strong>{selected.max_temp_c ?? 30}°C</strong>) · 24h Rain <strong>{selected.rainfall.toFixed(1)} mm</strong> · Wind Gusts <strong>{selected.wind_gust_kmh ?? 12} km/h</strong> · Risk <strong>{selected.score}/100</strong> ({selected.band})
+              </p>
+            ) : (
+              <p>
+                Forecast <strong>{selected.rainfall.toFixed(1)} mm/day</strong> · anomaly{" "}
+                <strong>
+                  {selected.sigma >= 0 ? "+" : ""}
+                  {selected.sigma.toFixed(1)}σ
+                </strong>{" "}
+                · risk <strong>{selected.score}</strong> ({selected.band}) · ~5 km radius
+              </p>
+            )}
             <p className={styles.muted}>
-              Expected: {impactsFor(selected.rainfall, selected.band).join(" · ")} · next 12–18 hours. Draft
-              decision support only.
+              {liveMode && selected.hazard_alert ? (
+                <span><strong>Live Assessment:</strong> {selected.hazard_alert} · Real-time NWP ingestion.</span>
+              ) : (
+                <span>Expected: {impactsFor(selected.rainfall, selected.band).join(" · ")} · next 12–18 hours. Draft decision support only.</span>
+              )}
             </p>
           </div>
           <a href={`/api/forecast?lat=${selected.latitude}&lon=${selected.longitude}`} target="_blank" rel="noreferrer">

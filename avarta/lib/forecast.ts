@@ -144,6 +144,12 @@ export interface RegionRiskRow {
   sigma: number;
   score: number;
   band: string;
+  state?: string;
+  zone?: string;
+  hazard_alert?: string;
+  temperature_c?: number;
+  max_temp_c?: number;
+  wind_gust_kmh?: number;
 }
 
 const RAIN_ANCHORS: [string, number, number][] = [
@@ -176,11 +182,45 @@ const HEATWAVE_ANCHORS: [string, number, number][] = [
   ["Nagpur", 21.15, 79.09],
 ];
 
-/** State-level risk rows sampled from the replay grid, most severe first. */
-export function regionRiskRows(replay: ReplayCase): RegionRiskRow[] {
+export const ALL_INDIA_ANCHORS: [string, number, number][] = [
+  ["Srinagar (J&K)", 34.08, 74.80],
+  ["Leh (Ladakh)", 34.15, 77.58],
+  ["Shimla (HP)", 31.10, 77.17],
+  ["Dehradun (UK)", 30.32, 78.03],
+  ["Amritsar (PB)", 31.63, 74.87],
+  ["Chandigarh", 30.73, 76.78],
+  ["Delhi (NCR)", 28.61, 77.21],
+  ["Lucknow (UP)", 26.85, 80.95],
+  ["Jaipur (RJ)", 26.91, 75.79],
+  ["Jodhpur (RJ)", 26.24, 73.02],
+  ["Ahmedabad (GJ)", 23.02, 72.57],
+  ["Mumbai (MH)", 19.07, 72.87],
+  ["Nagpur (MH)", 21.15, 79.09],
+  ["Panaji (Goa)", 15.50, 73.83],
+  ["Bhopal (MP)", 23.26, 77.41],
+  ["Raipur (CG)", 21.25, 81.63],
+  ["Patna (BR)", 25.60, 85.14],
+  ["Ranchi (JH)", 23.34, 85.31],
+  ["Kolkata (WB)", 22.57, 88.36],
+  ["Bhubaneswar (OD)", 20.30, 85.82],
+  ["Hyderabad (TS)", 17.38, 78.49],
+  ["Visakhapatnam (AP)", 17.69, 83.22],
+  ["Bengaluru (KA)", 12.97, 77.59],
+  ["Chennai (TN)", 13.08, 80.27],
+  ["Kochi (KL)", 9.93, 76.27],
+  ["Guwahati (AS)", 26.14, 91.74],
+  ["Shillong (ML)", 25.58, 91.89],
+  ["Itanagar (AR)", 27.09, 93.61],
+  ["Gangtok (SK)", 27.34, 88.61],
+  ["Port Blair (AN)", 11.62, 92.73],
+];
+
+/** State-level risk rows sampled from the replay grid or all-India stations, most severe first. */
+export function regionRiskRows(replay: ReplayCase, allIndia = false): RegionRiskRow[] {
+  const isLive = allIndia || (replay.hazard_type === "live") || replay.id?.includes("live");
   const isCyclone = (replay.hazard_type === "cyclone") || replay.id?.includes("cyclone");
   const isHeat = (replay.hazard_type === "heatwave") || replay.id?.includes("heat");
-  const anchors = isCyclone ? CYCLONE_ANCHORS : isHeat ? HEATWAVE_ANCHORS : RAIN_ANCHORS;
+  const anchors = isLive ? ALL_INDIA_ANCHORS : isCyclone ? CYCLONE_ANCHORS : isHeat ? HEATWAVE_ANCHORS : RAIN_ANCHORS;
 
   return anchors.map(([name, lat, lon]) => {
     const grid = nearestGrid(replay, lat, lon);
