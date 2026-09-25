@@ -19,16 +19,17 @@ class TestDatasetHub(unittest.TestCase):
         self.assertIn("ERA5", catalog)
         self.assertIn("NEPS-G", catalog)
         self.assertIn("NCUM", catalog)
-        self.assertIn("IMD_GRIDDED_4KM", catalog)
+        self.assertIn("IMD_GRIDDED_0P25", catalog)
+        self.assertIn("CHIRPS_DAILY_0P05", catalog)
         self.assertIn("COPERNICUS_DEM", catalog)
 
     def test_cyclone_amphan_benchmark_metrics(self):
-        amphan = self.hub.load_or_create_benchmark_dataset("cyclone_amphan_2020")
-        self.assertEqual(amphan["min_central_pressure_hpa"], 907.0)
-        self.assertEqual(amphan["max_sustained_wind_kmh"], 260.0)
-        self.assertTrue(len(amphan["best_track"]) >= 5)
+        amphan = self.hub.create_synthetic_fixture("cyclone_amphan_2020")
+        self.assertEqual(amphan["mode"], "synthetic_fixture")
+        self.assertEqual(amphan["example_min_pressure_hpa"], 907.0)
+        self.assertTrue(len(amphan["example_track"]) >= 5)
         # Verify coarse is lower than fine ground truth
-        self.assertLess(np.max(amphan["ncum_12km_coarse"]), np.max(amphan["imd_5km_ground_truth"]))
+        self.assertLess(np.max(amphan["coarse_toy_field"]), np.max(amphan["fine_toy_field"]))
 
     def test_extreme_tail_loss_computation(self):
         criterion = ExtremeTailPreservationLoss(quantile_threshold=0.90, alpha_tail=4.0)

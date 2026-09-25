@@ -31,5 +31,24 @@ class TestClimatologyEngine(unittest.TestCase):
         self.assertAlmostEqual(z[0, 0], 4.0, places=2)
         self.assertAlmostEqual(z[0, 1], 0.0, places=2)
 
+    def test_missing_member_and_invalid_quantiles(self):
+        forecast = np.array([[[20., np.nan]], [[30., np.nan]], [[np.nan, 3.]]])
+        quantiles = np.array([[[1., 1.]], [[10., 10.]]])
+        result = self.engine.compute_efi(forecast, quantiles, quantile_probabilities=np.array([0.1, 0.9]))
+        self.assertGreater(result[0, 0], 0)
+        self.assertTrue(np.isnan(result[0, 1]))
+        with self.assertRaises(ValueError):
+            self.engine.compute_efi(forecast, quantiles, quantile_probabilities=np.array([0.9, 0.1]))
+
+    def test_components_report_area_without_invented_significance(self):
+        engine = ClimatologyEngine(efi_threshold=0.7, min_cluster_size_km2=0)
+        efi = np.array([[0.8, 0.8], [0.1, np.nan]])
+        z = np.full((2, 2), 3.)
+        regions = engine.extract_extreme_anomalies(efi, z, np.array([20., 20.5]), np.array([70., 70.5]))
+        self.assertEqual(len(regions), 1)
+        self.assertGreater(regions[0].area_km2, 0)
+        self.assertIsNone(regions[0].p_value)
+        self.assertIsNone(regions[0].climatology_percentile)
+
 if __name__ == "__main__":
     unittest.main()

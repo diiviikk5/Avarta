@@ -7,6 +7,7 @@ Avarta now has one reproducible **historical rainfall replay** rather than a das
 - An archived NOAA GEFS forecast initialized **19 August 2025 00:00 UTC** is read from GRIB byte ranges: control plus four perturbed members at 0.5° resolution. The 24-hour window is **22 August 03:00–23 August 03:00 UTC**.
 - Three-hour precipitation fields are reconstructed from the archive's alternating accumulation windows. Connected rainfall footprints are detected and linked across forecast frames with the existing Kalman tracker. The [generated case JSON](avarta/public/replay/august-2025.json) records source URLs, byte ranges, SHA-256 hashes, initialization and valid times, lead hours, grid coordinates, tracks, and forecast values.
 - The forecast is compared with the **23 August 2025 IMD 0.25° daily rainfall grid**, with missing cells excluded. The dashboard and both APIs read the computed JSON. The old fictional threats are accessible only through a prominent **Prototype demo** mode or `/api/threats?mode=demo`.
+- A second check uses the independent **CHIRPS v2 0.05° daily rainfall estimate**, recording the official source and SHA-256. The GEFS field is only bilinearly interpolated to that grid, not downscaled by a model.
 - Alerts are **draft decision support only**. This case does not meet the provisional 64.5 mm/day ensemble-mean threshold and issues no public alert.
 
 ## Honest result from this case
@@ -20,6 +21,8 @@ Avarta now has one reproducible **historical rainfall replay** rather than a das
 | Heavy-rain footprint intersection-over-union (≥64.5 mm/day) | 0.00 |
 
 This forecast subset **missed** the observed extreme. Five members and one case do not establish calibrated skill. The IMD daily window is treated as ending at 08:30 IST (03:00 UTC); confirm exact product timing before formal verification. Tiny negative amounts from differencing quantized GEFS accumulations are clipped to zero, with a 0.1 mm tolerance.
+
+The CHIRPS comparison covers 64,002 common 0.05° cells. It estimates a **100.08 mm/day peak** against **43.94 mm/day** from bilinearly interpolated GEFS, with **0.00** heavy-rain footprint overlap. CHIRPS and IMD disagree sharply on peak magnitude; neither is unquestioned point truth. GEFS's 03–03 UTC accumulation may not match the CHIRPS daily window exactly, so this is descriptive rather than formal skill verification. The finer **observation** grid is not a 5 km **forecast**.
 
 ## Separate model experiment
 
@@ -52,7 +55,7 @@ OMP_NUM_THREADS=4 .venv/bin/python -m training.train_imd_real --epochs 2
 cd avarta && npm run dev
 ```
 
-Open `http://localhost:3000/dashboard`. The committed JSON artifacts let the UI run without downloading the raw grids. Rebuilding the case fetches GEFS `.idx` files and only the required APCP GRIB byte ranges from the [NOAA GEFS public archive](https://noaa-gefs-pds.s3.amazonaws.com/). Cached GRIB messages stay under ignored `data/raw/gefs_cache/`.
+Open `http://localhost:3000/dashboard`. The committed JSON artifacts let the UI run without downloading the raw grids. Rebuilding the case fetches GEFS `.idx` files and only the required APCP GRIB byte ranges from the [NOAA GEFS public archive](https://noaa-gefs-pds.s3.amazonaws.com/). Cached GRIB messages stay under ignored `data/raw/gefs_cache/`. The pipeline also retrieves the [official CHIRPS GeoTIFF](https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_daily/tifs/p05/2025/) into ignored `data/raw/`; use `--no-chirps` only when intentionally omitting that check, and check source terms before redistribution.
 
 `python avarta_tui.py` opens an interactive, color-coded Rich terminal dashboard when run in a terminal. It includes the computed rainfall grid, 3-hour track timeline, held-out model benchmark, source provenance, and draft alert disposition. For scripts or quick inspection, use `--map`, `--timeline`, `--benchmark`, `--datasets`, `--alerts`, or `--no-interactive`. `--demo` is explicitly fictional. The familiar `--live` and `--lens` flags remain as aliases for the **archived** timeline and the honest coarse-proxy benchmark; they no longer imply live inference or 5 km output. Use `--theme forest|midnight|amber|cyan|mono` (additional legacy theme names remain accepted). `--train` runs the real IMD experiment only when the official raw file is present. `python run_pipeline.py` rebuilds the historical replay.
 
@@ -60,4 +63,4 @@ The Next.js endpoints are `GET /api/cases`, `GET /api/threats`, `GET /api/benchm
 
 ## Scope and next steps
 
-This case uses threshold-based detection and Kalman track association; it does **not** use an icosahedral GNN, EFI/30-year ERA5 climatology, physics-constrained diffusion, or hyper-local 5 km impact modelling. Remaining experimental modules are not evidence of those capabilities. To advance SIH 26078: obtain paired NEPS-G/NCUM ensemble archives and a genuinely fine target, choose spatial/event holdouts before cropping, test multiple hazards and years, calibrate probabilities and alert thresholds, then compare any GNN/diffusion candidate against transparent baselines.
+The geometry module now constructs a recursive icosahedral mesh, and tracking uses timestamp-aware Kalman prediction with globally optimal assignment. EFI calculation and real NetCDF ingestion are available but **no trained GNN or matched multi-decade model climate** is in the forecast path. A conditional DDPM architecture has shape, gradient and sampling tests but **no trained weights or 5 km skill result**. This case does **not** use physics-constrained diffusion or hyper-local 5 km impact modelling. Synthetic storm/heatwave generators are labeled fixtures, not historical benchmarks. See the [data and model evidence ledger](docs/DATASETS_AND_TRAINING.md). To advance SIH 26078: obtain paired NEPS-G/NCUM ensemble archives and a genuinely fine target, choose spatial/event holdouts before cropping, test multiple hazards and years, calibrate probabilities and alert thresholds, then compare any GNN/diffusion candidate against transparent baselines.

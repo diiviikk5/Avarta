@@ -1,9 +1,7 @@
 """
-Avarta Residual Diffusion Downscaler Training Pipeline
-Implements the exact loss formulations from SIH Problem Statement 26078:
-- Base Reconstruction Loss (MSE on 5 km grid)
-- Extreme-Tail Preservation Loss (Asymmetric penalty on 90th+ percentile amplitudes)
-- Physics-Informed Conservation Loss (Navier-Stokes moisture flux divergence constraint)
+Synthetic tensor exercise for a deterministic residual CNN.
+This does not use forecasts, observations, diffusion, physical conservation,
+or a 5 km grid. Use training/train_imd_real.py for the measured experiment.
 """
 
 import os
@@ -63,8 +61,7 @@ class ExtremeTailPreservationLoss(nn.Module):
 
         tail_loss_mean = torch.stack(tail_losses).mean()
 
-        # 3. Physics Non-Negativity & Mass Penalty
-        # Weather precipitation / wind speed cannot be negative
+        # 3. Simple output-domain penalty; this is NOT mass conservation.
         negativity_penalty = torch.mean(torch.relu(-pred)**2)
 
         # Total Composite Loss
@@ -81,8 +78,7 @@ class ExtremeTailPreservationLoss(nn.Module):
 
 class AtmosphericDownscalingDataset(Dataset):
     """
-    PyTorch Dataset providing paired 12 km coarse atmospheric inputs, 
-    terrain orography, threat state vectors, and 5 km ground truth fields.
+    Synthetic paired arrays for shape testing, not meteorological datasets.
     """
     def __init__(self, num_samples: int = 120, coarse_size: int = 16, fine_size: int = 38):
         super().__init__()
@@ -99,7 +95,7 @@ class AtmosphericDownscalingDataset(Dataset):
             lat = np.random.uniform(12.0, 22.0)
             lon = np.random.uniform(80.0, 90.0)
 
-            # Generate fine-scale 5 km ground truth (with sharp eyewall & convective cells)
+            # Generate a sharp toy target; no physical resolution is implied.
             y_fine, x_fine = np.ogrid[-self.fine_size//2:self.fine_size//2, -self.fine_size//2:self.fine_size//2]
             r_fine = np.sqrt(x_fine**2 + y_fine**2)
             eyewall = np.exp(-((r_fine - 6.0)**2) / 4.0)
@@ -109,7 +105,7 @@ class AtmosphericDownscalingDataset(Dataset):
             ground_truth = intensity * eyewall - (intensity * 0.7) * eye_calm + turbulent_noise
             ground_truth = np.clip(ground_truth, 0.0, intensity).astype(np.float32)
 
-            # Coarse 12 km input (simulates NWP numerical diffusion / averaging)
+            # Smoothed target-derived toy input, not independent NWP.
             # Subsample and smooth
             from scipy.ndimage import zoom, gaussian_filter
             coarse = gaussian_filter(ground_truth, sigma=2.2)
@@ -120,7 +116,7 @@ class AtmosphericDownscalingDataset(Dataset):
             x_coarse[2] *= 0.95
             x_coarse[3] *= 1.10
 
-            # Digital Elevation Model (DEM) terrain
+            # Random toy terrain, not a DEM.
             terrain = np.random.normal(loc=150.0, scale=80.0, size=(1, self.fine_size, self.fine_size)).astype(np.float32)
             terrain = np.clip(terrain, 0.0, 3000.0) / 1000.0  # Normalized km
 
@@ -144,10 +140,10 @@ class AtmosphericDownscalingDataset(Dataset):
 
 def train_downscaler(epochs: int = 5, batch_size: int = 16, lr: float = 1e-3, device: str = "cpu") -> Dict[str, Any]:
     """
-    Executes a real PyTorch training loop on the ResidualDownscaler.
+    Executes PyTorch optimization on synthetic target-derived examples only.
     """
     dev = torch.device(device if torch.cuda.is_available() and device == "cuda" else "cpu")
-    print(f"[*] Initializing Avarta ResidualDownscaler Training on device: {dev}")
+    print(f"[*] Synthetic residual CNN exercise on device: {dev}; not forecast validation")
 
     # Dataset & Loaders
     dataset = AtmosphericDownscalingDataset(num_samples=96)
@@ -257,7 +253,7 @@ def train_downscaler(epochs: int = 5, batch_size: int = 16, lr: float = 1e-3, de
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Avarta Residual Diffusion Downscaler Training")
+    parser = argparse.ArgumentParser(description="Synthetic residual CNN tensor exercise; not diffusion or 5 km validation")
     parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")

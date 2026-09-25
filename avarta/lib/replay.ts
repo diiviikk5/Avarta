@@ -23,6 +23,24 @@ export interface ReplayCase {
     source_url: string;
     timing_note: string;
   };
+  independent_observation?: {
+    model: string;
+    date: string;
+    grid_spacing_degrees: number;
+    source_url: string;
+    sha256: string;
+    note: string;
+  };
+  independent_verification?: {
+    method: string;
+    sampled_grid_cells: number;
+    forecast_peak_mm_day: number;
+    chirps_peak_mm_day: number;
+    mean_absolute_error_mm_day: number;
+    heavy_rain_iou: number | null;
+    heavy_rain_threshold_mm_day: number;
+    timing_note: string;
+  };
   domain: { south: number; north: number; west: number; east: number };
   verification: {
     sampled_grid_cells: number;

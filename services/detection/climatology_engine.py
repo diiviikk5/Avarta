@@ -1,13 +1,17 @@
-"""
-Avarta Global Extreme Forecast Index (EFI) & Anomaly Detection Engine
-Computes spatial deviations against 30-year ERA5 historical climatology distributions.
-Formula:
-  EFI = (2 / π) * ∫_0^1 [p - F_forecast(Q_clim(p))] / sqrt(p*(1-p)) dp
+"""Extreme Forecast Index and georeferenced anomaly components.
+
+EFI requires quantiles from a matching, independent model-climate archive. It
+must not be interpreted as a calibrated EFI when supplied arbitrary quantiles.
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Optional
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import List, Tuple
+
+import numpy as np
+from scipy.ndimage import label
+
 
 @dataclass
 class AnomalyRegion:
@@ -15,146 +19,108 @@ class AnomalyRegion:
     variable: str
     centroid_lat: float
     centroid_lon: float
-    bounding_box: Tuple[float, float, float, float]  # (min_lat, min_lon, max_lat, max_lon)
+    bounding_box: Tuple[float, float, float, float]
     max_efi: float
     mean_efi: float
-    p_value: float
     z_score: float
-    climatology_percentile: float
+    area_km2: float
+    # These statistics cannot be inferred from EFI or a z-score alone.
+    p_value: float | None = None
+    climatology_percentile: float | None = None
+
 
 class ClimatologyEngine:
-    """
-    Computes ensemble EFI and identifies high-risk spatio-temporal contiguous clusters.
-    """
-    def __init__(self, efi_threshold: float = 0.75, min_cluster_size_km2: float = 2500.0):
+    def __init__(self, efi_threshold: float = 0.75,
+                 min_cluster_size_km2: float = 2500.0):
+        if not -1 <= efi_threshold <= 1 or min_cluster_size_km2 < 0:
+            raise ValueError("Invalid EFI threshold or minimum area")
         self.efi_threshold = efi_threshold
         self.min_cluster_size_km2 = min_cluster_size_km2
 
-    def compute_efi(
-        self,
-        ensemble_forecasts: np.ndarray,
-        climatology_quantiles: np.ndarray,
-        num_integration_steps: int = 100
-    ) -> np.ndarray:
+    def compute_efi(self, ensemble_forecasts: np.ndarray,
+                    climatology_quantiles: np.ndarray,
+                    num_integration_steps: int = 100,
+                    quantile_probabilities: np.ndarray | None = None) -> np.ndarray:
+        """Numerically integrate 2/pi * (p - F_forecast(Q_clim(p))) / sqrt(p(1-p)).
+
+        Inputs have shapes [member, latitude, longitude] and
+        [quantile, latitude, longitude]. Missing cells return NaN. A minimum of
+        two valid ensemble members is required at each point. Probabilities
+        default to evenly spaced 0.01..0.99; pass explicit archive levels when
+        they differ. The result is uncalibrated unless the model climate is
+        appropriate for the forecast model, valid date and lead.
         """
-        Calculates EFI across grid points given ensemble forecasts and climatology quantiles.
-        Args:
-            ensemble_forecasts: Shape [E, H, W] - E ensemble members (e.g. 50 members)
-            climatology_quantiles: Shape [Q, H, W] - Q percentiles (e.g. 1% to 99%)
-            num_integration_steps: Discretization intervals for integral [0, 1]
-        Returns:
-            efi_map: Shape [H, W] with values in [-1.0, 1.0]
-        """
-        E, H, W = ensemble_forecasts.shape
-        p_vals = np.linspace(0.01, 0.99, num_integration_steps)
-        efi_accum = np.zeros((H, W), dtype=np.float32)
+        forecast = np.asarray(ensemble_forecasts, dtype=np.float64)
+        quantiles = np.asarray(climatology_quantiles, dtype=np.float64)
+        if forecast.ndim != 3 or quantiles.ndim != 3 or forecast.shape[1:] != quantiles.shape[1:]:
+            raise ValueError("Expected ensemble [E,H,W] and quantiles [Q,H,W]")
+        if forecast.shape[0] < 2 or quantiles.shape[0] < 2 or num_integration_steps < 3:
+            raise ValueError("At least two members/quantiles and three integration steps required")
+        levels = (np.linspace(0.01, 0.99, len(quantiles)) if quantile_probabilities is None
+                  else np.asarray(quantile_probabilities, dtype=np.float64))
+        if levels.shape != (len(quantiles),) or np.any(np.diff(levels) <= 0) or levels[0] <= 0 or levels[-1] >= 1:
+            raise ValueError("Quantile probabilities must increase strictly within (0, 1)")
+        valid = ((np.isfinite(forecast).sum(axis=0) >= 2)
+                 & np.isfinite(quantiles).all(axis=0)
+                 & (np.diff(quantiles, axis=0) >= 0).all(axis=0))
+        p_grid = np.linspace(levels[0], levels[-1], num_integration_steps)
+        integral = np.zeros(forecast.shape[1:], dtype=np.float64)
+        previous = None
+        for p in p_grid:
+            upper = int(np.searchsorted(levels, p, side="right"))
+            lower = max(0, min(upper - 1, len(levels) - 2))
+            upper = lower + 1
+            fraction = (p - levels[lower]) / (levels[upper] - levels[lower])
+            threshold = quantiles[lower] * (1 - fraction) + quantiles[upper] * fraction
+            member_valid = np.isfinite(forecast)
+            cdf = np.sum((forecast <= threshold) & member_valid, axis=0) / np.maximum(member_valid.sum(axis=0), 1)
+            integrand = (p - cdf) / np.sqrt(p * (1 - p))
+            if previous is not None:
+                integral += (previous + integrand) * (p_grid[1] - p_grid[0]) / 2
+            previous = integrand
+        result = np.clip(2 / np.pi * integral, -1.0, 1.0)
+        return np.where(valid, result, np.nan).astype(np.float32)
 
-        # Vectorized empirical CDF calculation
-        # For each quantile p, evaluate fraction of ensemble <= Q_clim(p)
-        for p in p_vals:
-            # Linear interpolation of climatology at percentile p
-            q_idx = int(p * (climatology_quantiles.shape[0] - 1))
-            q_thresh = climatology_quantiles[q_idx]  # [H, W]
+    @staticmethod
+    def compute_z_scores(forecast_mean: np.ndarray, climatology_mean: np.ndarray,
+                         climatology_std: np.ndarray, epsilon: float = 1e-6) -> np.ndarray:
+        std = np.asarray(climatology_std)
+        return (forecast_mean - climatology_mean) / np.where(std > 0, std, np.nan)
 
-            # F_f(Q_c(p)): fraction of ensemble members less than or equal to threshold
-            f_f = np.mean(ensemble_forecasts <= q_thresh, axis=0)  # [H, W]
-
-            weight = 1.0 / np.sqrt(p * (1.0 - p))
-            efi_accum += (p - f_f) * weight
-
-        # Multiply by normalization factor (2 / pi) * dp
-        dp = p_vals[1] - p_vals[0]
-        efi_map = (2.0 / np.pi) * efi_accum * dp
-        return np.clip(efi_map, -1.0, 1.0)
-
-    def compute_z_scores(
-        self,
-        forecast_mean: np.ndarray,
-        climatology_mean: np.ndarray,
-        climatology_std: np.ndarray,
-        epsilon: float = 1e-6
-    ) -> np.ndarray:
-        """
-        Computes standardized anomalies: Z = (X - μ_clim) / σ_clim
-        """
-        return (forecast_mean - climatology_mean) / (climatology_std + epsilon)
-
-    def extract_extreme_anomalies(
-        self,
-        efi_map: np.ndarray,
-        z_score_map: np.ndarray,
-        lats: np.ndarray,
-        lons: np.ndarray,
-        variable_name: str = "precipitation_flux"
-    ) -> List[AnomalyRegion]:
-        """
-        Identifies connected components where EFI exceeds threshold and groups them into anomaly regions.
-        """
-        H, W = efi_map.shape
-        mask = (efi_map >= self.efi_threshold) & (z_score_map >= 2.0)
-        
-        # Simple connected cluster extractor without external heavy dependencies
-        visited = np.zeros_like(mask, dtype=bool)
-        clusters = []
-
-        for r in range(H):
-            for c in range(W):
-                if mask[r, c] and not visited[r, c]:
-                    # BFS component search
-                    component = []
-                    queue = [(r, c)]
-                    visited[r, c] = True
-
-                    while queue:
-                        curr_r, curr_c = queue.pop(0)
-                        component.append((curr_r, curr_c))
-
-                        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                            nr, nc = curr_r + dr, curr_c + dc
-                            if 0 <= nr < H and 0 <= nc < W:
-                                if mask[nr, nc] and not visited[nr, nc]:
-                                    visited[nr, nc] = True
-                                    queue.append((nr, nc))
-
-                    if len(component) >= 4:  # Minimum grid cell size
-                        clusters.append(component)
-
-        results = []
-        for idx, cluster in enumerate(clusters):
-            coords_r = [pt[0] for pt in cluster]
-            coords_c = [pt[1] for pt in cluster]
-
-            cluster_lats = [lats[r] for r in coords_r]
-            cluster_lons = [lons[c] for c in coords_c]
-            cluster_efis = [efi_map[r, c] for r, c in cluster]
-            cluster_zs = [z_score_map[r, c] for r, c in cluster]
-
-            centroid_lat = float(np.mean(cluster_lats))
-            centroid_lon = float(np.mean(cluster_lons))
-            bbox = (
-                float(min(cluster_lats)),
-                float(min(cluster_lons)),
-                float(max(cluster_lats)),
-                float(max(cluster_lons)),
-            )
-
-            max_efi = float(np.max(cluster_efis))
-            mean_efi = float(np.mean(cluster_efis))
-            mean_z = float(np.mean(cluster_zs))
-
-            results.append(
-                AnomalyRegion(
-                    region_id=f"ANOM-{variable_name[:3].upper()}-{idx+1:03d}",
-                    variable=variable_name,
-                    centroid_lat=centroid_lat,
-                    centroid_lon=centroid_lon,
-                    bounding_box=bbox,
-                    max_efi=round(max_efi, 3),
-                    mean_efi=round(mean_efi, 3),
-                    p_value=float(round(1.0 - (1.0 / (1.0 + np.exp(mean_z - 3.0))), 4)),
-                    z_score=round(mean_z, 2),
-                    climatology_percentile=round(float(np.clip(95.0 + mean_z * 1.5, 95.0, 99.99)), 2),
-                )
-            )
-
-        return results
+    def extract_extreme_anomalies(self, efi_map: np.ndarray,
+                                  z_score_map: np.ndarray, lats: np.ndarray,
+                                  lons: np.ndarray,
+                                  variable_name: str = "precipitation_flux") -> List[AnomalyRegion]:
+        efi_map, z_score_map = np.asarray(efi_map), np.asarray(z_score_map)
+        lats, lons = np.asarray(lats), np.asarray(lons)
+        if efi_map.shape != z_score_map.shape or efi_map.shape != (len(lats), len(lons)):
+            raise ValueError("Maps and coordinates must describe the same grid")
+        if len(lats) < 2 or len(lons) < 2:
+            raise ValueError("At least two coordinates per spatial dimension required")
+        dlat = abs(float(np.median(np.diff(lats))))
+        dlon = abs(float(np.median(np.diff(lons))))
+        if dlat == 0 or dlon == 0:
+            raise ValueError("Coordinate spacing must be nonzero")
+        cell_areas = 111.195**2 * dlat * dlon * np.maximum(np.cos(np.deg2rad(lats)), 0)
+        mask = np.isfinite(efi_map) & np.isfinite(z_score_map) & (efi_map >= self.efi_threshold) & (z_score_map >= 2)
+        components, count = label(mask)
+        regions = []
+        for object_id in range(1, count + 1):
+            rows, cols = np.where(components == object_id)
+            area = float(np.sum(cell_areas[rows]))
+            if area < self.min_cluster_size_km2:
+                continue
+            weights = cell_areas[rows]
+            regions.append(AnomalyRegion(
+                region_id=f"ANOM-{variable_name[:3].upper()}-{len(regions)+1:03d}",
+                variable=variable_name,
+                centroid_lat=float(np.average(lats[rows], weights=weights)),
+                centroid_lon=float(np.average(lons[cols], weights=weights)),
+                bounding_box=(float(lats[rows].min()), float(lons[cols].min()),
+                              float(lats[rows].max()), float(lons[cols].max())),
+                max_efi=round(float(efi_map[rows, cols].max()), 3),
+                mean_efi=round(float(np.average(efi_map[rows, cols], weights=weights)), 3),
+                z_score=round(float(np.average(z_score_map[rows, cols], weights=weights)), 2),
+                area_km2=round(area, 1),
+            ))
+        return regions

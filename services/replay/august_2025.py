@@ -20,6 +20,7 @@ import numpy as np
 from scipy.ndimage import label
 
 from services.ingestion.imd_gridded_parser import IMDGriddedParser
+from services.ingestion.chirps_daily import read_crop as read_chirps_crop, source_url as chirps_source_url, download as download_chirps
 from services.tracking.kalman_tracker import PersistentThreatTracker
 
 
@@ -184,18 +185,14 @@ def _track(intervals: np.ndarray, lats: np.ndarray, lons: np.ndarray) -> list[di
             tz=timezone.utc,
         ).isoformat().replace("+00:00", "Z")
         active = tracker.update_with_detections(detections, timestamp)
-        for footprint in footprints:
-            if active:
-                closest = min(active, key=lambda track: tracker.haversine_km(
-                    footprint["centroid"][0], footprint["centroid"][1], track["lat"], track["lon"]
-                ))
-                footprint["track_id"] = closest["threat_id"]
+        for footprint, matched in zip(footprints, active):
+            footprint["track_id"] = matched["threat_id"]
         frames.append({"lead_hour": lead, "valid_time": timestamp,
                        "objects": sorted(footprints, key=lambda x: x["peak_mm_3h"], reverse=True)[:8]})
     return frames
 
 
-def build_case(imd_file: Path, workers: int = 6) -> dict:
+def build_case(imd_file: Path, workers: int = 6, chirps_file: Path | None = None) -> dict:
     observed, imd_lats, imd_lons, imd_sha = _observed_grid(imd_file)
     records: dict[str, dict[int, np.ndarray]] = {member: {} for member in MEMBERS}
     sources = []
@@ -257,6 +254,36 @@ def build_case(imd_file: Path, workers: int = 6) -> dict:
             "A single event cannot establish forecast skill or warning thresholds.",
         ],
     }
+    if chirps_file is not None:
+        chirps, chirps_lats, chirps_lons, chirps_sha = read_chirps_crop(chirps_file, DOMAIN)
+        forecast_on_chirps = _bilinear_to_imd(
+            daily_mean, coarse_lats, coarse_lons, chirps_lats, chirps_lons,
+        )
+        common = np.isfinite(chirps) & np.isfinite(forecast_on_chirps)
+        if not common.any():
+            raise RuntimeError("No common GEFS/CHIRPS cells in domain")
+        report["independent_observation"] = {
+            "model": "CHIRPS v2 daily rainfall estimate",
+            "date": OBS_DATE,
+            "grid_spacing_degrees": 0.05,
+            "source_url": chirps_source_url(datetime.fromisoformat(OBS_DATE).date()),
+            "sha256": chirps_sha,
+            "note": "Independent satellite/gauge estimate, not point-gauge ground truth.",
+        }
+        report["independent_verification"] = {
+            "method": "GEFS ensemble mean bilinearly interpolated to CHIRPS grid; no learned downscaling",
+            "sampled_grid_cells": int(common.sum()),
+            "forecast_peak_mm_day": round(float(forecast_on_chirps[common].max()), 2),
+            "chirps_peak_mm_day": round(float(chirps[common].max()), 2),
+            "mean_absolute_error_mm_day": round(float(np.mean(np.abs(forecast_on_chirps[common] - chirps[common]))), 2),
+            "heavy_rain_iou": _footprint_iou(forecast_on_chirps, chirps, HEAVY_RAIN_MM_DAY),
+            "heavy_rain_threshold_mm_day": HEAVY_RAIN_MM_DAY,
+            "timing_note": "The GEFS 03–03 UTC accumulation is not known to exactly match the CHIRPS daily window; descriptive comparison only.",
+        }
+        report["limitations"].append(
+            "CHIRPS 0.05° provides an independent fine observation grid, not evidence of a 5 km forecast. "
+            "CHIRPS daily extreme magnitudes and timing have additional product uncertainty."
+        )
     return report
 
 
@@ -264,8 +291,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--imd-file", type=Path, default=Path("data/raw/Rainfall_ind2025_rfp25.grd"))
     parser.add_argument("--output", type=Path, default=Path("avarta/public/replay/august-2025.json"))
+    parser.add_argument("--chirps-file", type=Path, help="Use a local official CHIRPS daily GeoTIFF.gz")
+    parser.add_argument("--no-chirps", action="store_true", help="Skip the independent CHIRPS check (default downloads/caches it)")
     args = parser.parse_args()
-    report = build_case(args.imd_file)
+    chirps_file = (None if args.no_chirps else
+                   args.chirps_file or download_chirps(datetime.fromisoformat(OBS_DATE).date()))
+    report = build_case(args.imd_file, chirps_file=chirps_file)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(f"Wrote {args.output}: {report['verification']}")

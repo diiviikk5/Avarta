@@ -2212,6 +2212,25 @@
     "Five ensemble members are a small demonstration subset, not a calibrated probability forecast.",
     "Forecast is 0.5\u00b0 and observation is 0.25\u00b0; this replay does not demonstrate 5 km downscaling.",
     "Tiny negative 3-hour values from differencing quantized GEFS accumulations are clipped to zero (maximum allowed 0.1 mm).",
-    "A single event cannot establish forecast skill or warning thresholds."
-  ]
+    "A single event cannot establish forecast skill or warning thresholds.",
+    "CHIRPS 0.05\u00b0 provides an independent fine observation grid, not evidence of a 5 km forecast. CHIRPS daily extreme magnitudes and timing have additional product uncertainty."
+  ],
+  "independent_observation": {
+    "model": "CHIRPS v2 daily rainfall estimate",
+    "date": "2025-08-23",
+    "grid_spacing_degrees": 0.05,
+    "source_url": "https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_daily/tifs/p05/2025/chirps-v2.0.2025.08.23.tif.gz",
+    "sha256": "f8be8099dbd6398201e21d9c5b7b2d17b21979902123496c41317a260357ae8d",
+    "note": "Independent satellite/gauge estimate, not point-gauge ground truth."
+  },
+  "independent_verification": {
+    "method": "GEFS ensemble mean bilinearly interpolated to CHIRPS grid; no learned downscaling",
+    "sampled_grid_cells": 64002,
+    "forecast_peak_mm_day": 43.94,
+    "chirps_peak_mm_day": 100.08,
+    "mean_absolute_error_mm_day": 11.05,
+    "heavy_rain_iou": 0.0,
+    "heavy_rain_threshold_mm_day": 64.5,
+    "timing_note": "The GEFS 03\u201303 UTC accumulation is not known to exactly match the CHIRPS daily window; descriptive comparison only."
+  }
 }

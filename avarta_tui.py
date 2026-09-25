@@ -94,6 +94,14 @@ def overview(console: Console, report: dict, theme: tuple[str, str, str]) -> Non
     caveat.append("  ·  The coarse ensemble-mean peak stays below the provisional threshold. A retrospective forecast miss is visible; precise warnings are not justified.")
     console.print(Panel(caveat, title="DRAFT DISPOSITION", border_style=accent))
     console.print(Text(f"Source grids: GEFS {forecast['grid_spacing_degrees']}°  /  IMD {observed['grid_spacing_degrees']}°. No 5 km output or diffusion model is used here.", style=muted))
+    if report.get("independent_verification"):
+        cross = report["independent_verification"]
+        console.print(Panel(
+            f"Independent CHIRPS 0.05° daily estimate: {cross['chirps_peak_mm_day']:.2f} mm/day peak "
+            f"vs {cross['forecast_peak_mm_day']:.2f} mm/day interpolated GEFS; "
+            f"heavy-rain overlap {100 * (cross['heavy_rain_iou'] or 0):.0f}%.\n"
+            "CHIRPS and IMD disagree on peak magnitude; this is not a 5 km forecast or calibrated verification.",
+            title="SECOND OBSERVATION CHECK", border_style=primary))
     console.print(Text("Views: --map  --timeline  --benchmark  --datasets  --alerts  --demo", style=muted))
 
 
@@ -237,6 +245,11 @@ def sources(console: Console, report: dict, theme: tuple[str, str, str]) -> None
     table.add_row("Observation", f"{observation['model']} · {observation['date']} · 0.25°")
     table.add_row("IMD SHA-256", observation["sha256"])
     table.add_row("IMD source", observation["source_url"])
+    if report.get("independent_observation"):
+        second = report["independent_observation"]
+        table.add_row("Independent check", f"{second['model']} · {second['date']} · {second['grid_spacing_degrees']}°")
+        table.add_row("CHIRPS SHA-256", second["sha256"])
+        table.add_row("CHIRPS source", second["source_url"])
     table.add_row("Archived GRIB records", str(len(report["provenance"]["gefs_grib_records"])))
     console.print(table)
     console.print(Text("GEFS record URLs, byte ranges, step windows and SHA-256 hashes are included in avarta/public/replay/august-2025.json.", style=muted))

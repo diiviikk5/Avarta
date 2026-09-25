@@ -1,12 +1,13 @@
-"""
-Avarta Spherical GNN — Stage 1 Spherical Mesh Anomaly Tracking
-Maps 12 km NCMRWF Global Ensemble (NEPS-G) grids directly onto an icosahedral mesh
-to eliminate polar distortion and flat-plane coordinate artifacts.
+"""Spherical mesh geometry and an *untrained* experimental message-passing model.
+
+The mesh builder is real geometry; this module does not ingest NEPS-G or provide a
+trained anomaly detector. See the historical replay for the validated data path.
 """
 
 import math
-from typing import Tuple, List, Dict
+from typing import Tuple, Dict
 import numpy as np
+from scipy.spatial import ConvexHull, cKDTree
 
 try:
     import torch
@@ -47,25 +48,67 @@ def subdivide_mesh(vertices: np.ndarray, level: int = 1) -> Tuple[np.ndarray, np
         nodes: (N, 3) 3D cartesian coordinates on unit sphere
         edge_index: (2, E) undirected edge graph adjacency
     """
-    edges_set = set()
-    # Simple k-nearest geodesic neighbor graph for spherical nodes
-    num_nodes = len(vertices)
-    nodes = np.copy(vertices)
-    
-    # Calculate pairwise angular distance on sphere
-    dot_prod = np.clip(np.dot(nodes, nodes.T), -1.0, 1.0)
-    angular_dist = np.arccos(dot_prod)
-    
-    # Connect 5 nearest neighbors per spherical node
-    src_nodes, dst_nodes = [], []
-    for i in range(num_nodes):
-        sorted_indices = np.argsort(angular_dist[i])[1:6]
-        for neighbor in sorted_indices:
-            src_nodes.append(i)
-            dst_nodes.append(neighbor)
-            
-    edge_index = np.array([src_nodes, dst_nodes], dtype=np.int64)
-    return nodes, edge_index
+    if level < 0 or level > 7:
+        raise ValueError("level must be between 0 and 7")
+    nodes = np.asarray(vertices, dtype=np.float64)
+    if nodes.shape != (12, 3):
+        raise ValueError("Expected the 12 vertices of an icosahedron")
+    nodes = nodes / np.linalg.norm(nodes, axis=1, keepdims=True)
+    faces = ConvexHull(nodes).simplices.astype(np.int64)
+    points = [point.copy() for point in nodes]
+    for _ in range(level):
+        midpoint_cache: dict[tuple[int, int], int] = {}
+
+        def midpoint(a: int, b: int) -> int:
+            key = (min(a, b), max(a, b))
+            if key not in midpoint_cache:
+                point = points[a] + points[b]
+                point /= np.linalg.norm(point)
+                midpoint_cache[key] = len(points)
+                points.append(point)
+            return midpoint_cache[key]
+
+        refined = []
+        for a, b, c in faces:
+            ab, bc, ca = midpoint(int(a), int(b)), midpoint(int(b), int(c)), midpoint(int(c), int(a))
+            refined.extend(((a, ab, ca), (b, bc, ab), (c, ca, bc), (ab, bc, ca)))
+        faces = np.asarray(refined, dtype=np.int64)
+
+    undirected = set()
+    for a, b, c in faces:
+        undirected.update(((min(a, b), max(a, b)),
+                           (min(b, c), max(b, c)),
+                           (min(c, a), max(c, a))))
+    edges = np.asarray(sorted(undirected), dtype=np.int64)
+    directed = np.concatenate((edges, edges[:, ::-1]), axis=0)
+    return np.asarray(points, dtype=np.float32), directed.T
+
+
+def interpolate_grid_to_mesh(field: np.ndarray, latitudes: np.ndarray,
+                             longitudes: np.ndarray, nodes: np.ndarray,
+                             neighbors: int = 4) -> np.ndarray:
+    """Interpolate a lat/lon field onto spherical nodes with chord-distance weights.
+
+    This is a geometric interpolation, not a learned mapping or a conservative
+    remap. Missing source cells are excluded. Returns NaN for all-missing input.
+    """
+    field = np.asarray(field, dtype=np.float64)
+    latitudes, longitudes = np.asarray(latitudes), np.asarray(longitudes)
+    if field.shape != (len(latitudes), len(longitudes)):
+        raise ValueError("field must have shape (latitude, longitude)")
+    if neighbors < 1:
+        raise ValueError("neighbors must be positive")
+    lat, lon = np.meshgrid(np.deg2rad(latitudes), np.deg2rad(longitudes), indexing="ij")
+    xyz = np.stack((np.cos(lat) * np.cos(lon), np.cos(lat) * np.sin(lon), np.sin(lat)), axis=-1)
+    valid = np.isfinite(field)
+    if not valid.any():
+        return np.full(len(nodes), np.nan, dtype=np.float32)
+    count = min(neighbors, int(valid.sum()))
+    distances, indices = cKDTree(xyz[valid]).query(nodes, k=count)
+    distances = np.asarray(distances).reshape(len(nodes), count)
+    indices = np.asarray(indices).reshape(len(nodes), count)
+    weights = 1.0 / np.maximum(distances, 1e-10) ** 2
+    return np.sum(field[valid][indices] * weights, axis=1).astype(np.float32) / weights.sum(axis=1)
 
 
 if HAS_TORCH:
@@ -93,9 +136,12 @@ if HAS_TORCH:
             neighbor_feats = self.neighbor_transform(x[src])
             msg = self.edge_mlp(torch.cat([x_proj[dst], neighbor_feats], dim=-1))
             
-            # Scatter mean / sum
+            # Degree-normalized aggregation prevents higher-valence nodes from
+            # receiving systematically larger activations.
             out = torch.zeros_like(x_proj)
             out.index_add_(0, dst, msg)
+            degree = torch.bincount(dst, minlength=x.shape[0]).to(out.dtype).clamp_min(1)
+            out = out / degree.unsqueeze(-1)
             return F.silu(x_proj + out)
 
 

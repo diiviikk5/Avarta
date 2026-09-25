@@ -48,3 +48,6 @@ def test_committed_replay_has_provenance_and_no_false_five_km_claim():
     assert all(frame["valid_time"] and frame["lead_hour"] for frame in case["frames"])
     assert all(record["sha256"] for record in case["provenance"]["gefs_grib_records"])
     assert case["verification"]["heavy_rain_iou"] == 0
+    assert case["independent_observation"]["grid_spacing_degrees"] == 0.05
+    assert case["independent_verification"]["heavy_rain_iou"] == 0
+    assert "no learned downscaling" in case["independent_verification"]["method"]
