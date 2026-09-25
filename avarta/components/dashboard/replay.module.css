@@ -59,3 +59,118 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .agrometTable td{padding:10px 12px;border-top:1px solid #eee8d8;font-size:12px;color:#473f2c}
 .capBox{margin-top:18px;background:#182825;color:#e8f4f0;border-radius:8px;padding:16px;font-family:monospace;font-size:11px;overflow:auto;max-height:280px}
 
+/* Theme Toggle Button */
+.themeBtn{display:flex;align-items:center;gap:6px;background:#eef4ee;border:1px solid #d5e0d4;color:#385e54;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;cursor:pointer;transition:all .2s ease;line-height:1}
+.themeBtn:hover{background:#e2ede0;border-color:#c4d6c2;color:#174239}
+.themeBtnDark{background:#172d27;border-color:#2b554b;color:#c5ece1}
+.themeBtnDark:hover{background:#1f3b33;border-color:#3b7466;color:#fff}
+.themeSun{color:#f5b73d;transition:transform .3s ease}
+.themeMoon{color:#35695c;transition:transform .3s ease}
+.themeBtn:hover .themeSun,.themeBtn:hover .themeMoon{transform:rotate(15deg)}
+
+/* Editorial Dark Mode Theme */
+.shellDark{--ink:#e2ede8;--muted:#8ea39b;--line:#1c3631;--cream:#0c1614;--green:#48b8a3;--orange:#e07255;background:#0c1614;color:#e2ede8}
+.shellDark .rail{background:#081210;border-right:1px solid #142723}
+.shellDark .logoMark{background:#132a25;border-color:#2b554b;color:#50caa8}
+.shellDark .nav a{color:#8faaa0}
+.shellDark .nav a:hover,.shellDark .nav .navActive{background:#162f29;color:#f0faf5}
+.shellDark .nav .navActive{box-shadow:inset 3px 0 #5bc5b2}
+.shellDark .railBottom{border-top-color:#1c3832;color:#9cb5ab}
+.shellDark .topbar{background:#0f1c19;border-bottom-color:#1a332d}
+.shellDark .breadcrumb{color:#799187}
+.shellDark .breadcrumb strong{color:#e5f2ed}
+.shellDark .status{background:#142b25;border-color:#244940;color:#5ec4ad}
+.shellDark .hazardSwitcher{background:#132622;border-color:#223f38}
+.shellDark .hazardBtn{color:#8ba59b}
+.shellDark .hazardBtnActive{background:#23594e;color:#f2fbf7}
+.shellDark .topDate{color:#8ba59b}
+.shellDark .eyebrow{color:#5bc5b2}
+.shellDark .heading h1{color:#f1f8f5}
+.shellDark .heading p{color:#8fa59b}
+.shellDark .export{background:#132623;border-color:#21433c;color:#d8eee6;box-shadow:0 2px 6px rgba(0,0,0,0.4)}
+.shellDark .export:hover{background:#1b3530}
+.shellDark .modeBar{border-bottom-color:#1a342e}
+.shellDark .modeBar button{color:#8ea399}
+.shellDark .modeBar button span{color:#678076}
+.shellDark .modeBar .modeActive{color:#5bc5b2;border-bottom-color:#5bc5b2}
+.shellDark .modeNote{color:#799288}
+.shellDark .metric,.shellDark .mapCard,.shellDark .sideCard,.shellDark .lower,.shellDark .demoPanel,.shellDark .spectralBox,.shellDark .riskTableCard{background:#11201d;border-color:#1b3530;box-shadow:0 4px 18px rgba(0,0,0,0.35)}
+.shellDark .metricLabel{color:#8ba49a}
+.shellDark .metric strong{color:#e5f2ed}
+.shellDark .metricFoot{color:#768f84}
+.shellDark .metricWarning{background:#241613;border-color:#4a241b}
+.shellDark .metricWarning strong,.shellDark .metricWarning .metricLabel{color:#f48a70}
+.shellDark .panelHead h2,.shellDark .sideCard h2,.shellDark .lower h2,.shellDark .demoHeading h2{color:#f0f7f4}
+.shellDark .panelHead p,.shellDark .muted,.shellDark .demoHeading p{color:#829a90}
+.shellDark .pill{background:#152c26;color:#62d6be}
+.shellDark .mapWrap{background:#0b1513;border-color:#18302a}
+.shellDark .mapWrap svg>rect:first-child{fill:#0b1513}
+.shellDark .mapWrap text{fill:#8fa79e}
+.shellDark .mapKey{color:#8da59b}
+.shellDark .mapFooter{border-top-color:#1a332d;color:#7f998f}
+.shellDark .timeline:before{background:#1c3831}
+.shellDark .timeline button{color:#8ea59b}
+.shellDark .timeline button:hover,.shellDark .timeline .timeActive{background:#152a25}
+.shellDark .timeDot{background:#101e1b;border-color:#2b544a}
+.shellDark .timeActive .timeDot{border-color:#5bc5b2;background:#1a3c35}
+.shellDark .timeline strong{color:#d4e8e0}
+.shellDark .timeline small{color:#799388}
+.shellDark .timeline b{color:#8aa499}
+.shellDark .sideCard>p{color:#8aa297}
+.shellDark .sideCard>a{color:#5bc5b2}
+.shellDark .lowerHead{border-bottom-color:#1b3530}
+.shellDark .lowerHead>span{color:#7a9489}
+.shellDark .evidenceIcon{background:#152b25;color:#5bc5b2}
+.shellDark .evidenceGrid h3{color:#d6eae1}
+.shellDark .evidenceGrid p{color:#7f978c}
+.shellDark .footer{color:#6d857a}
+.shellDark .benchmark{border-top-color:#1b3530}
+.shellDark .benchmark th{color:#8da499}
+.shellDark .benchmark td{border-top-color:#19332e;color:#c4dbd2}
+.shellDark .benchmark td:nth-child(2){color:#5bc5b2}
+.shellDark .benchmarkNote a{color:#5bc5b2}
+.shellDark .crossCheck{background:#132521;border-color:#1c3731}
+.shellDark .crossCheck h3{color:#eaf5f0}
+.shellDark .crossCheck p{color:#8ba297}
+.shellDark .crossStats div{border-left-color:#23433b}
+.shellDark .crossStats strong{color:#62d6be}
+.shellDark .crossStats span{color:#829a8f}
+.shellDark .crossStats a{color:#5bc5b2}
+.shellDark table.riskTable thead th{background:#122320;border-bottom-color:#1b3630;color:#8ea499}
+.shellDark table.riskTable tbody td{color:#c8ddd5;border-top-color:#18312c}
+.shellDark table.riskTable tbody tr:hover{background:#152824}
+.shellDark .riskRegionCell{color:#e0f0ea}
+.shellDark .bandPill[data-band="LOW"]{color:#5bd97d;background:#132c1c;border-color:#1f4f2c}
+.shellDark .bandPill[data-band="MODERATE"]{color:#e3b839;background:#2f260f;border-color:#564515}
+.shellDark .bandPill[data-band="HIGH"]{color:#f28f49;background:#331c11;border-color:#5d2e19}
+.shellDark .bandPill[data-band="SEVERE"]{color:#f56c67;background:#361413;border-color:#63201e}
+.shellDark .risk3dWrap{background:linear-gradient(180deg,#11201d,#0b1513);border-color:#1a352f}
+.shellDark .risk3dWrap svg>rect:first-of-type{fill:#0b1513}
+.shellDark .risk3dGratLabel{fill:#6d897e}
+.shellDark .risk3dLabel{fill:#c5dcd3;stroke:#0b1513}
+.shellDark .risk3dLabelActive{fill:#e8f7f1;stroke:#0b1513}
+.shellDark .risk3dLegend{color:#8ea499}
+.shellDark .risk3dHint{color:#728d82}
+.shellDark .risk3dDetail{background:#122320;border-color:#1d3933}
+.shellDark .risk3dDetail h3{color:#eaf5f0}
+.shellDark .risk3dDetail p{color:#8ba297}
+.shellDark .risk3dDetail p strong{color:#62d6be}
+.shellDark .risk3dDetail>a{color:#5bc5b2}
+.shellDark .askRow label{color:#8da499}
+.shellDark .askRow input{background:#132521;border-color:#21413a;color:#e0f1ea}
+.shellDark .askRow button{background:#226b5d}
+.shellDark .ghostBtn{background:#142a25 !important;color:#5bc5b2 !important;border-color:#23463e !important}
+.shellDark .askAnswer{background:#122420;border-color:#1e3c35;color:#cee3da}
+.shellDark .spectralMetric{background:#122320;border-color:#1c3631}
+.shellDark .spectralMetric strong{color:#5bc5b2}
+.shellDark .spectralSvgWrap{background:#0b1513;border-color:#18302a}
+.shellDark .sliderContainer{background:#0b1513;border-color:#18302a}
+.shellDark .agrometBox{background:#14211b;border-color:#20352b}
+.shellDark .agrometTable th{background:#182a22;color:#9ab3a6}
+.shellDark .agrometTable td{border-top-color:#1c3329;color:#c9dbd1}
+.shellDark .demoBanner{background:#251a10;border-color:#482f18;color:#f0a663}
+.shellDark .demoGrid article{background:#12221f;border-color:#1a352f}
+.shellDark .demoStat{color:#62d6be}
+.shellDark .demoGrid p,.shellDark .demoFoot{color:#7b9489}
+
+

@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 :root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: #f7f8f3; }
+[data-theme="dark"] body { background: #0c1614; color: #e2ede8; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible { outline: 2px solid #b57946; outline-offset: 3px; }
 ::selection { background: #d7e9da; color: #173d39; }
+[data-theme="dark"] ::selection { background: #1f4f46; color: #bdf3e4; }
+
