@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ImpactFootprint } from "@/types/threat";
-import { MapPin, FileText, Check, Copy, Building2 } from "lucide-react";
+import { MapPin, Users, Clock, Check, Copy, ShieldAlert } from "lucide-react";
 
 interface ImpactPanelProps {
   impact: ImpactFootprint;
@@ -10,7 +10,7 @@ interface ImpactPanelProps {
 
 export default function ImpactPanel({ impact }: ImpactPanelProps) {
   const [copiedCap, setCopiedCap] = useState(false);
-  const [showCapModal, setShowCapModal] = useState(false);
+  const [showJson, setShowJson] = useState(false);
 
   const capPayload = {
     identifier: `CAP-AVARTA-${impact.threat_id}-${Date.now().toString().slice(-6)}`,
@@ -26,10 +26,9 @@ export default function ImpactPanel({ impact }: ImpactPanelProps) {
       severity: "Extreme",
       certainty: "Observed & Ensemble Confirmed",
       eventCode: { valueName: "AVARTA_5KM_ID", value: impact.threat_id },
-      expires: new Date(Date.now() + impact.duration_hours * 3600000).toISOString(),
       headline: `Targeted 5 km Pinpoint Warning: ${impact.primary_zone_name}`,
-      description: `Avarta 5km generative downscaling detects localized peak of ${impact.peak_metric_value} ${impact.peak_metric_unit} within a 5 km impact radius. Affected population estimated at ${impact.exposed_population.toLocaleString()}.`,
-      instruction: `NDRF Action: Execute ${impact.ndrf_recommended_readiness}. Pre-position disaster relief teams to coordinates [${impact.coordinates.lat}°N, ${impact.coordinates.lon}°E].`,
+      description: `Avarta 5km generative downscaling detects localized peak of ${impact.peak_metric_value} ${impact.peak_metric_unit}. Affected population estimated at ${impact.exposed_population.toLocaleString()}.`,
+      instruction: `Execute ${impact.ndrf_recommended_readiness}. Pre-position disaster relief teams.`,
       area: {
         areaDesc: impact.primary_zone_name,
         circle: `${impact.coordinates.lat},${impact.coordinates.lon},5.0`
@@ -44,147 +43,101 @@ export default function ImpactPanel({ impact }: ImpactPanelProps) {
   };
 
   return (
-    <aside className="w-full lg:w-[380px] shrink-0 border-l border-[#292524] bg-[#141210] flex flex-col justify-between text-stone-100">
+    <aside className="w-full lg:w-[320px] shrink-0 border-l border-stone-800/80 bg-[#110f0e] flex flex-col justify-between text-stone-100">
       <div className="p-5 space-y-5">
         {/* Section Header */}
-        <div className="pb-4 border-b border-[#292524] flex items-center justify-between">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-800/80">
           <div>
             <h2
-              className="text-lg font-light text-white tracking-tight"
+              className="text-base font-light text-white tracking-tight"
               style={{ fontFamily: "var(--font-serif)" }}
             >
-              5 km Pinpoint Impact Zone
+              5 km Impact Intelligence
             </h2>
-            <p className="text-xs text-stone-400 mt-0.5">
-              Hyper-local disaster mitigation dossier
+            <p className="text-[11px] text-stone-500 font-mono mt-0.5">
+              Pinpoint Civil Defense Zone
             </p>
           </div>
-          <span className="text-[10px] font-medium tracking-wide uppercase px-2.5 py-1 rounded-full bg-white text-black font-semibold">
+
+          <span className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-950/80 text-rose-300 border border-rose-800/50">
             {impact.ndrf_recommended_readiness}
           </span>
         </div>
 
         {/* Primary Impact Location Card */}
-        <div className="bg-[#1c1917] p-4 rounded-[16px] border border-[#292524] shadow-xs space-y-2">
-          <div className="flex items-center gap-2 text-xs text-stone-400">
-            <MapPin size={14} className="text-rose-400" />
-            <span className="font-medium uppercase tracking-wider text-[10px]">Primary Strike Centroid</span>
+        <div className="bg-[#161412] p-4 rounded-xl border border-stone-800/70 space-y-2">
+          <div className="flex items-center gap-1.5 text-xs text-stone-400">
+            <MapPin size={13} className="text-rose-400" />
+            <span className="font-mono text-[10px] uppercase">Primary Strike Zone</span>
           </div>
           <h3
-            className="text-base font-normal text-white tracking-tight"
+            className="text-base font-medium text-white"
             style={{ fontFamily: "var(--font-serif)" }}
           >
             {impact.primary_zone_name}
           </h3>
-          <div className="text-xs text-stone-300 font-mono bg-black/40 p-2 rounded-lg border border-stone-800">
-            Coordinates: {impact.coordinates.lat}° N, {impact.coordinates.lon}° E (5 km Radius)
-          </div>
+          <span className="text-xs text-stone-400 font-mono block">
+            {impact.coordinates.lat}°N, {impact.coordinates.lon}°E (5 km Mesh)
+          </span>
         </div>
 
-        {/* Key Metrics Quadrant */}
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="bg-[#1c1917] p-3.5 rounded-[14px] border border-[#292524] shadow-xs">
-            <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
-              5 km Peak Amplitude
-            </span>
-            <span
-              className="text-xl font-light text-white block mt-1"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
-              {impact.peak_metric_value}{" "}
-              <span className="text-xs font-sans text-stone-400">{impact.peak_metric_unit}</span>
-            </span>
-            <span className="text-[10px] text-stone-400 block mt-0.5">Extreme value preserved</span>
-          </div>
-
-          <div className="bg-[#1c1917] p-3.5 rounded-[14px] border border-[#292524] shadow-xs">
-            <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
-              Landfall / ETA Window
-            </span>
-            <span
-              className="text-xl font-light text-white block mt-1"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
+        {/* Core Metrics: ETA & Population */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#161412] p-3.5 rounded-xl border border-stone-800/70">
+            <div className="flex items-center gap-1.5 text-stone-400 mb-1">
+              <Clock size={12} />
+              <span className="text-[10px] font-mono uppercase">ETA Arrival</span>
+            </div>
+            <span className="text-lg font-light text-white font-serif">
               T+{impact.estimated_arrival_hours}h
             </span>
-            <span className="text-[10px] text-stone-400 block mt-0.5">Duration: ~{impact.duration_hours}h</span>
           </div>
 
-          <div className="bg-[#1c1917] p-3.5 rounded-[14px] border border-[#292524] shadow-xs">
-            <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
-              Exposed Population
-            </span>
-            <span
-              className="text-xl font-light text-white block mt-1"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
+          <div className="bg-[#161412] p-3.5 rounded-xl border border-stone-800/70">
+            <div className="flex items-center gap-1.5 text-stone-400 mb-1">
+              <Users size={12} />
+              <span className="text-[10px] font-mono uppercase">Exposed Pop</span>
+            </div>
+            <span className="text-lg font-light text-white font-serif">
               {(impact.exposed_population / 1000000).toFixed(2)}M
             </span>
-            <span className="text-[10px] text-stone-400 block mt-0.5">{impact.affected_area_km2} km² impact zone</span>
-          </div>
-
-          <div className="bg-[#1c1917] p-3.5 rounded-[14px] border border-[#292524] shadow-xs">
-            <span className="text-[10px] uppercase tracking-wider text-stone-400 block">
-              Alert Fatigue Reduction
-            </span>
-            <span
-              className="text-xl font-light text-emerald-400 block mt-1"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
-              94.2%
-            </span>
-            <span className="text-[10px] text-emerald-400 block mt-0.5">District-wide fatigue solved</span>
           </div>
         </div>
 
-        {/* Critical Infrastructure in 5km Zone */}
-        <div className="bg-[#1c1917] p-4 rounded-[16px] border border-[#292524] shadow-xs space-y-2.5">
-          <div className="flex items-center gap-2 text-xs text-stone-400">
-            <Building2 size={14} className="text-white" />
-            <span className="font-medium uppercase tracking-wider text-[10px]">Critical Infrastructure In Corridor</span>
-          </div>
-          <ul className="space-y-1.5 text-xs text-stone-300">
-            {impact.critical_infrastructure.map((asset, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                <span className="truncate">{asset}</span>
-              </li>
+        {/* Critical Assets in 5km Zone */}
+        <div className="bg-[#161412] p-4 rounded-xl border border-stone-800/70 space-y-2">
+          <span className="text-[10px] font-mono uppercase text-stone-400 block">
+            Key Infrastructure At Risk
+          </span>
+          <div className="space-y-1.5 text-xs text-stone-300">
+            {impact.critical_infrastructure.slice(0, 3).map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-emerald-400 shrink-0" />
+                <span className="truncate">{item}</span>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
 
-        {/* Common Alerting Protocol (CAP 1.2) */}
-        <div className="bg-[#1c1917] p-4 rounded-[16px] border border-[#292524] shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-medium text-white">
-              <FileText size={15} />
-              <span>CAP 1.2 Standard Protocol</span>
-            </div>
-            <span className="text-[10px] text-stone-400">NDMA & NDRF</span>
-          </div>
+        {/* CAP 1.2 Action */}
+        <div className="space-y-2 pt-2">
+          <button
+            onClick={copyCapAlert}
+            className="w-full py-2.5 px-4 rounded-full text-xs font-semibold bg-white hover:bg-stone-200 text-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+          >
+            {copiedCap ? <Check size={14} /> : <Copy size={14} />}
+            <span>{copiedCap ? "CAP 1.2 Payload Copied" : "Copy CAP 1.2 Alert Payload"}</span>
+          </button>
 
-          <p className="text-xs text-stone-400 leading-relaxed">
-            Automated Common Alerting Protocol payload ready for direct injection into national and state disaster dispatch centers.
-          </p>
+          <button
+            onClick={() => setShowJson(!showJson)}
+            className="w-full text-center text-[11px] font-mono text-stone-400 hover:text-white cursor-pointer py-1"
+          >
+            {showJson ? "Hide JSON Schema" : "Inspect Raw OASIS JSON"}
+          </button>
 
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              onClick={() => setShowCapModal(!showCapModal)}
-              className="flex-1 py-2 px-3 rounded-full text-xs font-medium bg-[#141210] hover:bg-stone-800 text-stone-200 transition-colors cursor-pointer border border-stone-800"
-            >
-              {showCapModal ? "Hide JSON" : "Inspect Payload"}
-            </button>
-            <button
-              onClick={copyCapAlert}
-              className="py-2 px-4 rounded-full text-xs font-semibold bg-white hover:bg-stone-200 text-black transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              {copiedCap ? <Check size={13} /> : <Copy size={13} />}
-              <span>{copiedCap ? "Copied" : "Copy CAP"}</span>
-            </button>
-          </div>
-
-          {showCapModal && (
-            <div className="bg-black/60 p-3 rounded-lg border border-stone-800 text-[10px] font-mono text-stone-300 max-h-48 overflow-y-auto">
+          {showJson && (
+            <div className="bg-black/80 p-3 rounded-lg border border-stone-800 text-[10px] font-mono text-stone-300 max-h-40 overflow-y-auto">
               <pre>{JSON.stringify(capPayload, null, 2)}</pre>
             </div>
           )}

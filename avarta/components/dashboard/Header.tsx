@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Radio, ShieldCheck, Activity, Cpu } from "lucide-react";
+import { ArrowLeft, Radio } from "lucide-react";
 
 interface DashboardHeaderProps {
   activeThreatCount: number;
@@ -9,73 +9,46 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ activeThreatCount }: DashboardHeaderProps) {
   return (
-    <header className="w-full bg-[#141210] border-b border-[#292524] px-6 sm:px-10 py-4 sticky top-0 z-40 text-stone-100">
-      <div className="max-w-[1340px] mx-auto flex flex-wrap items-center justify-between gap-4">
-        {/* Brand & Editorial Title */}
+    <header className="w-full bg-[#110f0e] border-b border-stone-800/80 px-6 sm:px-10 py-3.5 sticky top-0 z-40 text-stone-100">
+      <div className="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
+        {/* Left: Brand & Quiet Horizon Indicator */}
         <div className="flex items-center gap-4">
           <Link
             href="/"
             className="text-stone-400 hover:text-white transition-colors p-1.5 rounded-full hover:bg-stone-800/80"
             title="Return to Home"
           >
-            <ArrowLeft size={17} />
+            <ArrowLeft size={16} />
           </Link>
 
-          <div className="flex items-baseline gap-3">
+          <div className="flex items-center gap-3">
             <span
               className="text-2xl font-light tracking-tight text-white"
               style={{ fontFamily: "var(--font-serif)" }}
             >
               Avarta
             </span>
-            <span className="text-[11px] font-medium tracking-[0.12em] uppercase text-stone-400 border-l border-stone-800 pl-3 hidden sm:inline">
-              Meteorological Intelligence Console
-            </span>
+            <span className="w-1 h-1 rounded-full bg-stone-700 hidden sm:inline" />
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono text-stone-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Medium-Range Threat Intelligence</span>
+            </div>
           </div>
         </div>
 
-        {/* Quiet Scientific Telemetry Badges (Dark Mode) */}
-        <div className="hidden xl:flex items-center gap-2.5 text-xs">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1c1917] border border-stone-800 text-stone-300 shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="font-medium text-white">NEPS-G 12km EPS</span>
-            <span className="text-stone-500">· Synchronized</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1c1917] border border-stone-800 text-stone-300 shadow-xs">
-            <Activity size={12} className="text-stone-400" />
-            <span className="font-medium text-white">Spherical GNN v2.4</span>
-            <span className="text-stone-500">· Active Mesh</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1c1917] border border-stone-800 text-stone-300 shadow-xs">
-            <Cpu size={12} className="text-stone-400" />
-            <span className="font-medium text-white">5km Diffusion</span>
-            <span className="text-stone-500">· Threat-First Crop</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1c1917] border border-stone-800 text-stone-300 shadow-xs">
-            <ShieldCheck size={12} className="text-emerald-400" />
-            <span className="font-medium text-white">Physics Guard</span>
-            <span className="text-emerald-400 font-semibold">99.4% Valid</span>
-          </div>
-        </div>
-
-        {/* Right Action: Active Threats Pill */}
+        {/* Right: Active Threats Counter & Direct CAP Feed */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1c1917] border border-stone-800 text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-white font-medium">
-              {activeThreatCount} Active 4D Corridors
-            </span>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900 border border-stone-800 text-xs font-mono text-stone-300">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>{activeThreatCount} Active 4D Corridors</span>
           </div>
 
           <Link
             href="/api/threats"
             target="_blank"
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-stone-200 bg-[#1c1917] hover:bg-stone-800 border border-stone-700 px-3.5 py-1.5 rounded-full transition-colors shadow-xs"
+            className="hidden sm:inline-flex items-center text-xs font-medium text-stone-300 hover:text-white bg-transparent hover:bg-stone-900 border border-stone-800 px-4 py-1.5 rounded-full transition-colors"
           >
-            <span>Live JSON Feed</span>
+            REST API
           </Link>
         </div>
       </div>

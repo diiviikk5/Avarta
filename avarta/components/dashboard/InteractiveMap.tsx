@@ -304,53 +304,50 @@ export default function InteractiveMap({ threat }: InteractiveMapProps) {
   return (
     <div className="flex flex-col h-full bg-[#0a0c10] border-b border-[#292524] text-stone-100">
       {/* Top Map Action Bar */}
-      <div className="px-6 py-3.5 border-b border-[#292524] bg-[#141210] flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Compass size={17} className="text-white" />
-          <div>
-            <h3
-              className="text-base font-light text-white tracking-tight"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
-              4D Spatio-Temporal Corridor & Ensemble Evolution
-            </h3>
-            <span className="text-xs text-stone-400">
-              Centroid: {threat.centroid.lat.toFixed(2)}°N, {threat.centroid.lon.toFixed(2)}°E · Lead time: {threat.lead_time_days} days
-            </span>
-          </div>
+      <div className="px-6 py-3 border-b border-[#292524] bg-[#141210] flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3
+            className="text-base font-light text-white tracking-tight"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            4D Threat Spatio-Temporal Corridor
+          </h3>
+          <span className="text-xs text-stone-400 font-mono">
+            {threat.name} · Lead Time: {threat.lead_time_days} Days
+          </span>
         </div>
 
         {/* Layer Toggles */}
         <div className="flex items-center gap-2 text-xs">
           <button
             onClick={() => setShowComputeRegion(!showComputeRegion)}
-            className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full transition-colors cursor-pointer border ${
               showComputeRegion
                 ? "bg-white text-black border-white font-medium"
-                : "bg-[#1c1917] text-stone-300 border-stone-800 hover:border-stone-700"
+                : "bg-stone-900 text-stone-400 border-stone-800"
             }`}
           >
-            Compute Region
+            Compute Crop
           </button>
           <button
             onClick={() => setShowUncertaintyCorridor(!showUncertaintyCorridor)}
-            className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full transition-colors cursor-pointer border ${
               showUncertaintyCorridor
                 ? "bg-white text-black border-white font-medium"
-                : "bg-[#1c1917] text-stone-300 border-stone-800 hover:border-stone-700"
+                : "bg-stone-900 text-stone-400 border-stone-800"
             }`}
           >
-            Uncertainty Envelope
+            Uncertainty Cone
           </button>
           <button
             onClick={() => setShowEnsembleMembers(!showEnsembleMembers)}
-            className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full transition-colors cursor-pointer border ${
               showEnsembleMembers
                 ? "bg-white text-black border-white font-medium"
-                : "bg-[#1c1917] text-stone-300 border-stone-800 hover:border-stone-700"
+                : "bg-stone-900 text-stone-400 border-stone-800"
             }`}
           >
-            Ensemble Paths ({threat.ensemble_members.length})
+            EPS Members
           </button>
         </div>
       </div>
@@ -364,26 +361,21 @@ export default function InteractiveMap({ threat }: InteractiveMapProps) {
           className="w-full h-full object-cover"
         />
 
-        {/* Editorial Legend Plate (Dark) */}
-        <div className="absolute top-5 left-5 bg-[#141210]/90 backdrop-blur-md p-3.5 rounded-[14px] border border-stone-800 shadow-xl text-xs space-y-2 pointer-events-none">
-          <div className="text-[10px] font-medium tracking-wider uppercase text-stone-400 mb-1">
-            Cartographic Layers
+        {/* Minimal Bottom-Left Indicator */}
+        <div className="absolute bottom-4 left-5 flex items-center gap-3 bg-[#141210]/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-stone-800 text-[11px] text-stone-300 pointer-events-none">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-white" />
+            <span>Consensus</span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-white inline-block" />
-            <span className="text-stone-200">Consensus Deterministic Mean</span>
+          <span className="text-stone-600">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-xs bg-[#f4c5a8]/70" />
+            <span>95% Cone</span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-3 h-0.5 bg-[#94a3b8] inline-block" />
-            <span className="text-stone-400">EPS Perturbation Members</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#f4c5a8]/60 inline-block" />
-            <span className="text-stone-400">95% Trajectory Uncertainty</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-[#a8c8e8]/50 border border-dashed border-sky-400 inline-block" />
-            <span className="text-stone-400">Dynamic 5km Compute Crop</span>
+          <span className="text-stone-600">|</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-xs border border-dashed border-sky-400" />
+            <span>5km Crop</span>
           </div>
         </div>
 
