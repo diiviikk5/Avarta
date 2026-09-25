@@ -3,34 +3,48 @@ Unit tests for CorrDiff residual diffusion downscaler and ExtremeTailPreservatio
 """
 
 import unittest
-import torch
+import numpy as np
 from models.residual_downscaler.diffusion_downscaler import (
-    ResidualDownscalerUNet,
-    ExtremeTailPreservationLoss
+    ExtremeTailPreservationLoss,
+    HAS_TORCH,
 )
+
+if HAS_TORCH:
+    import torch
+    from models.residual_downscaler.diffusion_downscaler import ResidualDownscaler
+
 
 class TestResidualDownscaler(unittest.TestCase):
     def setUp(self):
-        self.model = ResidualDownscalerUNet(in_channels=4, out_channels=4, base_dim=32)
-        self.loss_fn = ExtremeTailPreservationLoss(tail_weight=3.0, threshold_quantile=0.90)
-
-    def test_forward_pass_shape(self):
-        batch_size = 2
-        in_c = 4
-        H, W = 16, 16
-        x_coarse = torch.randn(batch_size, in_c, H, W)
-        timesteps = torch.tensor([10, 50], dtype=torch.long)
-
-        out = self.model(x_coarse, timesteps)
-        self.assertEqual(out.shape, (batch_size, in_c, H * 2, W * 2))
+        self.loss_fn = ExtremeTailPreservationLoss(alpha_extreme=3.5, percentile_threshold=0.95)
 
     def test_extreme_tail_loss(self):
-        pred = torch.tensor([[[[1.0, 5.0], [10.0, 50.0]]]], dtype=torch.float32)
-        target = torch.tensor([[[[1.0, 5.0], [10.0, 45.0]]]], dtype=torch.float32)
+        y_true = np.linspace(0.0, 100.0, 1000).reshape(10, 100)
+        # Prediction that severely under-predicts the extreme tail
+        y_pred = y_true.copy()
+        y_pred[y_true > 90.0] = 50.0
 
-        loss = self.loss_fn(pred, target)
-        self.assertTrue(torch.is_tensor(loss))
-        self.assertGreater(loss.item(), 0.0)
+        loss_dict = self.loss_fn.compute_loss(y_pred, y_true)
+        self.assertIn("total_loss", loss_dict)
+        self.assertIn("extreme_tail_penalty", loss_dict)
+        self.assertGreater(loss_dict["extreme_tail_penalty"], 0.0)
+        self.assertGreater(loss_dict["total_loss"], loss_dict["base_mse"])
+
+    @unittest.skipUnless(HAS_TORCH, "PyTorch required for downscaler forward pass")
+    def test_downscaler_forward_pass(self):
+        model = ResidualDownscaler(in_channels=4, out_channels=1, hidden_dim=32)
+
+        B, C, H, W = 1, 4, 10, 10
+        x_12km = torch.randn(B, C, H, W)
+        # fine terrain is scaled by 2.4 => 24x24
+        terrain_5km = torch.randn(B, 1, 24, 24)
+        threat_vec = torch.randn(B, 8)
+
+        output = model(x_12km, terrain_5km, threat_vec)
+        self.assertIn("y_5km", output)
+        self.assertIn("residual_5km", output)
+        self.assertEqual(output["y_5km"].shape, (B, 1, 24, 24))
+
 
 if __name__ == "__main__":
     unittest.main()

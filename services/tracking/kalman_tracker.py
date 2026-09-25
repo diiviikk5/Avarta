@@ -64,6 +64,10 @@ class KalmanThreatState:
         self.state = self.state + K @ y
         self.cov = (np.eye(6) - K @ H) @ self.cov
         
+        if len(self.history) >= 1:
+            prev_intensity = self.history[-1]["intensity"]
+            self.state[5] = measured_intensity - prev_intensity
+
         self.history.append({
             "lat": float(self.state[0]),
             "lon": float(self.state[1]),

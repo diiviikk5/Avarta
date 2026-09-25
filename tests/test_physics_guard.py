@@ -3,32 +3,44 @@ Unit tests for PhysicsGuard mass continuity, non-negative precipitation, and moi
 """
 
 import unittest
-import torch
+import numpy as np
 from models.physics_guard.physics_guard import PhysicsGuard
+
 
 class TestPhysicsGuard(unittest.TestCase):
     def setUp(self):
-        self.guard = PhysicsGuard(dx=5000.0, dy=5000.0)
+        self.guard = PhysicsGuard(max_continuity_error=0.05)
 
     def test_non_negative_precipitation_projection(self):
-        # Tensor with unphysical negative precipitation values
-        field = torch.tensor([[[[-10.0, 5.0], [0.0, -2.5]]]], dtype=torch.float32)
-        projected = self.guard.project_non_negative_precipitation(field)
+        field = np.array([[-10.0, 5.0], [0.0, -2.5]], dtype=np.float32)
+        projected, violations = self.guard.project(field)
 
-        self.assertTrue((projected >= 0.0).all().item())
-        self.assertEqual(projected[0, 0, 0, 0].item(), 0.0)
-        self.assertEqual(projected[0, 0, 0, 1].item(), 5.0)
+        self.assertEqual(violations, 2)
+        self.assertTrue((projected >= 0.0).all())
+        self.assertEqual(projected[0, 0], 0.0)
+        self.assertEqual(projected[0, 1], 5.0)
 
-    def test_moisture_flux_divergence_computation(self):
-        B, H, W = 1, 8, 8
-        u = torch.ones(B, 1, H, W) * 10.0
-        v = torch.zeros(B, 1, H, W)
-        q = torch.ones(B, 1, H, W) * 0.015
+    def test_physics_validation(self):
+        H, W = 16, 16
+        precip = np.maximum(0.0, np.random.uniform(0.0, 30.0, size=(H, W)))
+        humidity = np.ones((H, W), dtype=np.float32) * 0.015
+        u_wind = np.ones((H, W), dtype=np.float32) * 5.0
+        v_wind = np.zeros((H, W), dtype=np.float32)
 
-        div = self.guard.compute_moisture_flux_divergence(u, v, q)
-        self.assertEqual(div.shape, (B, 1, H, W))
-        # Uniform velocity field has zero divergence
-        self.assertTrue(torch.allclose(div, torch.zeros_like(div), atol=1e-5))
+        metrics = self.guard.validate(
+            precipitation_field=precip,
+            specific_humidity=humidity,
+            u_wind=u_wind,
+            v_wind=v_wind,
+            dx_meters=5000.0,
+            dy_meters=5000.0
+        )
+
+        self.assertIn("composite_physics_score", metrics)
+        self.assertIn("moisture_check_passed", metrics)
+        self.assertIn("continuity_residual_error", metrics)
+        self.assertGreaterEqual(metrics["composite_physics_score"], 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

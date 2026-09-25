@@ -56,7 +56,7 @@ if HAS_TORCH:
         """
         def __init__(self, in_channels: int = 4, out_channels: int = 1, hidden_dim: int = 64):
             super().__init__()
-            self.threat_encoder = ThreatConditioningEncoder()
+            self.threat_encoder = ThreatConditioningEncoder(threat_dim=8, embed_dim=hidden_dim)
             
             # Bilinear upsampler for coarse baseline
             self.upsample = nn.Upsample(scale_factor=2.4, mode="bilinear", align_corners=False)
