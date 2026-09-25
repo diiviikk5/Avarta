@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { CalendarDays, ChevronRight, CloudRain, FlaskConical, Layers3, MapPin, Moon, Navigation, Radar, Sparkles, Sun, Thermometer, Wind } from "lucide-react";
 import styles from "./replay.module.css";
+import AssistantWidget from "./AssistantWidget";
+
 
 const LINKS = [
   { href: "/dashboard", label: "Overview", icon: Layers3, exact: true },
@@ -175,6 +177,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </header>
         <main className={styles.main}>{children}</main>
       </div>
+      <AssistantWidget />
     </div>
   );
 }

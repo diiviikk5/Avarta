@@ -173,4 +173,73 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .shellDark .demoStat{color:#62d6be}
 .shellDark .demoGrid p,.shellDark .demoFoot{color:#7b9489}
 
+/* Floating AI Assistant Widget */
+.assistantRoot{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;align-items:flex-end}
+.assistantFab{width:48px;height:48px;border-radius:50%;background:#1c5248;color:#fff;border:1px solid #2e7164;display:grid;place-items:center;box-shadow:0 4px 18px rgba(18,52,44,.35);cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);position:relative}
+.assistantFab:hover{transform:scale(1.06);background:#236559;box-shadow:0 6px 22px rgba(18,52,44,.45)}
+.assistantFabActive{background:#153a33;border-color:#1f4f46}
+.assistantBadge{position:absolute;top:-2px;right:-2px;width:18px;height:18px;border-radius:50%;background:#dd5e3b;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.2);animation:assistantPulse 2.5s infinite}
+@keyframes assistantPulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+.assistantPanel{width:360px;max-width:calc(100vw - 32px);height:500px;max-height:calc(100vh - 100px);background:#fff;border:1px solid #dce5db;border-radius:14px;box-shadow:0 12px 36px rgba(18,52,44,.16),0 2px 10px rgba(0,0,0,.06);display:flex;flex-direction:column;overflow:hidden;margin-bottom:12px;animation:assistantSlideUp .22s ease-out}
+@keyframes assistantSlideUp{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.assistantHeader{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#f5f8f4;border-bottom:1px solid #e5ece4}
+.assistantIdentity{display:flex;align-items:center;gap:10px}
+.assistantIdentity strong{display:block;font-size:13px;color:#183630;letter-spacing:-.2px}
+.assistantAvatar{width:32px;height:32px;border-radius:8px;background:#e3ede5;color:#1c5248;display:grid;place-items:center;position:relative;border:1px solid #c8d9cb}
+.assistantOnlineDot{position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#22a35b;border:2px solid #fff}
+.assistantStatusText{display:block;font-size:10px;color:#6f857a;font-weight:500}
+.assistantCloseBtn{border:0;background:transparent;color:#768a80;padding:6px;border-radius:6px;cursor:pointer;display:grid;place-items:center;transition:all .15s ease}
+.assistantCloseBtn:hover{background:#e7efe8;color:#1c5248}
+.assistantMessages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.assistantUserRow{display:flex;justify-content:flex-end}
+.assistantBotRow{display:flex;align-items:flex-start;gap:8px}
+.assistantMiniAvatar{width:22px;height:22px;border-radius:6px;background:#e3ede5;color:#1c5248;display:grid;place-items:center;flex:none;margin-top:2px}
+.assistantUserBubble{max-width:82%;background:#1c5248;color:#fff;padding:9px 13px;border-radius:12px 12px 2px 12px;font-size:12px;line-height:1.55;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.assistantBotBubble{max-width:88%;background:#f4f7f2;border:1px solid #e1ebe0;color:#233b34;padding:10px 13px;border-radius:2px 12px 12px 12px;font-size:12px;line-height:1.55}
+.assistantMessageText{margin:0;white-space:pre-wrap}
+.assistantLinkRow{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:6px;border-top:1px solid #e4ede3}
+.assistantLinkPill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#1c5248;background:#eaf1e9;border:1px solid #c9dacb;padding:3px 8px;border-radius:100px;text-decoration:none;transition:all .15s ease}
+.assistantLinkPill:hover{background:#1c5248;color:#fff}
+.assistantTypingIndicator{display:flex;align-items:center;gap:4px;padding:4px 2px}
+.assistantTypingIndicator span{width:6px;height:6px;border-radius:50%;background:#50796e;animation:typingBounce 1.2s infinite ease-in-out both}
+.assistantTypingIndicator span:nth-child(1){animation-delay:-.32s}
+.assistantTypingIndicator span:nth-child(2){animation-delay:-.16s}
+@keyframes typingBounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+.assistantSuggestions{display:flex;gap:5px;overflow-x:auto;padding:6px 12px 8px;border-top:1px solid #ebf1ea;background:#fafcfa;scrollbar-width:none}
+.assistantSuggestions::-webkit-scrollbar{display:none}
+.assistantChip{flex:none;display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:#3b5c51;background:#eef4ed;border:1px solid #d4e0d2;padding:4px 9px;border-radius:100px;cursor:pointer;white-space:nowrap;transition:all .15s ease}
+.assistantChip:hover{background:#e2ede0;border-color:#b7ceb4;color:#173f36}
+.assistantInputForm{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid #e5ece4;background:#fff}
+.assistantInput{flex:1;border:1px solid #d5dfd4;border-radius:8px;padding:8px 11px;font-size:12px;color:#1a332d;background:#fbfcfb;outline:none;transition:border-color .15s ease}
+.assistantInput:focus{border-color:#1c5248;background:#fff}
+.assistantSendBtn{width:32px;height:32px;border:0;background:#1c5248;color:#fff;border-radius:8px;display:grid;place-items:center;cursor:pointer;transition:all .15s ease}
+.assistantSendBtn:hover:not(:disabled){background:#256b5e}
+.assistantSendBtn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Dark Mode Assistant Overrides */
+.shellDark .assistantFab{background:#1e594e;border-color:#2e7a6b;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.shellDark .assistantFab:hover{background:#266d60}
+.shellDark .assistantPanel{background:#101f1c;border-color:#1e3a34;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.shellDark .assistantHeader{background:#0d1b18;border-bottom-color:#1a342e}
+.shellDark .assistantIdentity strong{color:#e2ede8}
+.shellDark .assistantAvatar{background:#162b26;border-color:#264a42;color:#5bc5b2}
+.shellDark .assistantOnlineDot{border-color:#101f1c}
+.shellDark .assistantStatusText{color:#7d968b}
+.shellDark .assistantCloseBtn{color:#8da499}
+.shellDark .assistantCloseBtn:hover{background:#19312b;color:#fff}
+.shellDark .assistantMiniAvatar{background:#162b26;color:#5bc5b2}
+.shellDark .assistantBotBubble{background:#132421;border-color:#1c3631;color:#d7eae1}
+.shellDark .assistantLinkRow{border-top-color:#1a342f}
+.shellDark .assistantLinkPill{background:#182e28;border-color:#274941;color:#5bc5b2}
+.shellDark .assistantLinkPill:hover{background:#5bc5b2;color:#0c1614}
+.shellDark .assistantSuggestions{background:#0d1b18;border-top-color:#1a332d}
+.shellDark .assistantChip{background:#142723;border-color:#22423b;color:#8faaa0}
+.shellDark .assistantChip:hover{background:#1b332e;border-color:#2d554c;color:#bde7dc}
+.shellDark .assistantInputForm{background:#101f1c;border-top-color:#1c3832}
+.shellDark .assistantInput{background:#132622;border-color:#21433c;color:#e2ede8}
+.shellDark .assistantInput:focus{border-color:#5bc5b2}
+.shellDark .assistantSendBtn{background:#256a5c}
+.shellDark .assistantSendBtn:hover:not(:disabled){background:#2e7f6f}
+
+
 
