@@ -119,8 +119,68 @@ def render_doppler_radar(matrix: np.ndarray, title: str, subtitle: str = "", com
     )
 
 
-def render_avarta_banner() -> Panel:
-    """Renders a cyberpunk glowing gradient ASCII banner for AVARTA."""
+THEMES = {
+    "cyan": {
+        "name": "Cyber Icy Cyan (Default)",
+        "gradient": ["#e0f2fe", "#7dd3fc", "#38bdf8", "#0284c7", "#0369a1", "#0284c7"],
+        "border": "bold cyan",
+        "accent": "#38bdf8",
+        "tag": "CYBER-CYAN"
+    },
+    "emerald": {
+        "name": "Matrix Deep Emerald",
+        "gradient": ["#d1fae5", "#6ee7b7", "#34d399", "#10b981", "#059669", "#047857"],
+        "border": "bold green",
+        "accent": "#10b981",
+        "tag": "MATRIX-EMERALD"
+    },
+    "amber": {
+        "name": "Solar Thermal Gold",
+        "gradient": ["#fef3c7", "#fde047", "#f59e0b", "#d97706", "#ea580c", "#c2410c"],
+        "border": "bold yellow",
+        "accent": "#f59e0b",
+        "tag": "SOLAR-AMBER"
+    },
+    "aurora": {
+        "name": "Nordic Aurora Borealis",
+        "gradient": ["#22d3ee", "#06b6d4", "#14b8a6", "#10b981", "#34d399", "#6ee7b7"],
+        "border": "bold #14b8a6",
+        "accent": "#22d3ee",
+        "tag": "AURORA"
+    },
+    "stealth": {
+        "name": "Titanium Stealth HUD",
+        "gradient": ["#ffffff", "#f1f5f9", "#cbd5e1", "#94a3b8", "#64748b", "#94a3b8"],
+        "border": "bold white",
+        "accent": "#ffffff",
+        "tag": "STEALTH-HUD"
+    },
+    "crimson": {
+        "name": "Catastrophe Red Alert",
+        "gradient": ["#fee2e2", "#fca5a5", "#f87171", "#ef4444", "#dc2626", "#b91c1c"],
+        "border": "bold red",
+        "accent": "#ef4444",
+        "tag": "CRIMSON-ALERT"
+    },
+    "synthwave": {
+        "name": "Synthwave Violet",
+        "gradient": ["#38bdf8", "#818cf8", "#a78bfa", "#c084fc", "#e879f9", "#f43f5e"],
+        "border": "bold #c084fc",
+        "accent": "#c084fc",
+        "tag": "SYNTHWAVE"
+    }
+}
+
+CURRENT_THEME = "cyan"
+
+
+def render_avarta_banner(theme_key: Optional[str] = None) -> Panel:
+    """Renders a stylized ASCII banner with the active color theme."""
+    global CURRENT_THEME
+    key = theme_key or CURRENT_THEME
+    theme = THEMES.get(key, THEMES["cyan"])
+    colors = theme["gradient"]
+
     ascii_art = """
       █████╗ ██╗   ██╗ █████╗ ██████╗ ████████╗ █████╗ 
      ██╔══██╗██║   ██║██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗
@@ -130,21 +190,20 @@ def render_avarta_banner() -> Panel:
      ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
 """
     banner_text = Text()
-    colors = ["#38bdf8", "#60a5fa", "#818cf8", "#a78bfa", "#c084fc", "#e879f9"]
     lines = [l for l in ascii_art.strip("\n").split("\n")]
     for idx, line in enumerate(lines):
         c = colors[idx % len(colors)]
         banner_text.append(line + "\n", style=f"bold {c}")
 
     banner_text.append("\n  4D SPATIO-TEMPORAL EXTREME WEATHER ANOMALY TRACKING\n", style="bold white")
-    banner_text.append("  [GraphCast Multi-Mesh GNN] · [CorrDiff Residual Diffusion] · [PhysicsGuard]\n", style="cyan")
-    banner_text.append("  SIH Problem Statement 26078 · Operational Meteorological Intelligence Core", style="dim white")
+    banner_text.append("  [GraphCast Multi-Mesh GNN] · [CorrDiff Residual Diffusion] · [PhysicsGuard]\n", style=f"bold {theme['accent']}")
+    banner_text.append(f"  SIH Problem Statement 26078 · Operational Meteorological Intelligence Core · [{theme['tag']}]", style="dim white")
 
     return Panel(
         Align.center(banner_text),
         box=box.DOUBLE,
-        border_style="bold cyan",
-        subtitle="[bold white]v2.4-CORE[/] · [bold green]● SPATIO-TEMPORAL TENSOR ENGINE SYNCHRONIZED[/]",
+        border_style=theme["border"],
+        subtitle=f"[bold white]v2.4-CORE[/] · [bold green]● SPATIO-TEMPORAL TENSOR ENGINE SYNCHRONIZED[/] · [dim cyan]THEME: {theme['name'].upper()}[/]",
         subtitle_align="right"
     )
 
@@ -252,7 +311,7 @@ def make_cockpit_layout(angle: float = 0.0) -> Layout:
     f_left.append(" OASIS CAP 1.2 Issued for Visakhapatnam & Kakinada Coast. NDRF Battalions #4 & #7 Deployed.", style="bold yellow")
     
     f_right = Text()
-    f_right.append("[1] 5-Stage Demo  [2] Zoom Lens  [3] CAP JSON  [Q] Exit Cockpit", style="bold cyan")
+    f_right.append("[1] Demo  [2] Lens  [3] CAP  [C] Switch Theme  [Q] Exit", style="bold cyan")
 
     footer_table.add_row(f_left, f_right)
     layout["footer"].update(Panel(footer_table, box=box.ROUNDED, border_style="dim white"))
@@ -262,6 +321,7 @@ def make_cockpit_layout(angle: float = 0.0) -> Layout:
 
 def live_cockpit_loop(max_seconds: int = 0):
     """Executes the live interactive mission control cockpit loop with rotating radar."""
+    global CURRENT_THEME
     console.clear()
     
     # Check if Windows non-blocking input is available
@@ -289,6 +349,10 @@ def live_cockpit_loop(max_seconds: int = 0):
                     key = msvcrt.getch().decode("utf-8", errors="ignore").lower()
                     if key in ["q", "\x1b"]:  # q or ESC
                         break
+                    elif key == "c":
+                        theme_keys = list(THEMES.keys())
+                        idx = theme_keys.index(CURRENT_THEME)
+                        CURRENT_THEME = theme_keys[(idx + 1) % len(theme_keys)]
                     elif key == "1":
                         live.stop()
                         demo_full_pipeline()
@@ -592,8 +656,38 @@ def run_training_demo():
     ))
 
 
+def select_theme_menu():
+    """Allows user to interactively pick an ASCII color theme."""
+    global CURRENT_THEME
+    console.clear()
+    console.print(render_avarta_banner())
+    console.print("\n[bold cyan]🎨 AVARTA COLOR THEME SWITCHER[/]\n")
+
+    table = Table(title="Available Color Themes", box=box.ROUNDED, border_style="cyan")
+    table.add_column("Key", style="bold white", justify="center")
+    table.add_column("Theme Name", style="bold white")
+    table.add_column("Identifier", style="cyan")
+    table.add_column("Palette Style", style="yellow")
+    table.add_column("Active", style="bold green", justify="center")
+
+    theme_keys = list(THEMES.keys())
+    for idx, (k, t) in enumerate(THEMES.items(), 1):
+        is_active = "[bold green]● CURRENT[/]" if k == CURRENT_THEME else ""
+        table.add_row(str(idx), t["name"], t["tag"], f"Border: {t['border']}", is_active)
+
+    console.print(table)
+    console.print("\nEnter theme number (1-7), or press Enter to keep current:")
+    choice = console.input("[bold #38bdf8]Select Theme > [/]").strip()
+
+    if choice.isdigit() and 1 <= int(choice) <= len(theme_keys):
+        CURRENT_THEME = theme_keys[int(choice) - 1]
+        console.print(f"\n[bold green]✔ Theme switched to: {THEMES[CURRENT_THEME]['name']}[/]")
+        time.sleep(0.7)
+
+
 def interactive_menu():
     """Interactive CLI menu loop."""
+    global CURRENT_THEME
     while True:
         console.clear()
         console.print(render_avarta_banner())
@@ -618,8 +712,10 @@ def interactive_menu():
         col2_text = Text()
         col2_text.append("[D] ", style="bold #10b981")
         col2_text.append("Dataset Ingestion Hub (IMDAA, ERA5, NEPS-G, IMD 4km)\n", style="bold #10b981")
-        col2_text.append("[T] ", style="bold #e879f9")
-        col2_text.append("Train Diffusion Downscaler (PyTorch Training Loop)\n", style="bold #e879f9")
+        col2_text.append("[T] ", style="bold #38bdf8")
+        col2_text.append("Train Diffusion Downscaler (PyTorch Training Loop)\n", style="bold #38bdf8")
+        col2_text.append("[C] ", style="bold #f59e0b")
+        col2_text.append(f"Switch Color Theme [Active: {THEMES[CURRENT_THEME]['tag']}]\n", style="bold #f59e0b")
         col2_text.append("[4] ", style="bold #00f0ff")
         col2_text.append("PhysicsGuard Conservation Ledger (Navier-Stokes Audit)\n", style="white")
         col2_text.append("[5] ", style="bold #00f0ff")
@@ -631,7 +727,7 @@ def interactive_menu():
 
         grid.add_row(
             Panel(col1_text, title="[bold cyan]Operational Telemetry & Benchmarks[/]", box=box.ROUNDED, border_style="cyan"),
-            Panel(col2_text, title="[bold magenta]Datasets, Training & Physics[/]", box=box.ROUNDED, border_style="magenta")
+            Panel(col2_text, title="[bold #38bdf8]Datasets, Training & Themes[/]", box=box.ROUNDED, border_style="blue")
         )
         console.print(grid)
         console.print()
@@ -660,6 +756,8 @@ def interactive_menu():
         elif choice in ["t", "train"]:
             run_training_demo()
             console.input("[dim cyan]Press Enter to return to menu...[/]")
+        elif choice in ["c", "theme", "colors"]:
+            select_theme_menu()
         elif choice == "4":
             guard = PhysicsGuard()
             audit = guard.validate(np.random.uniform(0, 50, (32, 32)), np.ones((32, 32))*0.015, np.ones((32, 32))*10.0, np.zeros((32, 32)))
@@ -686,6 +784,7 @@ def interactive_menu():
 
 
 def main():
+    global CURRENT_THEME
     parser = argparse.ArgumentParser(description="Avarta AI Operational Weather Intelligence CLI")
     parser.add_argument("--demo", action="store_true", help="Run live end-to-end 5-stage inference demo non-interactively")
     parser.add_argument("--live", action="store_true", help="Launch live animated mission control cockpit")
@@ -693,7 +792,11 @@ def main():
     parser.add_argument("--datasets", action="store_true", help="Display SIH-26078 Dataset Hub and provenance")
     parser.add_argument("--benchmark", action="store_true", help="Run Super Cyclone Amphan 2020 ground truth benchmark")
     parser.add_argument("--train", action="store_true", help="Execute PyTorch downscaler training loop")
+    parser.add_argument("--theme", type=str, default=None, choices=list(THEMES.keys()), help="Set color theme (cyan, emerald, amber, aurora, stealth, crimson, synthwave)")
     args = parser.parse_args()
+
+    if args.theme and args.theme in THEMES:
+        CURRENT_THEME = args.theme
 
     if args.demo:
         demo_full_pipeline()
