@@ -9,12 +9,13 @@ import PhysicsGuardInspector from "@/components/dashboard/PhysicsGuardInspector"
 import ImpactPanel from "@/components/dashboard/ImpactPanel";
 import AgentCopilot from "@/components/dashboard/AgentCopilot";
 import FoundationModelsExplorer from "@/components/dashboard/FoundationModelsExplorer";
+import DatasetHubViewer from "@/components/dashboard/DatasetHubViewer";
 import { MOCK_THREATS } from "@/lib/mock-weather-data";
-import { Layers, Sparkles, ShieldCheck, Bot, Cpu } from "lucide-react";
+import { Layers, Sparkles, ShieldCheck, Bot, Cpu, Database } from "lucide-react";
 
 export default function DashboardPage() {
   const [selectedThreatId, setSelectedThreatId] = useState<string>(MOCK_THREATS[0].id);
-  const [activeCenterTab, setActiveCenterTab] = useState<"map" | "downscaling" | "physics" | "models" | "agent">("map");
+  const [activeCenterTab, setActiveCenterTab] = useState<"map" | "downscaling" | "physics" | "models" | "datasets" | "agent">("map");
 
   const selectedThreat = MOCK_THREATS.find((t) => t.id === selectedThreatId) || MOCK_THREATS[0];
 
@@ -91,6 +92,18 @@ export default function DashboardPage() {
               </button>
 
               <button
+                onClick={() => setActiveCenterTab("datasets")}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  activeCenterTab === "datasets"
+                    ? "bg-white text-black shadow-xs font-semibold"
+                    : "text-stone-400 hover:text-white hover:bg-stone-800/60"
+                }`}
+              >
+                <Database size={13} className={activeCenterTab === "datasets" ? "text-black" : "text-stone-400"} />
+                <span>Datasets & Benchmarks</span>
+              </button>
+
+              <button
                 onClick={() => setActiveCenterTab("agent")}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
                   activeCenterTab === "agent"
@@ -120,6 +133,7 @@ export default function DashboardPage() {
               <PhysicsGuardInspector guard={selectedThreat.physics_guard} />
             )}
             {activeCenterTab === "models" && <FoundationModelsExplorer />}
+            {activeCenterTab === "datasets" && <DatasetHubViewer />}
             {activeCenterTab === "agent" && <AgentCopilot threat={selectedThreat} />}
           </div>
         </div>

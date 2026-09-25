@@ -109,11 +109,61 @@ if HAS_FASTAPI:
             "spectral_smoothing_loss_prevented_percent": 118.5
         }
 
+    class ChatRequest(BaseModel):
+        threat_id: str
+        query: str
+
+    class SpatialAlertRequest(BaseModel):
+        threat_id: str = "AVT-2026-00001"
+        lat: float = 17.194
+        lon: float = 82.928
+        hazard_type: str = "CYCLONE"
+        intensity: float = 186.4
+        radius_km: float = 5.0
+
+    @app.post("/api/alerts/spatial")
+    def trigger_spatial_alert(req: SpatialAlertRequest):
+        return {
+            "status": "SUCCESS",
+            "threat_id": req.threat_id,
+            "pinpoint_core": {
+                "lat": req.lat,
+                "lon": req.lon,
+                "hazard_type": req.hazard_type,
+                "peak_intensity": req.intensity
+            },
+            "spatial_impact_tiers": {
+                "severe_zone": {
+                    "radius_km": 5.0,
+                    "threat_level": "RED",
+                    "action_mandate": "MANDATORY_EVACUATION",
+                    "exposed_population": 78400,
+                    "ndrf_deployment": "NDRF Level-3 Quick Reaction Team"
+                },
+                "moderate_zone": {
+                    "radius_km": 15.0,
+                    "threat_level": "ORANGE",
+                    "action_mandate": "SHELTER_IN_PLACE",
+                    "exposed_population": 185000
+                },
+                "low_zone": {
+                    "radius_km": 30.0,
+                    "threat_level": "YELLOW",
+                    "action_mandate": "MONITOR_UPDATES",
+                    "exposed_population": 550109
+                }
+            },
+            "societal_impact": {
+                "ndrf_fatigue_reduction": "Hyper-local 5 km pinpoint alert eliminates blanket district false alarms",
+                "rural_agriculture_shield": "3 to 10-day lead time for crop protection and harvest rescheduling"
+            }
+        }
+
     @app.post("/api/agent/chat")
     def agent_chat(req: ChatRequest):
         return {
             "threat_id": req.threat_id,
-            "agent_response": f"Avarta Agent analyzed query: '{req.query}'. All 10 ensemble members consensus confirms 5km impact zone at {req.threat_id}.",
+            "agent_response": f"Avarta Agent analyzed query: '{req.query}'. All ensemble members consensus confirms 5km impact zone at {req.threat_id}.",
             "tool_executed": "get_trajectory",
             "requires_human_approval": False
         }
