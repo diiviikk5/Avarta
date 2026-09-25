@@ -83,17 +83,40 @@ def render_ascii_heatmap(matrix: np.ndarray, title: str, unit: str = "km/h") -> 
     return Panel(content, title=f"[bold cyan]{title}[/]", subtitle=subtitle, border_style="dim white", box=box.ROUNDED)
 
 
+def render_avarta_banner() -> Panel:
+    """Renders a high-tech gradient ASCII banner for AVARTA."""
+    ascii_art = """
+      █████╗ ██╗   ██╗ █████╗ ██████╗ ████████╗ █████╗ 
+     ██╔══██╗██║   ██║██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗
+     ███████║██║   ██║███████║██████╔╝   ██║   ███████║
+     ██╔══██║╚██╗ ██╔╝██╔══██║██╔══██╗   ██║   ██╔══██║
+     ██║  ██║ ╚████╔╝ ██║  ██║██║  ██║   ██║   ██║  ██║
+     ╚═╝  ╚═╝  ╚═══╝  ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
+"""
+    banner_text = Text()
+    colors = ["#38bdf8", "#60a5fa", "#818cf8", "#a78bfa", "#c084fc", "#e879f9"]
+    lines = [l for l in ascii_art.strip("\n").split("\n")]
+    for idx, line in enumerate(lines):
+        c = colors[idx % len(colors)]
+        banner_text.append(line + "\n", style=f"bold {c}")
+
+    banner_text.append("\n  4D SPATIO-TEMPORAL EXTREME WEATHER ANOMALY TRACKING\n", style="bold white")
+    banner_text.append("  [GraphCast Multi-Mesh GNN] · [CorrDiff Residual Diffusion] · [PhysicsGuard]\n", style="dim cyan")
+    banner_text.append("  SIH Problem Statement 26078 · Operational Meteorological Intelligence Core", style="dim white")
+
+    return Panel(
+        Align.center(banner_text),
+        box=box.DOUBLE,
+        border_style="bold cyan",
+        subtitle="[bold white]v2.4-CORE[/] · [bold green]SPATIO-TEMPORAL TENSOR ENGINE SYNCHRONIZED[/]",
+        subtitle_align="right"
+    )
+
+
 def demo_full_pipeline():
     """Runs live 5-stage AI inference with animated progress and terminal diagnostics."""
     console.clear()
-    
-    title_text = Text()
-    title_text.append("AVARTA ", style="bold white on color(235)")
-    title_text.append("· 4D AI Weather Intelligence Terminal\n", style="bold cyan")
-    title_text.append("Live Deep Learning Inference Engine · SIH Problem Statement 26078\n", style="dim white")
-    title_text.append("GraphCast Multi-Mesh GNN · CorrDiff Residual Diffusion · Navier-Stokes Conservation", style="dim cyan")
-    
-    console.print(Panel(Align.center(title_text), box=box.HEAVY, border_style="cyan"))
+    console.print(render_avarta_banner())
     console.print()
 
     with Progress(
@@ -209,10 +232,9 @@ def interactive_menu():
     """Interactive CLI menu loop."""
     while True:
         console.clear()
-        menu_text = Text()
-        menu_text.append("AVARTA OPERATIONAL AI COMMAND CENTER\n", style="bold white")
-        menu_text.append("Select an operational AI pipeline module to execute:\n", style="dim white")
-        console.print(Panel(Align.center(menu_text), box=box.DOUBLE, border_style="cyan"))
+        console.print(render_avarta_banner())
+        console.print()
+        console.print("  [bold white]Operational AI Pipeline Modules:[/]")
 
         console.print("  [1] [bold cyan]Run Full End-to-End AI Pipeline Demo[/] (5-Stage PyTorch Inference)")
         console.print("  [2] [bold cyan]4D Kalman Threat Object Tracker[/] (Hungarian Trajectory State)")
