@@ -79,14 +79,23 @@ Where $q$ is specific humidity ($\text{kg/kg}$) and $\mathbf{v} = (u, v)$ is hor
 
 ---
 
-## 3. Editorial UI/UX Philosophy
+## 3. UI/UX & Dual Operational Interfaces
 
-The Avarta Operational Console departs entirely from typical "dark-mode neon developer tool" aesthetics. Built using an **editorial print magazine design system**:
+Avarta provides two synchronized interfaces designed for high-stakes operational meteorology:
 
-- **Canvas**: Off-white alabaster (`#f5f5f5`) paired with warm near-black ink (`#0c0a09`).
-- **Typography**: Display typography in **EB Garamond 300** (quiet, literary serif) paired with **Inter** for dense telemetry, tables, and buttons.
-- **Atmospheric Voltage**: Soft pastel gradient orbs (*Mint* `#a7e5d3`, *Peach* `#f4c5a8`, *Lavender* `#c8b8e0`, *Sky* `#a8c8e8`) drift softly in the background as the sole color accents.
-- **Console Interface**: Segmented pill tabs, 1px hairlines (`#e7e5e4`), interactive cartographic canvas, and direct CAP 1.2 JSON export.
+### 3.1 Luxury Editorial Dark-Mode Console (`/dashboard`)
+Departing from cluttered, neon developer tools, the interior workspace is built on an **editorial luxury dark canvas**:
+- **Canvas**: Obsidian near-black (`#0c0a09`) paired with subtle warm card surfaces (`#141210` / `#1c1917`).
+- **Typography**: Classic serif display typography paired with **Inter** for high-density telemetry, tables, and actions.
+- **Clutter-Free Elegance**: Segmented pill navigation (4D Corridor, Downscaler, Physics, Foundation Models, Copilot) with ample whitespace and zero unnecessary filler metrics.
+- **Atmospheric Voltage**: Diffused background radiance with subtle emerald and cyan glows for active corridors and physical conservation metrics.
+
+### 3.2 Rich Terminal TUI & Pipeline CLI (`avarta_tui.py`)
+For headless deployments, scientific cluster verification, or direct command-line operations:
+- **Gradient Block ASCII Banner**: High-tech terminal branding.
+- **Live 5-Stage Animated Progress**: Real-time progress bars tracking global ensemble ingestion, EFI calculation, Hungarian 4D Kalman tracking, CorrDiff PyTorch downscaling, and PhysicsGuard Navier-Stokes verification.
+- **Terminal Block Heatmaps**: Side-by-side ANSI block comparisons proving +74% convective core amplitude recovery over coarse 12 km NWP.
+- **OASIS CAP 1.2 Synthesizer**: Monokai syntax-highlighted civil defense alert output.
 
 ---
 
@@ -96,23 +105,27 @@ The Avarta Operational Console departs entirely from typical "dark-mode neon dev
 Avarta/
 ├── avarta/                          # Next.js 16 Editorial Web Console
 │   ├── app/
-│   │   ├── dashboard/page.tsx       # Primary Operational Workspace
+│   │   ├── dashboard/page.tsx       # Dark Mode Operational Workspace
 │   │   ├── api/threats/route.ts     # Telemetry & Threat Query API
-│   │   ├── globals.css              # Editorial tokens & atmospheric orbs
+│   │   ├── globals.css              # Obsidian tokens & atmospheric orbs
 │   │   ├── layout.tsx               # EB Garamond & Inter typography config
-│   │   └── page.tsx                 # Cinematic hero & feature showcase
+│   │   └── page.tsx                 # Cinematic 4-video background hero
 │   ├── components/
-│   │   ├── HeroSection.tsx          # 60fps local video switcher & scrim
+│   │   ├── HeroSection.tsx          # 60fps local video switcher & clean CTA
 │   │   ├── EditorialLandingFeatures.tsx # 4-column scientific deep-dive
 │   │   └── dashboard/
 │   │       ├── Header.tsx           # Telemetry status strip
 │   │       ├── ThreatList.tsx       # 4D Threat Objects dossier
-│   │       ├── InteractiveMap.tsx   # Cartographic corridor canvas
+│   │       ├── InteractiveMap.tsx   # Midnight cartography with uncertainty cone
 │   │       ├── DownscalingViewer.tsx# 12km vs 5km spectral comparison
-│   │       ├── PhysicsGuardInspector.tsx # Conservation ledger
-│   │       ├── ImpactPanel.tsx      # GIS exposure & CAP 1.2 export
+│   │       ├── PhysicsGuardInspector.tsx # 99.4% conservation ledger
+│   │       ├── FoundationModelsExplorer.tsx # GraphCast / CorrDiff / ClimaX specs
+│   │       ├── ImpactPanel.tsx      # GIS exposure & CAP 1.2 copy
 │   │       └── AgentCopilot.tsx     # Autonomous response synthesis
 │   └── types/threat.ts              # Strongly-typed TypeScript interfaces
+│
+├── avarta_tui.py                    # Interactive Rich Terminal User Interface (TUI)
+├── run_pipeline.py                  # Headless end-to-end scientific pipeline runner
 │
 ├── models/                          # Core AI Architectures
 │   ├── spherical_gnn/               # Multi-mesh icosahedral spherical GNN
@@ -138,13 +151,26 @@ Avarta/
 
 ## 5. Quickstart & Verification
 
-### 5.1 Run Python Scientific Services & Unit Tests
+### 5.1 Run the Interactive Rich Terminal TUI
 ```bash
-# Clone the repository
-git clone https://github.com/diiviikk5/Avarta.git
-cd Avarta
+# Interactive Command Center with ASCII Banner & Module Selection
+python avarta_tui.py
 
-# Run the complete test suite
+# Or launch the automated 5-stage live inference demonstration
+python avarta_tui.py --demo
+```
+
+### 5.2 Run the Scientific End-to-End Pipeline
+```bash
+# Executes all 5 stages in ~2 seconds and exports high-res publication figures
+python run_pipeline.py
+```
+Outputs generated in `outputs/`:
+- `outputs/12km_vs_5km_reconstruction.png`: Matplotlib side-by-side scientific comparison.
+- `outputs/alert_cap_v1_2.json`: Validated OASIS CAP 1.2 civil defense JSON.
+
+### 5.3 Run Python Unit Tests
+```bash
 python -m unittest discover -s tests
 ```
 
@@ -157,14 +183,14 @@ Ran 12 tests in 0.048s
 OK
 ```
 
-### 5.2 Run Next.js Editorial Console
+### 5.4 Run Next.js Operational Web Console
 ```bash
 cd avarta
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the cinematic hero and [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to launch the operational threat console.
+Open [http://localhost:3000](http://localhost:3000) to view the cinematic video hero, and [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to launch the dark-mode operational console.
 
 ---
 
