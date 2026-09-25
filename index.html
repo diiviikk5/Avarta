@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avarta — Atmospheric Intelligence Designed To Evolve</title>
+  <meta
+    name="description"
+    content="Physics-informed neural downscaling, multi-hazard 4D trajectory tracking, and automated OASIS CAP alerts for extreme weather events across India."
+  />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/webp" href="assets/logo.webp" />
+
+  <!-- Google Fonts: Inter (400, 500, 600) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- BubbledotICG-FinePos via OnlineWebFonts CDN -->
+  <link href="https://db.onlinewebfonts.com/c/8cb707a9b8a73f8a7403336b861c3074?family=BubbledotICG-FinePos" rel="stylesheet" />
+
+  <!-- Font Awesome 6.5.2 -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Full-viewport cover background video -->
+  <div class="bg" aria-hidden="true">
+    <video class="bg-video" autoplay muted loop playsinline preload="auto">
+      <source
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_012548_ef22562c-c0ae-4816-ad9d-f8922af4e6a7.mp4"
+        type="video/mp4"
+      />
+    </video>
+    <div class="bg-overlay"></div>
+  </div>
+
+  <!-- Single-viewport main page hero container -->
+  <div class="page" id="heroViewport">
+    <!-- 1) Header -->
+    <header class="header">
+      <div class="header-container">
+        <!-- Brand Logo -->
+        <a href="#heroViewport" class="logo-btn" aria-label="Avarta Home">
+          <img src="assets/logo.webp" alt="" width="52" height="52" class="logo-img" />
+        </a>
+
+        <!-- Desktop Nav Pill -->
+        <nav class="nav-pill" aria-label="Primary Navigation">
+          <a href="/" class="nav-link active">Home</a>
+          <a href="/dashboard" class="nav-link">Replay Lab</a>
+          <a href="/dashboard/downscaling" class="nav-link">Downscale</a>
+          <a href="/dashboard/risk" class="nav-link">3D Risk</a>
+          <a href="/dashboard/terminal" class="nav-link">Terminal</a>
+          <a href="/dashboard/trajectory" class="nav-link">Trajectory</a>
+          <a href="/dashboard/inspector" class="nav-link">Inspector</a>
+          <a href="/dashboard/ask" class="nav-link">Copilot</a>
+          <a href="/dashboard/demo" class="nav-link">Demo</a>
+        </nav>
+
+        <!-- Desktop Action Pill -->
+        <a href="/dashboard/terminal" class="btn-signin">Mission Control</a>
+
+        <!-- Mobile Hamburger Button -->
+        <button
+          type="button"
+          class="burger-btn"
+          id="burgerBtn"
+          aria-label="Toggle navigation menu"
+          aria-expanded="false"
+          aria-controls="mobileMenuSheet"
+        >
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Menu Overlay & Sheet -->
+    <div class="mobile-overlay" id="mobileOverlay" hidden></div>
+    <div class="mobile-sheet" id="mobileMenuSheet" hidden role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+      <nav class="mobile-nav" aria-label="Mobile Navigation Links">
+        <a href="/" class="mobile-nav-link active" style="--stagger: 0">Home</a>
+        <a href="/dashboard" class="mobile-nav-link" style="--stagger: 1">Replay Lab (Overview)</a>
+        <a href="/dashboard/downscaling" class="mobile-nav-link" style="--stagger: 2">PINN Downscale Lab</a>
+        <a href="/dashboard/risk" class="mobile-nav-link" style="--stagger: 3">3D All-India Risk Grid</a>
+        <a href="/dashboard/terminal" class="mobile-nav-link" style="--stagger: 4">Mission Control TUI</a>
+        <a href="/dashboard/trajectory" class="mobile-nav-link" style="--stagger: 5">Kalman 4D Trajectory</a>
+        <a href="/dashboard/inspector" class="mobile-nav-link" style="--stagger: 6">Inspector & OASIS CAP</a>
+        <a href="/dashboard/ask" class="mobile-nav-link" style="--stagger: 7">Meteorological Copilot</a>
+        <a href="/dashboard/demo" class="mobile-nav-link" style="--stagger: 8">Prototype Showcase</a>
+      </nav>
+      <a href="/dashboard/terminal" class="mobile-signin-btn" style="--stagger: 9">Launch Terminal</a>
+    </div>
+
+    <!-- 2) Hero -->
+    <main class="hero">
+      <!-- Trust row ("Validated on MoES / NCMRWF Problem Statement #26078") -->
+      <div class="trust-row anim" style="--d: 0.05s">
+        <div class="trust-avatars">
+          <!-- Avatar 1: MoES -->
+          <div class="trust-avatar avatar-1" title="Ministry of Earth Sciences (MoES)">
+            <div class="trust-inner-circle">
+              <i class="fa-solid fa-cloud-bolt"></i>
+            </div>
+          </div>
+          <!-- Avatar 2: NCMRWF -->
+          <div class="trust-avatar avatar-2" title="NCMRWF Numerical Weather Prediction">
+            <div class="trust-inner-circle">
+              <i class="fa-solid fa-satellite"></i>
+            </div>
+          </div>
+          <!-- Avatar 3: IMD -->
+          <div class="trust-avatar avatar-3" title="India Meteorological Department (IMD)">
+            <div class="trust-inner-circle">
+              <i class="fa-solid fa-wind"></i>
+            </div>
+          </div>
+        </div>
+        <!-- Overlapping Trust Pill -->
+        <div class="trust-pill">
+          <span>Validated on MoES / NCMRWF Problem Statement #26078</span>
+        </div>
+      </div>
+
+      <!-- Headline: Retro dot-matrix font, solid white, two lines -->
+      <h1 class="headline anim" aria-label="Atmospheric Intelligence Designed To Evolve">
+        <span class="headline-line" style="--line-d: 0.12s">Atmospheric Intelligence</span>
+        <span class="headline-line" style="--line-d: 0.3s">Designed To Evolve</span>
+      </h1>
+
+      <!-- Subhead -->
+      <p class="subhead anim" style="--d: 0.28s">
+        Physics-informed neural downscaling, multi-hazard 4D trajectory tracking, and automated OASIS CAP alerts for extreme weather events across India.
+      </p>
+
+      <!-- CTA -->
+      <div class="cta-wrap anim-pulse" style="--d: 0.4s">
+        <a href="/dashboard" class="btn-cta">Explore Replay Lab</a>
+        <a href="/dashboard/terminal" class="btn-cta-secondary">Launch CLI TUI</a>
+      </div>
+    </main>
+
+    <!-- 3) Stats Footer -->
+    <footer class="stats-footer">
+      <div class="stats-grid" id="statsGrid">
+        <!-- Metric 1: PINN Resolution -->
+        <div class="stat-item anim" style="--d: 0.5s">
+          <div class="stat-top">
+            <span class="stat-glyph">&lt;</span>
+            <span class="stat-value" data-target="5" data-suffix="km" data-decimals="0">0km</span>
+          </div>
+          <div class="stat-label">PINN Downscaled Grid</div>
+        </div>
+
+        <!-- Metric 2: 2D Fourier PSD Preservation -->
+        <div class="stat-item anim" style="--d: 0.58s">
+          <div class="stat-top">
+            <span class="stat-glyph">%</span>
+            <span class="stat-value" data-target="50.7" data-suffix="%" data-decimals="1">0.0%</span>
+          </div>
+          <div class="stat-label">High-Freq PSD Energy</div>
+        </div>
+
+        <!-- Metric 3: Autonomous Runtime -->
+        <div class="stat-item anim" style="--d: 0.66s">
+          <div class="stat-top">
+            <span class="stat-glyph">*</span>
+            <span class="stat-value" data-target="24" data-suffix="/7" data-decimals="0">0/7</span>
+          </div>
+          <div class="stat-label">NWP Data Assimilation</div>
+        </div>
+
+        <!-- Metric 4: All-India Regions -->
+        <div class="stat-item anim" style="--d: 0.74s">
+          <div class="stat-top">
+            <span class="stat-glyph">#</span>
+            <span class="stat-value" data-target="30" data-suffix="+" data-decimals="0">0+</span>
+          </div>
+          <div class="stat-label">Monitored Risk Regions</div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==========================================================================
+       DEEP-DIVE PLATFORM SECTIONS (Argus-style slides & interactive suites)
+       ========================================================================== -->
+  <div class="platform-sections">
+    <!-- SECTION 01: HISTORICAL EVENT REPLAY -->
+    <section id="replay" class="section-container">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="tag-row">
+            <span class="section-tag">[ 01 // PARADIGM SHIFT ]</span>
+            <span class="section-counter">01 / 05</span>
+          </div>
+          <h2 class="section-title">
+            Reconstruct extreme events from <br />
+            <span class="text-accent">multi-member ensemble fields.</span>
+          </h2>
+          <p class="section-desc">
+            Archived NOAA GEFS GRIB2 forecasts compared cell-by-cell with IMD 0.25° daily rainfall and CHIRPS v2 0.05° high-resolution satellite-gauge observations.
+          </p>
+        </div>
+
+        <!-- Case Switcher Interactive Bar -->
+        <div class="case-switcher-bar">
+          <button type="button" class="case-pill active" data-case="rainfall">
+            <i class="fa-solid fa-cloud-showers-heavy"></i> August 2025 Heavy Rain
+          </button>
+          <button type="button" class="case-pill" data-case="cyclone">
+            <i class="fa-solid fa-hurricane"></i> Super Cyclone Amphan
+          </button>
+          <button type="button" class="case-pill" data-case="heatwave">
+            <i class="fa-solid fa-temperature-arrow-up"></i> 2024 Heat Dome
+          </button>
+        </div>
+
+        <!-- Case Details Display Grid -->
+        <div class="case-card-grid">
+          <!-- Left: Verification Metrics -->
+          <div class="glass-card">
+            <div class="card-head">
+              <span class="card-badge">RETROSPECTIVE VERIFICATION</span>
+              <span class="card-live-dot"><span class="pulse-dot"></span>OFFICIAL REPLAY</span>
+            </div>
+            <h3 class="card-title" id="caseTitle">August 2025 Northwest India Rain</h3>
+            <p class="card-body-text" id="caseSummary">
+              An archived NOAA GEFS forecast initialized 19 Aug 2025 00:00 UTC verified against the IMD 23 Aug daily rainfall grid across 2,237 common valid cells.
+            </p>
+
+            <div class="metrics-row" id="caseMetrics">
+              <div class="metric-box">
+                <span class="m-label">GEFS ENSEMBLE PEAK</span>
+                <strong class="m-val" id="mGefs">44.61 <small>mm/d</small></strong>
+              </div>
+              <div class="metric-box">
+                <span class="m-label">IMD OBSERVED PEAK</span>
+                <strong class="m-val text-accent" id="mObs">469.21 <small>mm/d</small></strong>
+              </div>
+              <div class="metric-box">
+                <span class="m-label">COMMON VALID CELLS</span>
+                <strong class="m-val" id="mCells">2,237</strong>
+              </div>
+              <div class="metric-box">
+                <span class="m-label">MEAN ABSOLUTE ERROR</span>
+                <strong class="m-val" id="mMae">13.97 <small>mm/d</small></strong>
+              </div>
+            </div>
+
+            <div class="case-footer-note" id="caseCaveat">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>Honest demonstration: 5 GEFS members missed the extreme 469 mm/d localized cloudburst peak, establishing need for physics-informed downscaling.</span>
+            </div>
+          </div>
+
+          <!-- Right: Kalman 4D Trajectory Tracker -->
+          <div class="glass-card">
+            <div class="card-head">
+              <span class="card-badge">KALMAN 4D TRACKER</span>
+              <span class="card-status-badge">HUNGARIAN ASSOCIATION</span>
+            </div>
+            <div class="trajectory-visualizer">
+              <div class="tracker-status-box">
+                <div class="tracker-item">
+                  <span>TRACK INITIALIZATION:</span>
+                  <strong id="trackInit">2025-08-19 00:00Z</strong>
+                </div>
+                <div class="tracker-item">
+                  <span>VALID WINDOW:</span>
+                  <strong id="trackValid">22 Aug 03:00 - 23 Aug 03:00 UTC</strong>
+                </div>
+                <div class="tracker-item">
+                  <span>BOUNDING BOX:</span>
+                  <strong id="trackBbox">[23.5°N–31.0°N, 71.0°E–79.5°E]</strong>
+                </div>
+                <div class="tracker-item">
+                  <span>KALMAN LEGS:</span>
+                  <strong>T+24h, T+48h, T+72h Forecast Extrapolations</strong>
+                </div>
+              </div>
+
+              <!-- Animated mini coordinate radar -->
+              <div class="radar-box">
+                <div class="radar-sweep"></div>
+                <div class="radar-ping ping-1"></div>
+                <div class="radar-ping ping-2"></div>
+                <div class="radar-ping ping-3"></div>
+                <div class="radar-overlay-text">
+                  <span class="code-mono">4D KALMAN STATE VECTOR: [x, y, dx/dt, dy/dt, intensity, area]</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 24px; display: flex; gap: 14px; flex-wrap: wrap;">
+            <a href="/dashboard" class="btn-cta">Open Replay Lab Interactive Grid →</a>
+            <a href="/dashboard/trajectory" class="btn-cta-secondary">View 4D Trajectory Tracker →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 02: PINN DOWNSCALING & SPECTRAL BENCHMARK -->
+    <section id="downscaling" class="section-container">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="tag-row">
+            <span class="section-tag">[ 02 // NEURAL PIPELINE ]</span>
+            <span class="section-counter">02 / 05</span>
+          </div>
+          <h2 class="section-title">
+            Physics-Informed Downscaling Core <br />
+            <span class="text-accent">preserving spectral fidelity.</span>
+          </h2>
+          <p class="section-desc">
+            Standard bilinear and basic CNN downscaling wipe out high-frequency spatial gradients. Avarta couples generative diffusion with conservation of mass and orographic vertical velocity.
+          </p>
+        </div>
+
+        <div class="pinn-grid">
+          <!-- Physics equations card -->
+          <div class="glass-card">
+            <div class="card-head">
+              <span class="card-badge">DIFFERENTIABLE CONSERVATION LAWS</span>
+              <span class="card-status-badge">PINN LOSS</span>
+            </div>
+            <h3 class="card-title">Physics Loss Formulation</h3>
+            <p class="card-body-text">
+              Downscaling operates subject to differentiable hydro-thermodynamic constraints:
+            </p>
+
+            <div class="equation-box">
+              <div class="eq-item">
+                <span class="eq-title">Moisture Flux Divergence Constraint</span>
+                <code>\mathcal{L}_{\text{moisture}} = \left\| \nabla \cdot (q \mathbf{v}) + \frac{\partial q}{\partial t} - (E - P) \right\|^2</code>
+              </div>
+              <div class="eq-item">
+                <span class="eq-title">5 km DEM Orographic Vertical Lift</span>
+                <code>w_{\text{oro}} = \mathbf{v}_{\text{horiz}} \cdot \nabla h_{\text{DEM}}(\text{lat}, \text{lon})</code>
+              </div>
+              <div class="eq-item">
+                <span class="eq-title">Non-Negativity Barrier</span>
+                <code>\mathcal{L}_{\text{barrier}} = \text{ReLU}(-P_{\text{pred}}) \cdot \lambda_{\text{phys}}</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spectral Power Density Benchmark -->
+          <div class="glass-card">
+            <div class="card-head">
+              <span class="card-badge">2D FOURIER POWER SPECTRUM (PSD)</span>
+              <span class="card-live-dot"><span class="pulse-dot"></span>E(k) PRESERVATION</span>
+            </div>
+            <h3 class="card-title">High-Frequency Energy Retention</h3>
+            <p class="card-body-text">
+              Radially integrated 2D Fast Fourier Transform benchmark across 5 km spatial wavelengths:
+            </p>
+
+            <div class="spectral-bars">
+              <div class="spec-bar-row">
+                <div class="spec-bar-header">
+                  <span>Bilinear Interpolation (Coarse 12 km)</span>
+                  <strong>1.7% Power</strong>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: 1.7%; background: #666;"></div>
+                </div>
+              </div>
+
+              <div class="spec-bar-row">
+                <div class="spec-bar-header">
+                  <span>Deterministic Residual CNN (Standard DL)</span>
+                  <strong>11.7% Power</strong>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: 11.7%; background: #a88;"></div>
+                </div>
+              </div>
+
+              <div class="spec-bar-row highlight">
+                <div class="spec-bar-header">
+                  <span>Avarta Generative Diffusion PINN</span>
+                  <strong class="text-accent">50.7% Power (Sharp Peaks)</strong>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: 50.7%; background: #fff;"></div>
+                </div>
+              </div>
+
+              <div class="spec-bar-row">
+                <div class="spec-bar-header">
+                  <span>IMD High-Resolution Ground Truth</span>
+                  <strong>100.0% Reference</strong>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" style="width: 100%; background: rgba(255,255,255,0.4);"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="case-footer-note">
+              <i class="fa-solid fa-chart-line"></i>
+              <span>Preserves 29.8x more extreme precipitation energy than bilinear interpolation.</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: left;">
+          <a href="/dashboard/downscaling" class="btn-cta">Launch 12 km → 5 km PINN Downscaling Lab & Split Slider →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 03: INTERACTIVE MISSION CONTROL TUI -->
+    <section id="terminal" class="section-container">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="tag-row">
+            <span class="section-tag">[ 03 // PRODUCTION CLI ]</span>
+            <span class="section-counter">03 / 05</span>
+          </div>
+          <h2 class="section-title">
+            Audit operational weather models in <br />
+            <span class="text-accent">a single terminal command.</span>
+          </h2>
+          <p class="section-desc">
+            Directly interact with Avarta's live engine. Try typing <span class="kbd">status</span>, <span class="kbd">scan</span>, <span class="kbd">downscale</span>, <span class="kbd">alerts</span>, or <span class="kbd">help</span> below.
+          </p>
+        </div>
+
+        <!-- Terminal Window Simulator -->
+        <div class="terminal-window">
+          <div class="terminal-topbar">
+            <div class="term-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <div class="term-title">avarta-engine — bash — 80x24</div>
+            <div class="term-mode">LIVE SIMULATOR</div>
+          </div>
+
+          <div class="terminal-body" id="termOutput">
+            <div class="term-line"><span class="t-cyan">Avarta Meteorological Intelligence Console v0.1.0</span></div>
+            <div class="term-line"><span class="t-muted">Problem Statement #26078 (MoES / NCMRWF / IMD)</span></div>
+            <div class="term-line"><span class="t-muted">Type 'help' to see all commands, or click any prompt below.</span></div>
+            <div class="term-line">&nbsp;</div>
+          </div>
+
+          <!-- Quick Command Launcher Pills -->
+          <div class="term-quick-bar">
+            <span>Quick Commands:</span>
+            <button type="button" class="term-quick-btn" data-cmd="status">status</button>
+            <button type="button" class="term-quick-btn" data-cmd="scan">scan</button>
+            <button type="button" class="term-quick-btn" data-cmd="downscale">downscale</button>
+            <button type="button" class="term-quick-btn" data-cmd="alerts">alerts</button>
+            <button type="button" class="term-quick-btn" data-cmd="clear">clear</button>
+          </div>
+
+          <!-- Terminal Input Prompt -->
+          <div class="terminal-input-row">
+            <span class="t-prompt">avarta@ncmrwf:~$</span>
+            <input
+              type="text"
+              id="terminalInput"
+              class="terminal-input"
+              placeholder="type status, scan, downscale, alerts..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button type="button" id="termSubmitBtn" class="term-submit-btn">Run</button>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: right;">
+          <a href="/dashboard/terminal" class="btn-cta">Launch Full Web VT100 Mission Control TUI →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 04: REAL-TIME 30 ALL-INDIA NWP REGIONS -->
+    <section id="risk" class="section-container">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="tag-row">
+            <span class="section-tag">[ 04 // REAL-TIME RISK MATRIX ]</span>
+            <span class="section-counter">04 / 05</span>
+          </div>
+          <h2 class="section-title">
+            30 All-India NWP Grid Regions <br />
+            <span class="text-accent">monitored with live assimilation.</span>
+          </h2>
+          <p class="section-desc">
+            Aggregated ECMWF / GFS anomaly scoring across India's meteorological sub-divisions, intersecting critical infrastructure buffers (AIIMS, power substations, highways).
+          </p>
+        </div>
+
+        <div class="risk-matrix-card glass-card">
+          <div class="table-wrap">
+            <table class="risk-table">
+              <thead>
+                <tr>
+                  <th>REGION</th>
+                  <th>HAZARD TYPE</th>
+                  <th>SEVERITY</th>
+                  <th>INTENSITY</th>
+                  <th>INFRASTRUCTURE IMPACT</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="riskTableBody">
+                <tr>
+                  <td><strong>Western Ghats (MH/KA)</strong></td>
+                  <td>Heavy Orog. Rainfall</td>
+                  <td><span class="band-tag severe">SEVERE</span></td>
+                  <td>148.4 mm/24h</td>
+                  <td>NH-66 Ghat corridors, Koyna catchment</td>
+                  <td><span class="live-tag">RED ALERT</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Konkan & Goa Coast</strong></td>
+                  <td>Flash Flood / Wind</td>
+                  <td><span class="band-tag high">HIGH</span></td>
+                  <td>88.2 mm/24h</td>
+                  <td>Konkan Railway, Mumbai-Pune Expressway</td>
+                  <td><span class="live-tag">ORANGE</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Bay of Bengal Offshore</strong></td>
+                  <td>Tropical Depression</td>
+                  <td><span class="band-tag severe">SEVERE</span></td>
+                  <td>92 km/h gusts</td>
+                  <td>Paradip port, offshore rigs, NH-16</td>
+                  <td><span class="live-tag">WARNING</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Gangetic Plains (UP/Bihar)</strong></td>
+                  <td>Heat Dome Anomaly</td>
+                  <td><span class="band-tag moderate">MODERATE</span></td>
+                  <td>39.2°C wet-bulb</td>
+                  <td>Rural power grid 220kV lines, GKMS crops</td>
+                  <td><span class="live-tag">ADVISORY</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Brahmaputra Basin (Assam)</strong></td>
+                  <td>Riverine Surge / Rain</td>
+                  <td><span class="band-tag high">HIGH</span></td>
+                  <td>112.0 mm/24h</td>
+                  <td>AIIMS Guwahati buffer, NH-27 culverts</td>
+                  <td><span class="live-tag">ORANGE</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; text-align: right;">
+          <a href="/dashboard/risk" class="btn-cta">Explore 3D India Subcontinent Risk Map →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 05: DECISION BRIEFING & COPILOT -->
+    <section id="copilot" class="section-container">
+      <div class="section-inner">
+        <div class="section-header">
+          <div class="tag-row">
+            <span class="section-tag">[ 05 // DECISION SUPPORT ]</span>
+            <span class="section-counter">05 / 05</span>
+          </div>
+          <h2 class="section-title">
+            Automated OASIS CAP 1.2 Feeds &amp; <br />
+            <span class="text-accent">"What Happens Here" Briefings.</span>
+          </h2>
+          <p class="section-desc">
+            Translates complex ensemble tensors into standardized NDMA / SACHET Common Alerting Protocol XML feeds and plain-language district executive summaries.
+          </p>
+        </div>
+
+        <div class="briefing-grid">
+          <!-- Interactive Briefing Generator -->
+          <div class="glass-card">
+            <div class="card-head">
+              <span class="card-badge">LOCAL AUTHORITY COPILOT</span>
+              <span class="card-status-badge">PINPOINT ADVISORY</span>
+            </div>
+            <h3 class="card-title">District Decision Explainer</h3>
+            <p class="card-body-text">
+              Select an operational impact zone to generate a plain-language briefing:
+            </p>
+
+            <div class="briefing-controls">
+              <select id="briefingSelect" class="briefing-select">
+                <option value="western_ghats">Western Ghats (Sindhudurg / Ratnagiri)</option>
+                <option value="bay_of_bengal">Bay of Bengal Coastal Arc (Odisha / WB)</option>
+                <option value="assam_brahmaputra">Brahmaputra Valley (Kamrup / Barpeta)</option>
+              </select>
+              <button type="button" id="generateBriefingBtn" class="btn-briefing">Generate Briefing</button>
+            </div>
+
+            <div class="briefing-output-box" id="briefingOutput">
+              <div class="brief-headline">
+                <strong>EXECUTIVE SUMMARY (OASIS CAP 1.2 READY):</strong>
+              </div>
+              <p id="briefText">
+                Active ensemble consensus indicates severe orographic enhancement along windward slopes. 24h accumulation will exceed local drainage absorption limits (148 mm/day). Recommend pre-positioning SDRF teams near vulnerable Ghat cuttings on NH-66 and issuing GKMS agricultural advisory to postpone paddy harvesting.
+              </p>
+            </div>
+          </div>
+
+          <!-- OASIS CAP 1.2 XML Live Feed Preview -->
+          <div class="glass-card">
+            <div class="card-head">
+              <span class="card-badge">NDMA / SACHET COMPLIANT</span>
+              <span class="card-live-dot"><span class="pulse-dot"></span>CAP 1.2 XML FEED</span>
+            </div>
+            <h3 class="card-title">CAP XML Message Structure</h3>
+            <p class="card-body-text">
+              Automated schema broadcast to emergency sirens, cellular cell-broadcasts, and webhooks:
+            </p>
+
+            <div class="code-box">
+              <pre><code>&lt;alert xmlns="urn:oasis:names:tc:emergency:cap:1.2"&gt;
+  &lt;identifier&gt;AVARTA-CAP-2025-08-23-001&lt;/identifier&gt;
+  &lt;sender&gt;ncmrwf.avarta.gov.in&lt;/sender&gt;
+  &lt;status&gt;Actual&lt;/status&gt;
+  &lt;msgType&gt;Alert&lt;/msgType&gt;
+  &lt;scope&gt;Public&lt;/scope&gt;
+  &lt;info&gt;
+    &lt;category&gt;Met&lt;/category&gt;
+    &lt;event&gt;Severe Orographic Precipitation&lt;/event&gt;
+    &lt;urgency&gt;Immediate&lt;/urgency&gt;
+    &lt;severity&gt;Severe&lt;/severity&gt;
+    &lt;certainty&gt;Observed&lt;/certainty&gt;
+    &lt;area&gt;
+      &lt;areaDesc&gt;Western Ghats Catchment Buffer&lt;/areaDesc&gt;
+      &lt;polygon&gt;15.8,73.8 16.5,74.1 17.2,73.5 15.8,73.8&lt;/polygon&gt;
+    &lt;/area&gt;
+  &lt;/info&gt;
+&lt;/alert&gt;</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; gap: 14px; flex-wrap: wrap;">
+          <a href="/dashboard/ask" class="btn-cta">Open Meteorological Copilot →</a>
+          <a href="/dashboard/inspector" class="btn-cta-secondary">Inspect Active CAP XML Feed →</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

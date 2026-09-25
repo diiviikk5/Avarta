@@ -23,25 +23,38 @@ import styles from "./replay.module.css";
 import AssistantWidget from "./AssistantWidget";
 
 const LINKS = [
+  { href: "/", label: "Landing Portal", icon: Sparkles, exact: true },
   { href: "/dashboard", label: "Overview", icon: Layers3, exact: true },
   { href: "/dashboard/inspector", label: "Inspector", icon: MapPin },
   { href: "/dashboard/trajectory", label: "Trajectory", icon: Navigation },
   { href: "/dashboard/risk", label: "Risk Map", icon: Thermometer },
   { href: "/dashboard/downscaling", label: "Downscaling", icon: Radar },
   { href: "/dashboard/terminal", label: "Terminal / CLI", icon: Terminal },
-  { href: "/dashboard/ask", label: "Ask", icon: Sparkles },
+  { href: "/dashboard/ask", label: "Ask Copilot", icon: Sparkles },
   { href: "/dashboard/validation", label: "Validation", icon: FlaskConical },
   { href: "/dashboard/demo", label: "Prototype demo", icon: CloudRain },
 ];
 
+const TOP_PILL_LINKS = [
+  { href: "/dashboard", label: "Replay Lab", exact: true },
+  { href: "/dashboard/downscaling", label: "PINN Downscale" },
+  { href: "/dashboard/risk", label: "3D Risk Grid" },
+  { href: "/dashboard/terminal", label: "Terminal CLI" },
+  { href: "/dashboard/trajectory", label: "Trajectory" },
+  { href: "/dashboard/inspector", label: "Inspector & CAP" },
+  { href: "/dashboard/ask", label: "Copilot" },
+  { href: "/dashboard/validation", label: "Validation" },
+  { href: "/dashboard/demo", label: "Demo" },
+];
+
 function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("avarta-theme") as "light" | "dark" | null;
-    const initial = saved ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const initial = saved ?? "dark";
     setTheme(initial);
     document.documentElement.setAttribute("data-theme", initial);
   }, []);
@@ -122,7 +135,7 @@ function SidebarHazardControls({ pathname }: { pathname: string }) {
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -154,7 +167,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   useEffect(() => {
     const checkTheme = () => {
-      const current = (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "light";
+      const current = (document.documentElement.getAttribute("data-theme") as "light" | "dark") || "dark";
       setTheme(current);
     };
     checkTheme();
@@ -230,8 +243,65 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </div>
       )}
 
-      {/* Content Area - No Topbar Header */}
+      {/* Content Area with Signature Argus Floating Header */}
       <div className={styles.content}>
+        <header className="sticky top-0 z-40 w-full py-3 px-6 flex items-center justify-between gap-4 bg-black/80 backdrop-blur-xl border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="w-10 h-10 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.16)] grid place-items-center hover:scale-105 transition-transform shrink-0"
+              title="Return to Landing Portal"
+            >
+              <img src="/assets/logo.webp" alt="Avarta" width={44} height={44} className="w-[70%] h-[70%] object-contain" />
+            </Link>
+            <button
+              onClick={toggleSidebar}
+              className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
+              title="Toggle Sidebar (Ctrl+B)"
+            >
+              {isSidebarOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+            </button>
+          </div>
+
+          {/* Centered White Nav Pill with 3-dot active indicator */}
+          <nav className="hidden xl:flex bg-white h-10 px-3 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.2)] items-center justify-around gap-1 max-w-[850px]">
+            {TOP_PILL_LINKS.map((link) => {
+              const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`font-sans font-medium text-[12px] tracking-tight px-3 py-1.5 rounded-full transition-all relative ${
+                    active ? "text-black font-semibold" : "text-[#2e2e2e]/60 hover:text-black"
+                  }`}
+                >
+                  {link.label}
+                  {active && (
+                    <span className="absolute bottom-[4px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full bg-black shadow-[-5px_0_0_#000,5px_0_0_#000]" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/terminal"
+              className="bg-[#28282a] text-[#c8c8c8] hover:bg-[#323234] hover:text-white h-9 px-3.5 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Terminal size={13} />
+              <span>CLI</span>
+            </Link>
+            <Link
+              href="/"
+              className="bg-white text-black hover:opacity-90 h-9 px-4 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-opacity shadow-sm"
+            >
+              <Sparkles size={13} />
+              <span>Portal</span>
+            </Link>
+          </div>
+        </header>
+
         <main className={styles.main}>{children}</main>
       </div>
 
