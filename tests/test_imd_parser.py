@@ -19,8 +19,8 @@ class TestIMDGriddedParser(unittest.TestCase):
         # Test extraction of extreme crops
         crops = parser.extract_extreme_training_crops(min_peak_mm=100.0, crop_size=38)
         self.assertGreater(len(crops), 0)
-        self.assertEqual(crops[0]["fine_target_5km"].shape, (38, 38))
-        self.assertEqual(crops[0]["coarse_12km"].shape, (16, 16))
+        self.assertEqual(crops[0]["target_imd_0p25"].shape, (38, 38))
+        self.assertEqual(crops[0]["coarse_proxy"].shape, (16, 16))
 
 if __name__ == "__main__":
     unittest.main()

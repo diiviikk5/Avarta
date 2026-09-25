@@ -1,206 +1,63 @@
-# Avarta (अवार्ता) — 4D AI Weather Intelligence Platform
+# Avarta — SIH 26078 research prototype
 
-[![Build & Unit Tests](https://img.shields.io/badge/tests-12%2F12%20passing-emerald)](https://github.com/diiviikk5/Avarta)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Framework: Next.js 16](https://img.shields.io/badge/Frontend-Next.js%2016-black)](https://nextjs.org/)
-[![Physics: Navier-Stokes](https://img.shields.io/badge/Physics-Moisture%20Convergence%20Verified-blueviolet)](https://github.com/diiviikk5/Avarta)
-[![Design: Editorial](https://img.shields.io/badge/Design-ElevenLabs%20Editorial%20System-stone)](https://github.com/diiviikk5/Avarta)
+Avarta now has one reproducible **historical rainfall replay** rather than a dashboard of unlabelled mock threats. It is a research demonstration, **not an operational forecast or warning service**.
 
-> **SIH Problem Statement 26078**: AI-driven spatio-temporal tracking of extreme weather anomalies in medium-range forecasts.
+## What works
 
-Avarta transforms 12 km coarse numerical weather prediction (NWP) ensemble fields into physics-verified, hyper-local 5 km threat intelligence. Instead of treating extreme events as disconnected pixels across forecast timesteps, Avarta tracks them as **persistent 4D spatio-temporal geometric threat objects** governed by atmospheric conservation laws.
+- An archived NOAA GEFS forecast initialized **19 August 2025 00:00 UTC** is read from GRIB byte ranges: control plus four perturbed members at 0.5° resolution. The 24-hour window is **22 August 03:00–23 August 03:00 UTC**.
+- Three-hour precipitation fields are reconstructed from the archive's alternating accumulation windows. Connected rainfall footprints are detected and linked across forecast frames with the existing Kalman tracker. The [generated case JSON](avarta/public/replay/august-2025.json) records source URLs, byte ranges, SHA-256 hashes, initialization and valid times, lead hours, grid coordinates, tracks, and forecast values.
+- The forecast is compared with the **23 August 2025 IMD 0.25° daily rainfall grid**, with missing cells excluded. The dashboard and both APIs read the computed JSON. The old fictional threats are accessible only through a prominent **Prototype demo** mode or `/api/threats?mode=demo`.
+- Alerts are **draft decision support only**. This case does not meet the provisional 64.5 mm/day ensemble-mean threshold and issues no public alert.
 
----
+## Honest result from this case
 
-## 1. System Architecture
+| Retrospective metric | Value |
+| --- | ---: |
+| GEFS ensemble-mean peak | 44.61 mm/day |
+| IMD observed peak | 469.21 mm/day |
+| Peak absolute error | 424.60 mm/day |
+| Mean absolute error over 2,237 common valid cells | 13.97 mm/day |
+| Heavy-rain footprint intersection-over-union (≥64.5 mm/day) | 0.00 |
 
-```
-12 km NWP Ensembles (ECMWF IFS / GFS / NCMRWF NEPS-G)
-                 │
-                 ▼
-  [ Stage 1: Global Anomaly Detection ]
-  ├── 30-Year ERA5 Climatology Engine (Quantile Integration)
-  ├── Extreme Forecast Index (EFI) & Standardized Z-Scores
-  └── Multi-Mesh Spherical Icosahedral GNN (Polar-Singularity Free)
-                 │
-                 ▼
-  [ Stage 2: 4D Spatio-Temporal Threat Tracking ]
-  ├── Hungarian Bipartite Spatial Association
-  └── 6-State Extended Kalman Filter [lat, lon, v_lat, v_lon, I, dI/dt]
-                 │
-                 ▼
-  [ Stage 3: Threat-First Compute Allocation ]
-  └── Dynamic 5 km Bounding Box Trigger (Saves 88% Global Compute)
-                 │
-                 ▼
-  [ Stage 4: Generative Residual Downscaler (12 km → 5 km) ]
-  ├── Conditional Latent Diffusion with Threat Embedding Injection
-  ├── High-Resolution Orography & DEM Alignment
-  └── ExtremeTailPreservationLoss (Prevents Spectral Smoothing)
-                 │
-                 ▼
-  [ Stage 5: Physics Guard & Conservation Layer ]
-  ├── Non-Negative Precipitation Bounds: P(x, y) ≥ 0
-  ├── Moisture Flux Convergence: -∇ · (q v) > 0 in Convective Cores
-  └── Hydrostatic Mass Continuity Verification
-                 │
-                 ▼
-  [ Stage 6: Actionable Synthesis & Dissemination ]
-  ├── OASIS Common Alerting Protocol (CAP v1.2) Automated Payloads
-  ├── District GIS Infrastructure Vulnerability Audit
-  └── Editorial Operational Console & Copilot Dialogue
-```
+This forecast subset **missed** the observed extreme. Five members and one case do not establish calibrated skill. The IMD daily window is treated as ending at 08:30 IST (03:00 UTC); confirm exact product timing before formal verification. Tiny negative amounts from differencing quantized GEFS accumulations are clipped to zero, with a 0.1 mm tolerance.
 
----
+## Separate model experiment
 
-## 2. Mathematical Formulations
+`training/train_imd_real.py` trains a **deterministic residual CNN**, not a diffusion model. Its input is a Gaussian-smoothed 16×16 proxy derived from a 38×38 crop of the **same 0.25° IMD grid**. There is no independent NWP input or genuine 5 km target. The target rainfall peak is no longer passed as model metadata. A chronological validation split starts **5 October 2025**, with a three-day purge gap. The test compares the CNN with bilinear interpolation on the **same 49 held-out cases**:
 
-### 2.1 Extreme Forecast Index (EFI) Integral
-Avarta evaluates anomalous shifts between the forecast ensemble cumulative distribution function $F_f$ and the 30-year ERA5 climatological quantile function $Q_c(p)$:
+| Metric (64.5 mm/day for heavy rain) | Residual CNN | Bilinear |
+| --- | ---: | ---: |
+| Mean peak absolute error | 61.523 mm/day | 84.875 mm/day |
+| Heavy-rain detection recall | 0.5273 | 0.2791 |
+| Heavy-rain footprint IoU | 0.3679 | 0.2643 |
+| Overall MAE | 4.134 mm/day | 2.912 mm/day |
+| False-alarm ratio | 0.4511 | 0.1674 |
 
-$$\text{EFI} = \frac{2}{\pi} \int_0^1 \frac{p - F_f(Q_c(p))}{\sqrt{p(1 - p)}} \, dp$$
+The CNN improves peaks, recall, and overlap but worsens overall error and false alarms. It is **not deployed in the forecast replay**. Training crops are target-centered; future work must use independently selected event regions and true paired forecast/high-resolution observations. No diffusion model should be promoted without outperforming this held-out baseline.
 
-Where:
-- $p \in (0, 1)$ represents the climatological percentile.
-- The denominator $\sqrt{p(1 - p)}$ heavily penalizes outliers occurring in the extreme tails.
-- $\text{EFI} \in [-1, 1]$; values $> 0.80$ trigger autonomous threat object spawning.
+## Run it
 
-### 2.2 Extreme-Tail Preserving Loss
-Standard MSE/MAE loss functions smooth out turbulent storm peaks. Avarta incorporates an asymmetric tail penalty:
-
-$$\mathcal{L}_{\text{total}} = \text{MSE}_{\text{base}} + \alpha_{\text{extreme}} \cdot \frac{\sum_{(x,y)} \mathbb{I}_{[y_{\text{true}} \ge Q_{0.95}]} \cdot (y_{\text{pred}} - y_{\text{true}})^2}{\sum_{(x,y)} \mathbb{I}_{[y_{\text{true}} \ge Q_{0.95}]} + \epsilon}$$
-
-### 2.3 PhysicsGuard Moisture Flux Convergence
-Before any downscaled field is disseminated, it is projected onto the physical conservation manifold. For precipitation rate $P > 25\text{ mm/h}$, net moisture flux divergence must remain non-positive:
-
-$$\nabla \cdot (q \mathbf{v}) = \frac{\partial(q u)}{\partial x} + \frac{\partial(q v)}{\partial y} \le 0$$
-
-Where $q$ is specific humidity ($\text{kg/kg}$) and $\mathbf{v} = (u, v)$ is horizontal wind velocity ($\text{m/s}$).
-
----
-
-## 3. UI/UX & Dual Operational Interfaces
-
-Avarta provides two synchronized interfaces designed for high-stakes operational meteorology:
-
-### 3.1 Luxury Editorial Dark-Mode Console (`/dashboard`)
-Departing from cluttered, neon developer tools, the interior workspace is built on an **editorial luxury dark canvas**:
-- **Canvas**: Obsidian near-black (`#0c0a09`) paired with subtle warm card surfaces (`#141210` / `#1c1917`).
-- **Typography**: Classic serif display typography paired with **Inter** for high-density telemetry, tables, and actions.
-- **Clutter-Free Elegance**: Segmented pill navigation (4D Corridor, Downscaler, Physics, Foundation Models, Copilot) with ample whitespace and zero unnecessary filler metrics.
-- **Atmospheric Voltage**: Diffused background radiance with subtle emerald and cyan glows for active corridors and physical conservation metrics.
-
-### 3.2 Rich Terminal TUI & Pipeline CLI (`avarta_tui.py`)
-For headless deployments, scientific cluster verification, or direct command-line operations:
-- **Gradient Block ASCII Banner**: High-tech terminal branding.
-- **Live 5-Stage Animated Progress**: Real-time progress bars tracking global ensemble ingestion, EFI calculation, Hungarian 4D Kalman tracking, CorrDiff PyTorch downscaling, and PhysicsGuard Navier-Stokes verification.
-- **Terminal Block Heatmaps**: Side-by-side ANSI block comparisons proving +74% convective core amplitude recovery over coarse 12 km NWP.
-- **OASIS CAP 1.2 Synthesizer**: Monokai syntax-highlighted civil defense alert output.
-
----
-
-## 4. Repository Structure
-
-```
-Avarta/
-├── avarta/                          # Next.js 16 Editorial Web Console
-│   ├── app/
-│   │   ├── dashboard/page.tsx       # Dark Mode Operational Workspace
-│   │   ├── api/threats/route.ts     # Telemetry & Threat Query API
-│   │   ├── globals.css              # Obsidian tokens & atmospheric orbs
-│   │   ├── layout.tsx               # EB Garamond & Inter typography config
-│   │   └── page.tsx                 # Cinematic 4-video background hero
-│   ├── components/
-│   │   ├── HeroSection.tsx          # 60fps local video switcher & clean CTA
-│   │   ├── EditorialLandingFeatures.tsx # 4-column scientific deep-dive
-│   │   └── dashboard/
-│   │       ├── Header.tsx           # Telemetry status strip
-│   │       ├── ThreatList.tsx       # 4D Threat Objects dossier
-│   │       ├── InteractiveMap.tsx   # Midnight cartography with uncertainty cone
-│   │       ├── DownscalingViewer.tsx# 12km vs 5km spectral comparison
-│   │       ├── PhysicsGuardInspector.tsx # 99.4% conservation ledger
-│   │       ├── FoundationModelsExplorer.tsx # GraphCast / CorrDiff / ClimaX specs
-│   │       ├── ImpactPanel.tsx      # GIS exposure & CAP 1.2 copy
-│   │       └── AgentCopilot.tsx     # Autonomous response synthesis
-│   └── types/threat.ts              # Strongly-typed TypeScript interfaces
-│
-├── avarta_tui.py                    # Interactive Rich Terminal User Interface (TUI)
-├── run_pipeline.py                  # Headless end-to-end scientific pipeline runner
-│
-├── models/                          # Core AI Architectures
-│   ├── spherical_gnn/               # Multi-mesh icosahedral spherical GNN
-│   ├── residual_downscaler/         # 12km → 5km residual diffusion network
-│   └── physics_guard/               # Mass & moisture flux projection layers
-│
-├── services/                        # Production Microservices
-│   ├── detection/climatology_engine.py # ERA5 EFI integral calculation
-│   ├── tracking/kalman_tracker.py      # 4D Kalman filter & Hungarian matching
-│   ├── ingestion/dataset_reader.py     # ECMWF / GFS / Zarr dataset loader
-│   ├── impact/gis_footprint.py         # Infrastructure exposure & CAP 1.2
-│   └── api/main.py                     # FastAPI REST microservice
-│
-└── tests/                           # Complete Unit Test Suite (12 tests)
-    ├── test_spherical_gnn.py
-    ├── test_downscaler.py
-    ├── test_physics_guard.py
-    ├── test_tracker.py
-    └── test_climatology.py
-```
-
----
-
-## 5. Quickstart & Verification
-
-### 5.1 Run the Interactive Rich Terminal TUI
 ```bash
-# Interactive Command Center with ASCII Banner & Module Selection
-python avarta_tui.py
-
-# Or launch the automated 5-stage live inference demonstration
-python avarta_tui.py --demo
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cd avarta && npm ci && cd ..
 ```
 
-### 5.2 Run the Scientific End-to-End Pipeline
+Download the official **2025 IMD 0.25° daily rainfall binary** from the [IMD Pune grid-data page](https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_Bin.html) and save it as `data/raw/Rainfall_ind2025_rfp25.grd`. The tested file is 25,425,900 bytes with SHA-256 `b4fa5ffb389496c0fa7d5a468d1cb47e4db0bcabcd11be4f273c0e6cfa7d611d`. Raw data and model checkpoints are gitignored; check the source's terms before reusing or redistributing data.
+
 ```bash
-# Executes all 5 stages in ~2 seconds and exports high-res publication figures
-python run_pipeline.py
-```
-Outputs generated in `outputs/`:
-- `outputs/12km_vs_5km_reconstruction.png`: Matplotlib side-by-side scientific comparison.
-- `outputs/alert_cap_v1_2.json`: Validated OASIS CAP 1.2 civil defense JSON.
-
-### 5.3 Run Python Unit Tests
-```bash
-python -m unittest discover -s tests
+.venv/bin/python -m services.replay.august_2025
+OMP_NUM_THREADS=4 .venv/bin/python -m training.train_imd_real --epochs 2
+.venv/bin/python -m pytest -q
+cd avarta && npm run dev
 ```
 
-Output:
-```
-............
-----------------------------------------------------------------------
-Ran 12 tests in 0.048s
+Open `http://localhost:3000/dashboard`. The committed JSON artifacts let the UI run without downloading the raw grids. Rebuilding the case fetches GEFS `.idx` files and only the required APCP GRIB byte ranges from the [NOAA GEFS public archive](https://noaa-gefs-pds.s3.amazonaws.com/). Cached GRIB messages stay under ignored `data/raw/gefs_cache/`.
 
-OK
-```
+`python avarta_tui.py` prints the same verified case summary in a read-only terminal view; `--demo` is explicitly fictional. `python run_pipeline.py` is a shortcut for rebuilding the historical replay.
 
-### 5.4 Run Next.js Operational Web Console
-```bash
-cd avarta
-npm install
-npm run dev
-```
+The Next.js endpoints are `GET /api/cases`, `GET /api/threats`, `GET /api/benchmark`, and `GET /api/alerts`. The separate read-only FastAPI service is `uvicorn services.api.main:app --reload` with equivalent case/threat endpoints and `GET /api/alerts/draft`. The old Python alert and downscale endpoints now explicitly reject unvalidated operational claims.
 
-Open [http://localhost:3000](http://localhost:3000) to view the cinematic video hero, and [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to launch the dark-mode operational console.
+## Scope and next steps
 
----
-
-## 6. Citations & References
-1. Lam, R., et al. (2023). *Learning skillful medium-range global weather forecasting* (GraphCast). Science, 382(6677), 1416-1421.
-2. Mardani, M., et al. (2024). *CorrDiff: Generative AI for Extreme Weather Downscaling*. NVIDIA Technical Report.
-3. Lalaurette, F. (2003). *Early detection of abnormal weather using a probabilistic extreme forecast index*. Q.J.R. Meteorol. Soc., 129, 3031-3042.
-4. Hersbach, H., et al. (2020). *The ERA5 global reanalysis*. Q.J.R. Meteorol. Soc., 146(730), 1999-2049.
-
----
-
-## License
-MIT License. Developed for Smart India Hackathon (SIH) 2026.
+This case uses threshold-based detection and Kalman track association; it does **not** use an icosahedral GNN, EFI/30-year ERA5 climatology, physics-constrained diffusion, or hyper-local 5 km impact modelling. Remaining experimental modules are not evidence of those capabilities. To advance SIH 26078: obtain paired NEPS-G/NCUM ensemble archives and a genuinely fine target, choose spatial/event holdouts before cropping, test multiple hazards and years, calibrate probabilities and alert thresholds, then compare any GNN/diffusion candidate against transparent baselines.

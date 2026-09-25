@@ -1,7 +1,6 @@
 """
-Avarta Amplitude-Preserving Generative Residual Downscaler (Stage 2)
-Solves the Spectral Smoothing Problem: Standard CNN/U-Nets average out high-intensity peaks.
-Avarta uses a conditional residual generator that preserves extreme amplitudes and high-frequency wavelets.
+Experimental deterministic residual CNN. This file does not implement diffusion,
+and extreme-amplitude skill must be measured against a held-out baseline.
 """
 
 from typing import Dict, Any, Optional
@@ -48,11 +47,11 @@ if HAS_TORCH:
     class ResidualDownscaler(nn.Module):
         """
         Input:
-            x_12km: Coarse forecast field (B, C, H, W)
-            terrain: Elevation & orography (B, 1, H*2.4, W*2.4)
-            threat_emb: ThreatObject latent vector (B, D)
+            x_12km: Coarse input field (legacy argument name; grid spacing is data-dependent)
+            terrain: Ancillary field on the target grid
+            threat_emb: Metadata vector, which must not contain target-derived values
         Output:
-            y_5km: High-resolution field with extreme-tail preservation
+            y_5km: Reconstructed target-grid field (legacy key, not necessarily 5 km)
         """
         def __init__(self, in_channels: int = 4, out_channels: int = 1, hidden_dim: int = 64):
             super().__init__()
@@ -66,7 +65,7 @@ if HAS_TORCH:
             self.res1 = ResidualBlock(hidden_dim)
             self.res2 = ResidualBlock(hidden_dim)
             
-            # Extreme amplitude head (ensures non-smoothing of 99th percentile peaks)
+            # Learned residual head; peak preservation is empirical, not guaranteed.
             self.out_residual = nn.Sequential(
                 nn.Conv2d(hidden_dim, hidden_dim // 2, kernel_size=3, padding=1),
                 nn.SiLU(),

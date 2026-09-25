@@ -144,7 +144,7 @@ class PersistentThreatTracker:
         # 3. Spawn new Threat IDs for unassigned detections
         for d_idx, det in enumerate(detections):
             if d_idx not in assigned_detection_indices:
-                new_id = f"AVT-2026-{self.counter:05d}"
+                new_id = f"AVT-{timestamp[:4]}-{self.counter:05d}"
                 self.counter += 1
                 new_track = KalmanThreatState(new_id, det["lat"], det["lon"], det["intensity"], timestamp)
                 self.active_tracks[new_id] = new_track

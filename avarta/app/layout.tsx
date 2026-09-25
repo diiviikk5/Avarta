@@ -17,9 +17,9 @@ const editorialSans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Avarta — Spatio-Temporal Weather Intelligence",
+  title: "Avarta — Historical Rainfall Replay",
   description:
-    "AI-driven spatio-temporal tracking of extreme weather anomalies in medium-range forecasts. Persistent 4D threat objects with amplitude-preserving generative downscaling.",
+    "A research replay of archived GEFS rainfall forecasts and IMD observations, with transparent verification and draft-only alerts.",
 };
 
 export default function RootLayout({
