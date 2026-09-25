@@ -1,0 +1,84 @@
+{
+  "dataset_name": "IMD Pune 0.25\u00b0 Gridded Rainfall (2025)",
+  "source_file": "data/raw/Rainfall_ind2025_rfp25.grd",
+  "dataset_summary": {
+    "source_file": "data/raw/Rainfall_ind2025_rfp25.grd",
+    "total_days": 365,
+    "grid_dimensions": "129 lats \u00d7 135 lons",
+    "coverage_region": "6.5\u00b0N - 38.5\u00b0N, 66.5\u00b0E - 100.0\u00b0E (All India)",
+    "all_time_peak_mm": 469.21,
+    "annual_mean_rainfall_mm": 3.47,
+    "top_extreme_deluge_days": [
+      {
+        "day_of_year": 235,
+        "peak_rainfall_mm": 469.21,
+        "lat": 25.75,
+        "lon": 75.75
+      },
+      {
+        "day_of_year": 151,
+        "peak_rainfall_mm": 395.56,
+        "lat": 25.25,
+        "lon": 91.25
+      },
+      {
+        "day_of_year": 251,
+        "peak_rainfall_mm": 376.83,
+        "lat": 24.25,
+        "lon": 71.25
+      },
+      {
+        "day_of_year": 232,
+        "peak_rainfall_mm": 367.73,
+        "lat": 18.75,
+        "lon": 73.25
+      },
+      {
+        "day_of_year": 152,
+        "peak_rainfall_mm": 367.29,
+        "lat": 25.0,
+        "lon": 92.25
+      }
+    ]
+  },
+  "training_stats": {
+    "num_extreme_crops": 243,
+    "train_samples": 194,
+    "val_samples": 49,
+    "epochs": 3,
+    "batch_size": 16,
+    "trainable_parameters": 174401,
+    "training_time_seconds": 6.58,
+    "final_train_loss": 2088.2293,
+    "final_val_loss": 2008.3872,
+    "final_val_tail_loss": 466.3998,
+    "peak_preservation_ratio": 0.4642,
+    "loss_history": {
+      "train_loss": [
+        2599.2341965895434,
+        2234.9703556941104,
+        2088.2292903019834
+      ],
+      "val_loss": [
+        2263.8377075195312,
+        2121.7735595703125,
+        2008.38720703125
+      ],
+      "train_tail_loss": [
+        592.1337139423077,
+        508.4273939866286,
+        478.0211874154898
+      ],
+      "val_tail_loss": [
+        490.1609802246094,
+        494.76051330566406,
+        466.39984130859375
+      ],
+      "peak_preservation_ratio": [
+        0.4995948618402396,
+        0.44313305685898874,
+        0.46421495192360024
+      ]
+    }
+  }
+}

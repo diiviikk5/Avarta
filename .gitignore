@@ -33,6 +33,7 @@ eggs/
 data/raw/*.nc
 data/raw/*.grib
 data/raw/*.grib2
+data/raw/*.grd
 data/raw/*.csv
 data/processed/*.zarr
 *.h5
