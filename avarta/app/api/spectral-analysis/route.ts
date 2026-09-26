@@ -14,6 +14,9 @@ export async function GET() {
   };
 
   return NextResponse.json({
+    evidence_scope: "synthetic_metric_fixture",
+    candidate_field: "hand_constructed_diffusion_like_field_not_model_output",
+    validated_5km_skill: false,
     wavenumbers_k: k_vals,
     wavelengths_km: wl_vals,
     psd_db: psd_db,
@@ -24,6 +27,6 @@ export async function GET() {
       spectral_smoothing_resolved: true,
     },
     scientific_interpretation:
-      "Bilinear and standard CNN show severe high-frequency roll-off (spectral smoothing), damping peak amplitudes by >50%. The generative diffusion downscaler matches the ground-truth slope across high spatial wavenumbers (wavelengths < 20 km), proving extreme value amplitude preservation without spatial blurring.",
+      "On this hand-constructed synthetic stress test, the diffusion-like candidate retains more high-frequency power than the smoothed baselines. This validates the PSD metric and objective, not a trained model or real 5 km skill.",
   });
 }

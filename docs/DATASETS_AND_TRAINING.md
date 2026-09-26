@@ -7,11 +7,12 @@ forecast capability matters as much as the architecture.
 | Component | Present state | What is missing |
 | --- | --- | --- |
 | NOAA GEFS rainfall replay | Five archived 0.5° members and eight 3-hour forecast frames, linked to an IMD daily grid | Multi-event validation, calibrated ensemble probabilities, full NEPS-G archive |
+| Ensemble intelligence core | Upper/lower-tail EFI, Shift-of-Tails, finite-member Jeffreys intervals, confidence, geodesic footprints, spherical-mesh features, Brier/CRPS/reliability/rank/FSS verification | Lead/season/model-matched climate archive and many-case probability calibration |
 | Independent observation check | CHIRPS v2 0.05° daily estimate for one case | Exact daily-window alignment and multiple dates; CHIRPS is not point-gauge truth |
-| Spherical mesh | Real recursive icosahedron and geometric lat/lon interpolation | Trained GNN, globally tiled ingestion, node labels and held-out skill |
+| Spherical mesh/GNN | Recursive icosahedron, geometric interpolation, ensemble member attention, Earth-relative edges, temporal GRU, uncertainty and motion heads | Trained weights, globally tiled ingestion, node labels and held-out skill |
 | EFI calculator | Numerical EFI integration from supplied quantiles, with missing-data checks | Matching multi-decade model-climate quantiles by season and lead; ERA5 alone is not automatically model climate |
 | Downscaler | Separate deterministic residual CNN experiment on target-derived coarse IMD proxies | Independent NWP/fine-grid pairs, multi-event holdout, terrain, genuine 5 km verification |
-| Diffusion / physics | Conditional DDPM architecture with shape/gradient/sampling tests; no trained weights or validated conservation law | Independent data, event-held-out training, physical fields, baseline comparison |
+| Diffusion / physics | Conditional DDPM with tail, FFT spectral, coarse conservation, peak and optional moisture/continuity objectives; shape/gradient/sampling tests | Independent data, event-held-out training, trained weights, baseline comparison and genuine 5 km verification |
 | Alerts | Draft API response only | Calibrated thresholds, expert review, governance and dissemination authority |
 
 The earlier `DatasetHub` storm/heatwave generators are explicitly **synthetic

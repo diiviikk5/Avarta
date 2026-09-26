@@ -576,13 +576,13 @@ export function DownscaleEnhanced() {
                 fontSize: "11px",
               }}
             >
-              <CheckCircle2 size={15} /> SPECTRAL SMOOTHING RESOLVED
+              <CheckCircle2 size={15} /> SYNTHETIC PSD STRESS TEST
             </span>
           </div>
 
           <div className={styles.spectralGrid}>
             <div className={styles.spectralMetric}>
-              <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>GENERATIVE DIFFUSION (5 KM)</span>
+              <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>HAND-CONSTRUCTED DIFFUSION-LIKE FIELD</span>
               <strong style={{ color: "#ffb4c8" }}>
                 {spectral ? `${(spectral.preservation_metrics.diffusion_retention_ratio * 100).toFixed(1)}%` : "50.7%"}
               </strong>
@@ -605,7 +605,7 @@ export function DownscaleEnhanced() {
             <div className={styles.spectralMetric}>
               <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>DIFFUSION ADVANTAGE</span>
               <strong style={{ color: "#ffb4c8" }}>29.8x</strong>
-              <small style={{ fontSize: "10px", color: "#71717a" }}>Retention ratio vs. Bilinear baseline</small>
+              <small style={{ fontSize: "10px", color: "#71717a" }}>Synthetic fixture ratio vs. Bilinear</small>
             </div>
           </div>
 
@@ -668,7 +668,7 @@ export function DownscaleEnhanced() {
                 <span style={{ width: "16px", height: "3px", background: "#ffffff", display: "inline-block" }} /> Ground Truth
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#ffb4c8", fontWeight: 700 }}>
-                <span style={{ width: "16px", height: "3px", background: "#ffb4c8", display: "inline-block" }} /> Generative Diffusion (5 km)
+                <span style={{ width: "16px", height: "3px", background: "#ffb4c8", display: "inline-block" }} /> Diffusion-like fixture
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#d97706", fontWeight: 700 }}>
                 <span style={{ width: "16px", height: "3px", background: "#d97706", display: "inline-block" }} /> Residual CNN (Smoothed)
@@ -680,7 +680,7 @@ export function DownscaleEnhanced() {
           </div>
           <p style={{ margin: "10px 0 0", fontSize: "11.5px", color: "#a1a1aa", lineHeight: "1.6" }}>
             {spectral?.scientific_interpretation ||
-              "Bilinear and standard CNN show severe high-frequency roll-off (spectral smoothing), damping peak amplitudes by >50%. The generative diffusion downscaler matches the ground-truth slope across high spatial wavenumbers, preserving convective amplitudes."}
+              "Synthetic metric fixture only: the candidate field retains more high-frequency power than the smoothed baselines; no trained diffusion or 5 km skill is claimed."}
           </p>
         </div>
       )}

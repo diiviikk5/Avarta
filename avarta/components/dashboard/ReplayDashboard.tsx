@@ -596,10 +596,45 @@ export function AskPanel({ picked }: { picked: { lat: number; lon: number } | nu
   );
 }
 
+function EnsembleEvidenceAudit({ replay }: { replay: ReplayCase }) {
+  const probability = replay.raster.member_exceedance_probability;
+  if (!probability) return null;
+  const memberCount = replay.forecast.members.length;
+  const maximum = Math.max(...probability.flat());
+  return (
+    <section className={styles.lower} aria-label="Ensemble evidence audit">
+      <div className={styles.crossCheck} style={{ marginTop: 0 }}>
+        <div>
+          <div className={styles.eyebrow}>FINITE-ENSEMBLE UNCERTAINTY AUDIT</div>
+          <h3>Probability with honest error bars.</h3>
+          <p>
+            Every archived exceedance value is a raw member count, not a calibrated warning probability.
+            The new intelligence core adds 90% finite-sample intervals, EFI, Shift-of-Tails, confidence,
+            and spherical-GNN features when full member and model-climate fields are supplied.
+          </p>
+          <p className={styles.crossCaveat}>
+            This compact replay retained member frequency only, so it cannot reconstruct EFI or SOT.
+          </p>
+        </div>
+        <div className={styles.crossStats}>
+          <div><span>Archived members</span><strong>{memberCount}</strong></div>
+          <div><span>Probability resolution</span><strong>{Math.round(100 / memberCount)}<small>% steps</small></strong></div>
+          <div><span>Maximum raw support</span><strong>{Math.round(maximum * 100)}<small>%</small></strong></div>
+          <a href="/api/intelligence" target="_blank" rel="noreferrer">
+            Inspect uncertainty-aware footprints <ArrowUpRight size={13}/>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function ValidationSection({ replay, benchmark }: { replay: ReplayCase; benchmark: BenchmarkReport }) {
   const v = replay.verification;
-  return (
+  return (<>
+    <EnsembleEvidenceAudit replay={replay} />
     <section className={styles.lower} id="validation"><div className={styles.lowerHead}><div><div className={styles.eyebrow}>04 / EVIDENCE & LIMITS</div><h2>What the numbers say</h2></div><span>Retrospective verification · {v.sampled_grid_cells.toLocaleString()} valid IMD cells</span></div><div className={styles.evidenceGrid}><article><span className={styles.evidenceIcon}><ArrowDownRight size={18}/></span><h3>Mismatch matters</h3><p>The forecast peak is {v.forecast_peak_mm_day} mm/day; IMD reports {v.observed_peak_mm_day} mm/day. The heavy-rain footprints do not overlap at this threshold.</p></article><article><span className={styles.evidenceIcon}><Layers3 size={18}/></span><h3>Resolution is explicit</h3><p>GEFS is 0.5°; IMD observations are 0.25°. No 5 km forecast, diffusion output, or calibrated local impact zone is claimed here.</p></article><article><span className={styles.evidenceIcon}><MapPin size={18}/></span><h3>Trace every point</h3><p>Five archived GEFS members and the IMD daily grid feed this replay. Each frame carries a valid time, lead hour, and track footprint.</p></article></div>{replay.independent_verification && replay.independent_observation && <div className={styles.crossCheck}><div><div className={styles.eyebrow}>INDEPENDENT OBSERVATION CHECK</div><h3>Two grids, one missed event.</h3><p>CHIRPS v2 offers a separate 0.05° daily rainfall estimate. Its peak differs sharply from IMD; neither observation supports a successful heavy-rain forecast in this case.</p><p className={styles.crossCaveat}>CHIRPS is not gauge truth or a 5 km forecast target. Daily timing and extreme magnitudes require caution.</p></div><div className={styles.crossStats}><div><span>GEFS forecast peak</span><strong>{replay.independent_verification.forecast_peak_mm_day}<small> mm/day</small></strong></div><div><span>CHIRPS estimate peak</span><strong>{replay.independent_verification.chirps_peak_mm_day}<small> mm/day</small></strong></div><div><span>Heavy-rain overlap</span><strong>{Math.round((replay.independent_verification.heavy_rain_iou ?? 0) * 100)}<small>%</small></strong></div><a href={replay.independent_observation.source_url} target="_blank" rel="noreferrer">View CHIRPS source <ArrowUpRight size={13}/></a></div></div>}<div className={styles.benchmark}><div><div className={styles.eyebrow}>SEPARATE MODEL EXPERIMENT</div><h3>Residual CNN vs. bilinear</h3><p>IMD 0.25° target-centered crops, smoothed into a coarse proxy. {benchmark.validation.validation_samples} held-out dates from {benchmark.validation.first_validation_date}; no independent NWP and no 5 km ground truth.</p></div><div className={styles.benchmarkScroll}><table><thead><tr><th>Validation metric</th><th>Residual CNN</th><th>Bilinear</th></tr></thead><tbody><tr><td>Peak absolute error ↓</td><td>{benchmark.validation.residual_cnn.mean_peak_absolute_error_mm_day} mm</td><td>{benchmark.validation.bilinear.mean_peak_absolute_error_mm_day} mm</td></tr><tr><td>Heavy-rain recall ↑</td><td>{Math.round(benchmark.validation.residual_cnn.heavy_rain_detection_recall * 100)}%</td><td>{Math.round(benchmark.validation.bilinear.heavy_rain_detection_recall * 100)}%</td></tr><tr><td>Footprint overlap ↑</td><td>{Math.round(benchmark.validation.residual_cnn.heavy_rain_footprint_iou * 100)}%</td><td>{Math.round(benchmark.validation.bilinear.heavy_rain_footprint_iou * 100)}%</td></tr><tr><td>Overall MAE ↓</td><td>{benchmark.validation.residual_cnn.mean_absolute_error_mm_day} mm</td><td>{benchmark.validation.bilinear.mean_absolute_error_mm_day} mm</td></tr><tr><td>False-alarm ratio ↓</td><td>{Math.round(benchmark.validation.residual_cnn.heavy_rain_false_alarm_ratio * 100)}%</td><td>{Math.round(benchmark.validation.bilinear.heavy_rain_false_alarm_ratio * 100)}%</td></tr></tbody></table></div></div><p className={styles.benchmarkNote}>The CNN improves peak and overlap metrics but worsens overall error and false alarms. It is not promoted to the historical forecast pipeline. <a href="/api/benchmark" target="_blank" rel="noreferrer">View full benchmark <ArrowUpRight size={12}/></a></p></section>
+    </>
   );
 }
 

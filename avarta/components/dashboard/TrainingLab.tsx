@@ -14,7 +14,6 @@ import {
   Sparkles,
   Database,
   FileCode,
-  TrendingDown,
   Terminal as TerminalIcon,
   CheckCircle2,
   AlertTriangle,
@@ -569,11 +568,11 @@ export default function TrainingLab() {
   }, [isRunning, currentStep]);
 
   const DIFFUSION_STEPS = [
-    { t: 100, label: "T = 100", title: "Gaussian Noise Prior", psd: "4.2%", peak: "24 mm", desc: "Pure isotropic noise N(0, I); no spatial correlation." },
-    { t: 75, label: "T = 75", title: "Synoptic Flow Conditioning", psd: "14.8%", peak: "58 mm", desc: "Coarse 12 km NWP guidance injects large-scale trough & ridge positions." },
-    { t: 50, label: "T = 50", title: "Orographic Lift Integration", psd: "28.5%", peak: "96 mm", desc: "5 km DEM slope gradients v · ∇h force windward slope condensation." },
-    { t: 25, label: "T = 25", title: "Turbulent Eddy Denoising", psd: "42.1%", peak: "138 mm", desc: "Conditional denoiser resolves meso-gamma cloudburst convective cells." },
-    { t: 0, label: "T = 0", title: "Physics Manifold Projection", psd: "50.7%", peak: "162 mm", desc: "Non-negativity barrier P ≥ 0 and moisture flux conservation verified." },
+    { t: 100, label: "T = 100", title: "Gaussian Noise Prior", psd: "Not measured", peak: "Not measured", desc: "Architecture view: initialize from isotropic noise N(0, I)." },
+    { t: 75, label: "T = 75", title: "Synoptic Conditioning", psd: "Not measured", peak: "Not measured", desc: "Architecture view: inject coarse NWP channels into the denoiser." },
+    { t: 50, label: "T = 50", title: "Terrain Conditioning", psd: "Not measured", peak: "Not measured", desc: "Architecture view: condition the fine grid on terrain without asserting a trained result." },
+    { t: 25, label: "T = 25", title: "Fine-scale Denoising", psd: "Not measured", peak: "Not measured", desc: "Architecture view: recover stochastic spatial detail through reverse diffusion." },
+    { t: 0, label: "T = 0", title: "Multi-objective Output", psd: "Not measured", peak: "Not measured", desc: "Training objective combines tail, FFT spectrum, coarse consistency, peak and optional physics losses. No trained DDPM checkpoint exists yet." },
   ];
 
   return (
@@ -658,7 +657,7 @@ export default function TrainingLab() {
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-[#ffb4c8]/25 flex items-center gap-1.5 font-mono text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#ffb4c8] animate-pulse" />
-              <span className="text-zinc-400">TRAINING LEFT:</span>
+              <span className="text-zinc-400">SMOKE TEST:</span>
               <span className="text-[#ffb4c8] font-bold">{remainingPercent}%</span>
             </div>
           </div>
@@ -673,10 +672,10 @@ export default function TrainingLab() {
             {/* Interactive Loop Controller */}
             <div className="rounded-3xl p-6 bg-zinc-900/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between space-y-5">
               <div className="space-y-2">
-                <span className="font-mono text-xs text-[#ffb4c8] font-bold block">TRAINING CONTROLLER</span>
-                <h3 className="text-xl font-bold text-white">PyTorch Backpropagation Loop</h3>
+                <span className="font-mono text-xs text-[#ffb4c8] font-bold block">GRADIENT SMOKE-TEST CONTROLLER</span>
+                <h3 className="text-xl font-bold text-white">PyTorch Differentiability Probe</h3>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Triggers actual differentiable <code className="text-[#ffb4c8]">PINNPhysicsLoss</code> calculation over atmospheric moisture divergence &amp; 90th percentile extreme tails.
+                  Runs a real forward/backward pass on a seeded synthetic tensor to verify <code className="text-[#ffb4c8]">PINNPhysicsLoss</code>, gradients, shapes, and numerical stability. It is not a continuing training job or evidence of convergence.
                 </p>
               </div>
 
@@ -688,7 +687,7 @@ export default function TrainingLab() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ffb4c8] opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                     </span>
-                    <span className="text-zinc-300 font-semibold">TRAINING CONVERGENCE</span>
+                    <span className="text-zinc-300 font-semibold">SMOKE-TEST SEQUENCE</span>
                   </div>
                   <div className="text-right">
                     <span className="text-sm sm:text-base font-bold font-mono text-[#ffb4c8]">
@@ -728,7 +727,7 @@ export default function TrainingLab() {
                   }`}
                 >
                   {isRunning ? <Pause size={14} /> : <Play size={14} />}
-                  {isRunning ? "Pause Training Loop" : "Auto-Stream Epoch"}
+                  {isRunning ? "Pause Smoke Tests" : "Auto-Run Smoke Tests"}
                 </button>
 
                 <button
@@ -758,7 +757,7 @@ export default function TrainingLab() {
                   <strong className="text-xs sm:text-sm text-white font-bold">Step #{currentStep}</strong>
                 </div>
                 <div>
-                  <span className="text-zinc-500 block text-[10px]">TRAINING LEFT</span>
+                  <span className="text-zinc-500 block text-[10px]">TEST SEQUENCE</span>
                   <strong className="text-xs sm:text-sm text-[#ffb4c8] font-bold">{remainingPercent}% REMAINING</strong>
                 </div>
                 <div>
@@ -775,7 +774,7 @@ export default function TrainingLab() {
                 <div className="my-2">
                   <span className="text-2xl font-bold text-white font-mono">{totalLoss.toFixed(1)}</span>
                   <span className="text-[10px] text-emerald-400 block flex items-center gap-1 mt-0.5">
-                    <TrendingDown size={11} /> Descending gradient
+                    <Activity size={11} /> Measured this pass
                   </span>
                 </div>
                 <div className="text-[10px] text-zinc-500 font-mono">L = L_mse + 3.5 L_tail</div>
@@ -809,7 +808,7 @@ export default function TrainingLab() {
                     {predictedPeak.toFixed(0)} / {targetPeak.toFixed(0)} mm
                   </span>
                 </div>
-                <div className="text-[10px] text-zinc-500 font-mono">Bilinear only 28%</div>
+                <div className="text-[10px] text-zinc-500 font-mono">Synthetic batch diagnostic</div>
               </div>
             </div>
           </div>
@@ -819,8 +818,8 @@ export default function TrainingLab() {
             {/* SVG Loss Curve */}
             <div className="lg:col-span-2 rounded-3xl p-6 bg-zinc-900/80 border border-white/15 backdrop-blur-xl space-y-4">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-mono text-[#ffb4c8] font-bold">REAL-TIME OBJECTIVE FUNCTION CONVERGENCE</span>
-                <span className="text-zinc-400 font-mono">History (Last 20 Steps)</span>
+                <span className="font-mono text-[#ffb4c8] font-bold">RECENT INDEPENDENT GRADIENT PROBES</span>
+                <span className="text-zinc-400 font-mono">Not a convergence curve</span>
               </div>
 
               <div className="relative h-56 w-full pt-4">
@@ -952,27 +951,27 @@ export default function TrainingLab() {
             <div className="space-y-3 font-mono text-xs bg-black/50 p-4 rounded-2xl border border-white/10">
               <div className="flex justify-between">
                 <span className="text-zinc-500">MESSAGE PASSING:</span>
-                <span className="text-[#ffb4c8]">SphericalMessagePassingLayer</span>
+                <span className="text-[#ffb4c8]">EarthRelativeMessagePassing × 3</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500">ACTIVATION:</span>
-                <span className="text-white">SiLU + Degree Normalized Aggregate</span>
+                <span className="text-zinc-500">ENSEMBLE + TIME:</span>
+                <span className="text-white">Member Attention + Lead-Time GRU</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">OUTPUT HEAD 1:</span>
-                <span className="text-white">Anomaly Probability (Sigmoid)</span>
+                <span className="text-white">Anomaly Probability + EFI</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-500">OUTPUT HEAD 2:</span>
-                <span className="text-white">Extreme Forecast Index EFI (Tanh)</span>
+                <span className="text-white">Aleatoric Variance + Motion Vector</span>
               </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-xs text-zinc-300 space-y-2">
               <strong className="text-white block font-sans">Operational Status for Judges:</strong>
               <p className="text-zinc-400">
-                The mathematical mesh generator and PyTorch message-passing layers are fully implemented in <code className="text-[#ffb4c8]">models/spherical_gnn/icosahedron.py</code>. 
-                In the deployed demonstration, anomaly tracking is powered by the verified <code className="text-white">Kalman Filter + Hungarian assignment</code>, providing an auditably proven tracking baseline before full multi-terabyte ERA5 model-climate training.
+                The mesh, member-permutation-invariant attention, Earth-relative messages, temporal recurrence, uncertainty heads and multi-task loss are implemented in <code className="text-[#ffb4c8]">models/spherical_gnn/icosahedron.py</code>.
+                The historical replay still uses the tested <code className="text-white">Kalman Filter + Hungarian assignment</code> baseline until GNN weights earn held-out skill.
               </p>
             </div>
           </div>
@@ -987,8 +986,8 @@ export default function TrainingLab() {
           <div className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15 backdrop-blur-xl space-y-6">
             <div className="flex justify-between items-center text-xs flex-wrap gap-2">
               <span className="font-mono text-[#ffb4c8] font-bold">STAGE 2: CONDITIONAL DIFFUSION DOWNSCALER (DDPM)</span>
-              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full text-[10px] font-mono">
-                12 KM → 5 KM HIGH-AMPLITUDE PRESERVATION
+              <span className="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-3 py-1 rounded-full text-[10px] font-mono">
+                ARCHITECTURE READY · WEIGHTS UNTRAINED
               </span>
             </div>
 
@@ -996,7 +995,7 @@ export default function TrainingLab() {
               <div className="space-y-4">
                 <h3 className="text-2xl sm:text-3xl font-bold text-white">Reverse Denoising Step-by-Step</h3>
                 <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                  Unlike traditional CNNs that optimize mean squared error and blur sharp convective storms into flat averages, our conditional diffusion model learns the physical probability distribution of extreme rainfall conditioned on regional topography and NWP synoptics.
+                  The conditional diffusion candidate is designed to learn a distribution of fine-scale rainfall conditioned on topography and NWP synoptics. Its new objective explicitly scores extreme tails, Fourier detail, coarse conservation, peaks, and atmospheric consistency; real skill still requires paired training data.
                 </p>
 
                 {/* Scrubber Controls */}
@@ -1032,11 +1031,11 @@ export default function TrainingLab() {
                   <span className="text-[#ffb4c8] font-bold">{DIFFUSION_STEPS[diffusionStep].title}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">FOURIER HIGH-FREQ RETENTION:</span>
+                  <span className="text-zinc-500">FOURIER RETENTION:</span>
                   <span className="text-emerald-400 font-bold">{DIFFUSION_STEPS[diffusionStep].psd}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">RESOLVED LOCAL PEAK:</span>
+                  <span className="text-zinc-500">LOCAL PEAK:</span>
                   <span className="text-white font-bold">{DIFFUSION_STEPS[diffusionStep].peak}</span>
                 </div>
                 <p className="text-zinc-400 text-[11px] pt-2 border-t border-white/10 font-sans">
@@ -1060,9 +1059,9 @@ export default function TrainingLab() {
                   <span className="text-[10px] text-zinc-400">Moderate improvement</span>
                 </div>
                 <div className="p-4 rounded-2xl bg-rose-500/10 border border-[#ffb4c8]/30 space-y-1">
-                  <span className="text-[10px] font-mono text-[#ffb4c8]">AVARTA CONDITIONAL DIFFUSION</span>
+                  <span className="text-[10px] font-mono text-[#ffb4c8]">HAND-CONSTRUCTED DIFFUSION-LIKE FIXTURE</span>
                   <strong className="text-lg text-[#ffb4c8] font-mono block">50.7% Power</strong>
-                  <span className="text-[10px] text-emerald-400">Preserves cloudburst amplitudes</span>
+                  <span className="text-[10px] text-amber-300">Synthetic objective target, not model skill</span>
                 </div>
               </div>
             </div>
@@ -1095,7 +1094,7 @@ export default function TrainingLab() {
                 <tr className="hover:bg-white/[0.02]">
                   <td className="py-3 px-4 font-semibold text-white">Stage 1: Spherical GNN Tracker</td>
                   <td className="py-3 px-4 text-zinc-300">Message-passing GNN on icosahedral mesh computing EFI against 30-yr ERA5 baseline</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">models/spherical_gnn/icosahedron.py contains real icosahedral geometry &amp; PyTorch SphericalAnomalyGNN.</td>
+                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">Member attention → Earth-relative graph messages → lead-time GRU → probability, EFI, uncertainty and motion heads.</td>
                   <td className="py-3 px-4">
                     <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-mono">
                       Architecture Ready (Untrained)
@@ -1109,7 +1108,7 @@ export default function TrainingLab() {
                   <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">services/tracking/kalman_tracker.py uses a classical Kalman Filter with Hungarian assignment.</td>
                   <td className="py-3 px-4">
                     <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      Classical Math (100% Real)
+                      Implemented &amp; replay-tested
                     </span>
                   </td>
                 </tr>
@@ -1175,7 +1174,7 @@ export default function TrainingLab() {
                   <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">Fully unified single-port web platform across 30 routes + VT100 TUI terminal.</td>
                   <td className="py-3 px-4">
                     <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      100% Real &amp; Operational
+                      Research UI · alerts not operational
                     </span>
                   </td>
                 </tr>

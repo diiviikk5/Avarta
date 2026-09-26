@@ -221,6 +221,39 @@ def ensemble_plume(lat: float = 28.40, lon: float = 77.31, hazard_type: str = "r
     return generate_ensemble_plume(lat=lat, lon=lon, hazard_type=hazard_type)
 
 
+@app.get("/api/intelligence/audit")
+def ensemble_intelligence_audit(case_id: Optional[str] = None, probability: float = 0.5) -> dict:
+    """Finite-member uncertainty audit for a persisted ensemble probability field."""
+    import numpy as np
+    from services.intelligence import audit_probability_field
+
+    report = case(case_id)
+    raster = report.get("raster", {})
+    field = raster.get("member_exceedance_probability")
+    if field is None:
+        raise HTTPException(422, "Case has no persisted member probability field")
+    try:
+        audit = audit_probability_field(
+            np.asarray(field, dtype=np.float64),
+            len(report["forecast"].get("members", [])),
+            np.asarray(raster["latitudes"], dtype=np.float64),
+            np.asarray(raster["longitudes"], dtype=np.float64),
+            detection_probability=probability,
+            min_area_km2=1000.0,
+        )
+    except ValueError as error:
+        raise HTTPException(422, str(error))
+    return {
+        "case_id": report["id"],
+        "hazard": report.get("hazard"),
+        "source_model": report["forecast"].get("model"),
+        "threshold": report.get("verification", {}).get("heavy_rain_threshold_mm_day"),
+        **audit,
+        "decision": "research_evidence_only",
+        "note": "A small raw ensemble is not a calibrated warning probability.",
+    }
+
+
 @app.get("/api/cap/feed.xml")
 def cap_feed() -> Response:
     """OASIS CAP v1.2 XML Feed for civil defense / NDMA SACHET."""

@@ -13,7 +13,12 @@ from models.spherical_gnn.icosahedron import (
 
 if HAS_TORCH:
     import torch
-    from models.spherical_gnn.icosahedron import SphericalMessagePassingLayer, SphericalAnomalyGNN
+    from models.spherical_gnn.icosahedron import (
+        EnsembleTemporalSphericalGNN,
+        SphericalMessagePassingLayer,
+        SphericalAnomalyGNN,
+        ensemble_temporal_loss,
+    )
 
 
 class TestSphericalGNN(unittest.TestCase):
@@ -74,6 +79,42 @@ class TestSphericalGNN(unittest.TestCase):
         self.assertIn("anomaly_probability", predictions)
         self.assertIn("extreme_forecast_index", predictions)
         self.assertEqual(predictions["anomaly_probability"].shape, (N, 1))
+
+    @unittest.skipUnless(HAS_TORCH, "PyTorch required for neural layers")
+    def test_ensemble_temporal_gnn_is_member_permutation_invariant(self):
+        torch.manual_seed(4)
+        model = EnsembleTemporalSphericalGNN(in_channels=5, hidden_dim=16, layers=2)
+        model.eval()
+        x = torch.randn(2, 4, 3, len(self.nodes), 5)
+        edges = torch.tensor(self.edge_index, dtype=torch.long)
+        positions = torch.tensor(self.nodes, dtype=torch.float32)
+        with torch.no_grad():
+            first = model(x, edges, positions)
+            second = model(x[:, [2, 0, 3, 1]], edges, positions)
+        self.assertEqual(first["anomaly_probability"].shape, (2, 3, len(self.nodes), 1))
+        self.assertEqual(first["motion_delta_degrees"].shape, (2, 3, len(self.nodes), 2))
+        self.assertTrue(torch.allclose(first["anomaly_probability"], second["anomaly_probability"], atol=1e-6))
+
+    @unittest.skipUnless(HAS_TORCH, "PyTorch required for neural layers")
+    def test_ensemble_temporal_multitask_loss_backpropagates(self):
+        torch.manual_seed(8)
+        model = EnsembleTemporalSphericalGNN(in_channels=3, hidden_dim=16, layers=1)
+        x = torch.randn(1, 3, 2, len(self.nodes), 3)
+        predictions = model(
+            x,
+            torch.tensor(self.edge_index, dtype=torch.long),
+            torch.tensor(self.nodes, dtype=torch.float32),
+        )
+        scalar_shape = predictions["anomaly_probability"].shape
+        losses = ensemble_temporal_loss(
+            predictions,
+            torch.randint(0, 2, scalar_shape).float(),
+            torch.rand(scalar_shape) * 2 - 1,
+            torch.zeros_like(predictions["motion_delta_degrees"]),
+        )
+        self.assertTrue(torch.isfinite(losses["loss"]))
+        losses["loss"].backward()
+        self.assertIsNotNone(model.anomaly_head.weight.grad)
 
 
 if __name__ == "__main__":

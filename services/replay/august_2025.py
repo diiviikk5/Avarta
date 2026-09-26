@@ -21,6 +21,7 @@ from scipy.ndimage import label
 
 from services.ingestion.imd_gridded_parser import IMDGriddedParser
 from services.ingestion.chirps_daily import read_crop as read_chirps_crop, source_url as chirps_source_url, download as download_chirps
+from services.intelligence.verification import verify_ensemble
 from services.tracking.kalman_tracker import PersistentThreatTracker
 
 
@@ -209,7 +210,11 @@ def build_case(imd_file: Path, workers: int = 6, chirps_file: Path | None = None
     south, north, west, east = DOMAIN
     coarse_lats = np.arange(north, south - 0.01, -0.5, dtype=np.float32)
     coarse_lons = np.arange(west, east + 0.01, 0.5, dtype=np.float32)
-    forecast_on_imd_grid = _bilinear_to_imd(daily_mean, coarse_lats, coarse_lons, imd_lats, imd_lons)
+    members_on_imd_grid = np.stack([
+        _bilinear_to_imd(member, coarse_lats, coarse_lons, imd_lats, imd_lons)
+        for member in daily_members
+    ])
+    forecast_on_imd_grid = members_on_imd_grid.mean(axis=0)
     valid = np.isfinite(observed) & np.isfinite(forecast_on_imd_grid)
     peak_fcst = float(np.nanmax(forecast_on_imd_grid))
     peak_obs = float(np.nanmax(observed))
@@ -239,6 +244,10 @@ def build_case(imd_file: Path, workers: int = 6, chirps_file: Path | None = None
             "heavy_rain_threshold_mm_day": HEAVY_RAIN_MM_DAY,
             "heavy_rain_iou": _footprint_iou(forecast_on_imd_grid, observed, HEAVY_RAIN_MM_DAY),
             "observed_peak_location": [round(float(imd_lats[peak_row]), 3), round(float(imd_lons[peak_col]), 3)],
+            "ensemble_probabilistic": verify_ensemble(
+                members_on_imd_grid, observed, threshold=HEAVY_RAIN_MM_DAY,
+                neighborhood_scales=(1, 3, 5),
+            ),
         },
         "frames": frames,
         "raster": {"latitudes": [round(float(v), 2) for v in coarse_lats],
@@ -256,9 +265,11 @@ def build_case(imd_file: Path, workers: int = 6, chirps_file: Path | None = None
     }
     if chirps_file is not None:
         chirps, chirps_lats, chirps_lons, chirps_sha = read_chirps_crop(chirps_file, DOMAIN)
-        forecast_on_chirps = _bilinear_to_imd(
-            daily_mean, coarse_lats, coarse_lons, chirps_lats, chirps_lons,
-        )
+        members_on_chirps = np.stack([
+            _bilinear_to_imd(member, coarse_lats, coarse_lons, chirps_lats, chirps_lons)
+            for member in daily_members
+        ])
+        forecast_on_chirps = members_on_chirps.mean(axis=0)
         common = np.isfinite(chirps) & np.isfinite(forecast_on_chirps)
         if not common.any():
             raise RuntimeError("No common GEFS/CHIRPS cells in domain")
@@ -279,6 +290,10 @@ def build_case(imd_file: Path, workers: int = 6, chirps_file: Path | None = None
             "heavy_rain_iou": _footprint_iou(forecast_on_chirps, chirps, HEAVY_RAIN_MM_DAY),
             "heavy_rain_threshold_mm_day": HEAVY_RAIN_MM_DAY,
             "timing_note": "The GEFS 03–03 UTC accumulation is not known to exactly match the CHIRPS daily window; descriptive comparison only.",
+            "ensemble_probabilistic": verify_ensemble(
+                members_on_chirps, chirps, threshold=HEAVY_RAIN_MM_DAY,
+                neighborhood_scales=(1, 3, 5, 9),
+            ),
         }
         report["limitations"].append(
             "CHIRPS 0.05° provides an independent fine observation grid, not evidence of a 5 km forecast. "

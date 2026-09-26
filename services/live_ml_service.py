@@ -180,67 +180,63 @@ def run_live_training_step(step_idx: int = 1, hazard: str = "rainfall") -> Dict[
 
 
 def get_spherical_gnn_simulation() -> Dict[str, Any]:
-    """Execute real Spherical icosahedral GNN forward pass."""
+    """Execute an architecture smoke test; random weights are never meteorology."""
     import torch
-    from models.spherical_gnn.icosahedron import generate_icosahedron_vertices, subdivide_mesh, SphericalAnomalyGNN
+    from models.spherical_gnn.icosahedron import (
+        EnsembleTemporalSphericalGNN,
+        generate_icosahedron_vertices,
+        subdivide_mesh,
+    )
 
     verts = generate_icosahedron_vertices()
     nodes, edges = subdivide_mesh(verts, level=2)  # 162 nodes, 960 edges
 
-    gnn = SphericalAnomalyGNN(in_channels=8, hidden_dim=32)
-    gnn.eval()
-
     torch.manual_seed(101)
-    x = torch.randn(nodes.shape[0], 8)
+    gnn = EnsembleTemporalSphericalGNN(in_channels=11, hidden_dim=16, layers=1)
+    gnn.eval()
+    x = torch.randn(1, 3, 2, nodes.shape[0], 11)
     edge_index = torch.from_numpy(edges).long()
+    positions = torch.from_numpy(nodes)
 
     with torch.no_grad():
-        out = gnn(x, edge_index)
-        probs = out["anomaly_probability"].squeeze().numpy()
-        efis = out["extreme_forecast_index"].squeeze().numpy()
-
-    # Format nodes for 3D sphere render
-    sampled_nodes = []
-    for i in range(min(len(nodes), 80)):
-        sampled_nodes.append({
-            "x": round(float(nodes[i, 0]), 3),
-            "y": round(float(nodes[i, 1]), 3),
-            "z": round(float(nodes[i, 2]), 3),
-            "anomaly_prob": round(float(probs[i]), 3),
-            "efi_score": round(float(efis[i]), 3),
-            "active": bool(probs[i] > 0.65),
-        })
+        first = gnn(x, edge_index, positions)
+        permuted = gnn(x[:, [2, 0, 1]], edge_index, positions)
+    invariance_error = float(torch.max(torch.abs(
+        first["anomaly_probability"] - permuted["anomaly_probability"]
+    )).item())
 
     return {
         "level": 2,
         "total_nodes": int(nodes.shape[0]),
         "total_edges": int(edges.shape[1]),
-        "architecture": "MessagePassing SphericalAnomalyGNN (SiLU + Edge MLP)",
-        "sampled_nodes": sampled_nodes,
-        "max_efi": round(float(np.max(efis)), 3),
-        "mean_anomaly_prob": round(float(np.mean(probs)), 3),
+        "architecture": "Member attention -> Earth-relative GNN -> lead-time GRU -> multi-task heads",
+        "parameters": sum(parameter.numel() for parameter in gnn.parameters()),
+        "input_shape": list(x.shape),
+        "output_shape": list(first["anomaly_probability"].shape),
+        "member_permutation_invariance_max_error": invariance_error,
+        "weights_status": "random_architecture_smoke_test",
+        "meteorological_skill_claimed": False,
     }
 
 
 def get_diffusion_denoise_telemetry() -> Dict[str, Any]:
-    """Return step-by-step diffusion denoising telemetry."""
-    steps = [
-        {"t": 100, "label": "Initial Noise N(0, I)", "noise_scale": 1.0, "psd_retention": 4.2, "peak_mm": 24.1, "stage": "Gaussian Prior"},
-        {"t": 75, "label": "Synoptic Alignment", "noise_scale": 0.75, "psd_retention": 12.8, "peak_mm": 58.4, "stage": "Coarse Conditioning"},
-        {"t": 50, "label": "Orographic Lift Fusion", "noise_scale": 0.48, "psd_retention": 26.5, "peak_mm": 98.2, "stage": "Terrain Injection"},
-        {"t": 25, "label": "Turbulent Detail Synthesis", "noise_scale": 0.22, "psd_retention": 41.3, "peak_mm": 134.7, "stage": "Fine-scale Eddy Denoising"},
-        {"t": 0, "label": "Physical Field Projection", "noise_scale": 0.0, "psd_retention": 50.7, "peak_mm": 162.4, "stage": "PINN Physics Manifold"},
-    ]
+    """Inspect implemented DDPM machinery without fabricating skill telemetry."""
+    from models.conditional_diffusion.precip_ddpm import ConditionalPrecipitationDiffusion
+
+    model = ConditionalPrecipitationDiffusion(coarse_channels=7, steps=100)
     return {
         "total_timesteps": 100,
-        "diffusion_schedule": "Cosine Beta Schedule [1e-4 -> 0.02]",
-        "steps": steps,
-        "psd_energy_comparison": {
-            "bilinear": 1.7,
-            "cnn": 11.7,
-            "avarta_diffusion": 50.7,
-            "ground_truth": 100.0,
-        }
+        "diffusion_schedule": "Linear beta schedule [1e-4 -> 0.02]",
+        "parameters": sum(parameter.numel() for parameter in model.parameters()),
+        "objective_terms": [
+            "tail_weighted_denoising",
+            "fft_spectral_fidelity",
+            "coarse_scale_conservation",
+            "extreme_peak_preservation",
+            "optional_moisture_flux_and_continuity",
+        ],
+        "trained_checkpoint": False,
+        "validated_5km_skill": False,
     }
 
 

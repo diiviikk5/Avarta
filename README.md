@@ -16,10 +16,13 @@ The system implements the complete MoES / NCMRWF Problem Statement #26078 capabi
 
 | Stage | Module | Status |
 | --- | --- | --- |
+| Evidence-aware Ensemble Intelligence | `services/intelligence/ensemble_core.py` | EFI + Shift-of-Tails, Jeffreys probability intervals, member agreement/confidence, 8-connected geodesic footprints, and an 11-channel spherical-GNN feature cube |
 | Multi-hazard catalog (Amphan Cyclone, 2024 Heat Dome, August 2025 Rain) | `services/cases/` | Validated meteorological metrics: vorticity, Stull wet-bulb, 500 hPa ridge |
 | Multi-variable anomaly detection (rainfall, temperature, wind, pressure, humidity, geopotential) | `services/detection/multi_variable.py` | Baseline σ-scores; GNN spherical anomaly graph |
 | Event tracking with T+24/48/72 legs + 4D bbox | `services/tracking/event_track.py` | Timestamp-aware Kalman tracker with globally optimal Hungarian association |
+| Ensemble-Temporal Spherical GNN | `models/spherical_gnn/icosahedron.py` | Permutation-invariant member attention, Earth-relative edge geometry, lead-time GRU, anomaly/EFI/uncertainty/motion heads; architecture implemented, weights untrained |
 | Physics-Informed Downscaling Core (PINN) | `models/physics_guard/pinn_loss.py` | Differentiable moisture flux $-\nabla \cdot (q\mathbf{v})$, non-negativity barrier, mass divergence |
+| Multi-objective Conditional DDPM | `models/conditional_diffusion/precip_ddpm.py` | Tail-weighted denoising + FFT spectral + coarse conservation + peak + optional physics losses; architecture implemented, weights untrained |
 | Topography & Orographic Engine | `services/downscaling/topography.py` | 5 km DEM slope gradients, orographic vertical velocity $w_{oro} = \mathbf{v} \cdot \nabla h_{DEM}$ |
 | 2D Fourier Power Spectral Density (PSD) Benchmark | `services/downscaling/spectral.py` | Proves generative diffusion preserves 50.7% high-frequency energy vs. Bilinear's 1.7% and CNN's 11.7% |
 | High-precision Impact Polygons & Critical Infrastructure | `services/impact/spatial_polygons.py` | Geodesic 5 km GeoJSON buffer intersecting AIIMS, substations, NH-44, NH-16, rail lines |
@@ -27,7 +30,30 @@ The system implements the complete MoES / NCMRWF Problem Statement #26078 capabi
 | Gramin Krishi Mausam Sewa (GKMS) Agromet Advisories | `services/alerts/agromet.py` | Medium-range (3–10 day) crop-specific and livestock advisories for farmers |
 | Pinpoint forecast + "what happens here" explainer | `services/alerts/engine.py` | Plain-language decision briefings for local authorities |
 
-Shared behavior is covered by 61 unit and integration tests across `tests/`.
+Shared behavior is covered by 74 passing unit and integration tests across `tests/` (plus one environment-dependent skip).
+
+## Evidence-aware AI core
+
+The new `EnsembleIntelligenceCore` accepts real arrays shaped
+`[member, latitude, longitude]` plus lead/season-matched model-climate
+quantiles. It produces EFI, Shift-of-Tails, raw and posterior exceedance
+probabilities, 90% finite-member intervals, ensemble confidence, coherent
+geographic footprints and an 11-channel feature cube that can be remapped to
+the icosahedral GNN. Both upper-tail hazards (rain, wind, heat) and lower-tail
+hazards (central pressure, cold) are supported.
+
+`services/intelligence/verification.py` provides held-out Brier score and
+skill, CRPS, ROC AUC, reliability bins, ensemble rank histogram,
+spread-versus-error and multi-scale Fractions Skill Score. These are the gates
+for promoting a sharp-looking neural output into the forecast path.
+
+This distinction is important: five archived members have 20% probability
+resolution. The `/api/intelligence` dashboard endpoint and FastAPI
+`/api/intelligence/audit` endpoint expose that limitation and return no
+probability footprint for the August 2025 replay because its maximum member
+support is only 1/5. Full EFI/SOT analysis remains unavailable for that compact
+artifact because its individual daily member fields and matched model climate
+were not persisted.
 
 ## Honest result from this case
 
@@ -101,8 +127,8 @@ New in this update — multi-hazard cases, physics/spectral verification, GIS po
 
 The dashboard (`http://localhost:3000/dashboard`) is split into one page per section, sharing the same sidebar: Overview (`/dashboard`), Inspector (`/dashboard/inspector`), Trajectory (`/dashboard/trajectory`), Risk Map (`/dashboard/risk`), Downscaling (`/dashboard/downscaling`), Ask (`/dashboard/ask`), Validation (`/dashboard/validation`), and Prototype demo (`/dashboard/demo`). The multi-hazard selector (Rain / Cyclone / Heatwave) dynamically loads verified event data across all views. The Downscaling page includes an interactive split comparison slider, the 2D FFT Radial PSD plot, GKMS agricultural advisories, and an OASIS CAP 1.2 payload viewer.
 
-The Next.js endpoints are `GET /api/cases`, `GET /api/cases/catalog`, `GET /api/spectral-analysis`, `GET /api/hazard-polygons`, `GET /api/cap`, `GET /api/agromet`, `GET /api/ensemble-plume`, `GET /api/threats`, `GET /api/benchmark`, `GET /api/alerts`, `GET /api/forecast`, `GET /api/what-happens-here`, `GET /api/risk-regions`, `GET /api/events`, and `GET /api/downscaling`. The separate read-only FastAPI service is `uvicorn services.api.main:app --reload` with equivalent case/threat endpoints, `GET /api/cap/feed.xml`, and `GET /api/cap/alert/{id}`.
+The Next.js endpoints include `GET /api/intelligence` for finite-member uncertainty auditing, alongside cases, spectral analysis, polygons, CAP, agromet, ensemble plume, forecast, risk, events, and downscaling routes. The separate read-only FastAPI service is `uvicorn services.api.main:app --reload`; its equivalent audit endpoint is `GET /api/intelligence/audit`.
 
 ## Scope and next steps
 
-The geometry module now constructs a recursive icosahedral mesh, and tracking uses timestamp-aware Kalman prediction with globally optimal assignment. EFI calculation and real NetCDF ingestion are available but **no trained GNN or matched multi-decade model climate** is in the forecast path. A conditional DDPM architecture has shape, gradient and sampling tests but **no trained weights or 5 km skill result**. This case does **not** use physics-constrained diffusion or hyper-local 5 km impact modelling. Synthetic storm/heatwave generators are labeled fixtures, not historical benchmarks. See the [data and model evidence ledger](docs/DATASETS_AND_TRAINING.md). To advance SIH 26078: obtain paired NEPS-G/NCUM ensemble archives and a genuinely fine target, choose spatial/event holdouts before cropping, test multiple hazards and years, calibrate probabilities and alert thresholds, then compare any GNN/diffusion candidate against transparent baselines.
+The geometry module now constructs a recursive icosahedral mesh, and the candidate GNN is ensemble-aware, temporal, orientation-aware and uncertainty-producing. Tracking still uses timestamp-aware Kalman prediction with globally optimal assignment in the validated replay. EFI/SOT, real NetCDF ingestion and uncertainty-aware footprinting are available, but **no trained GNN or matched multi-decade model climate** is in the forecast path. The conditional DDPM now has spectral, coarse-consistency, peak and optional physics objectives plus shape/gradient/sampling tests, but **no trained weights or 5 km skill result**. This case does **not** use diffusion or hyper-local 5 km impact modelling. Synthetic storm/heatwave generators are labeled fixtures, not historical benchmarks. See the [data and model evidence ledger](docs/DATASETS_AND_TRAINING.md). To advance SIH 26078: obtain paired NEPS-G/NCUM ensemble archives and a genuinely fine target, choose spatial/event holdouts before cropping, test multiple hazards and years, calibrate probabilities and alert thresholds, then compare any GNN/diffusion candidate against transparent baselines.

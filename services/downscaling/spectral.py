@@ -8,7 +8,9 @@ extreme amplitudes that forecasters actually need to track."
 Computes:
 1. 2D Fast Fourier Transform (FFT) of spatial fields
 2. Radially integrated 1D Power Spectral Density E(k) vs spatial wavenumber k (km^-1)
-3. Quantitative Spectral Amplitude Preservation Index comparing:
+3. Quantitative Spectral Amplitude Preservation Index comparing supplied
+   fields. The bundled demonstration is an explicitly synthetic fixture, not
+   output from the untrained diffusion architecture:
    - Coarse NWP (12 km)
    - Bilinear Interpolation (severe high-frequency roll-off / blurring)
    - Residual CNN (spectral smoothing at fine scales)
@@ -118,16 +120,15 @@ def evaluate_spectral_benchmark(
             "spectral_smoothing_resolved": bool(retention_diffusion >= 0.50 and retention_diffusion > retention_cnn * 2 and retention_bilinear < 0.10),
         },
         "scientific_interpretation": (
-            "Bilinear and standard CNN show severe high-frequency roll-off (spectral smoothing), "
-            "damping peak amplitudes by >50%. The generative diffusion downscaler matches the "
-            "ground-truth slope across high spatial wavenumbers (wavelengths < 20 km), proving "
-            "extreme value amplitude preservation without spatial blurring."
+            "On this hand-constructed synthetic stress test, the diffusion-like candidate field "
+            "retains more high-frequency power than the smoothed baselines. This validates the PSD "
+            "metric and desired objective, not a trained diffusion model or real 5 km forecast skill."
         ),
     }
 
 
 def generate_synthetic_spectral_case() -> Dict[str, Any]:
-    """Generate reproducible spectral fields to benchmark and visualize spectral smoothing."""
+    """Generate reproducible fixture fields to exercise the spectral metric."""
     rng = np.random.default_rng(42)
     H, W = 64, 64
 
@@ -156,10 +157,14 @@ def generate_synthetic_spectral_case() -> Dict[str, Any]:
     # Generative Diffusion: retains high-frequency variance and sharp peak
     generative_diffusion = np.clip(bilinear * 0.85 + core * 0.5 + rng.normal(0, 5.0, (H, W)), 0.0, 155.0)
 
-    return evaluate_spectral_benchmark(
+    result = evaluate_spectral_benchmark(
         ground_truth=ground_truth,
         coarse_12km=coarse_12km,
         bilinear=bilinear,
         residual_cnn=residual_cnn,
         generative_diffusion=generative_diffusion,
     )
+    result["evidence_scope"] = "synthetic_metric_fixture"
+    result["candidate_field"] = "hand_constructed_diffusion_like_field_not_model_output"
+    result["validated_5km_skill"] = False
+    return result
