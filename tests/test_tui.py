@@ -2,7 +2,8 @@ from io import StringIO
 
 from rich.console import Console
 
-from avarta_tui import CASE_FILE, THEMES, load_artifact, render_view
+from avarta_tui import (CASE_FILE, THEMES, load_artifact, render_view,
+                        resolve_theme_choice, theme_selector)
 
 
 def capture(view: str, width: int = 80) -> str:
@@ -73,4 +74,20 @@ def test_tui_api_bridge_views():
     res_fc = execute_tui_command("forecast 28.40 77.31", case_name="rainfall")
     assert res_fc["status"] == "ok"
     assert res_fc["view"] == "forecast"
+
+
+def test_original_style_theme_screen_is_available_without_false_live_claims():
+    buffer = StringIO()
+    console = Console(file=buffer, width=100, force_terminal=False, color_system=None)
+    theme_selector(console, "amber")
+    output = buffer.getvalue()
+    assert "AVARTA COLOR THEME SWITCHER" in output
+    assert "Solar Thermal Gold" in output
+    assert "● CURRENT" in output
+    assert "CONDITIONAL DDPM" not in output  # label is explicit and lowercase
+    assert "untrained" in output
+    assert "RESEARCH ONLY" in output
+    assert "TENSOR ENGINE SYNCHRONIZED" not in output
+    assert resolve_theme_choice("amber", "1") == "cyan"
+    assert resolve_theme_choice("amber", "") == "amber"
 
