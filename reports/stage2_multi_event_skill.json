@@ -1,0 +1,47 @@
+{
+  "schema_version": "avarta.stage2-multi-event-skill.v1",
+  "ready": true,
+  "scope": "held_out_demonstration_fixture",
+  "operational_validation": false,
+  "independent_observations": false,
+  "scientific_skill_claimed": false,
+  "warning": "These measured results close the software evidence gate only. They are not MoES/IMD forecast skill or real 5 km validation.",
+  "heldout_samples": 6,
+  "event_count": 3,
+  "event_types": [
+    "cyclone_rainband",
+    "monsoon_extreme",
+    "orographic_cloudburst"
+  ],
+  "threshold_mm_day": 64.5,
+  "ddpm_ensemble_members": 2,
+  "checkpoint_sha256": "f7bb4fd07bfcab4361cefe2e8ff6b0a1df5f2944b0c8cc863cea72cb48d87fa4",
+  "corpus_sha256": "eccdeb45c633c2b29a5537c053ff580ed65746434da5bff4d58dac02a6682ecb",
+  "ddpm": {
+    "mean_absolute_error_mm_day": 90.4477,
+    "mean_peak_recovery_ratio": 3.2487,
+    "extreme_footprint_iou": 0.0908
+  },
+  "bilinear_baseline": {
+    "mean_absolute_error_mm_day": 5.4446,
+    "mean_peak_recovery_ratio": 0.7032,
+    "extreme_footprint_iou": 0.8212
+  },
+  "per_event": {
+    "cyclone_rainband": {
+      "mean_absolute_error_mm_day": 86.8976,
+      "mean_peak_recovery_ratio": 4.1491,
+      "extreme_footprint_iou": 0.1216
+    },
+    "monsoon_extreme": {
+      "mean_absolute_error_mm_day": 94.4004,
+      "mean_peak_recovery_ratio": 3.1281,
+      "extreme_footprint_iou": 0.085
+    },
+    "orographic_cloudburst": {
+      "mean_absolute_error_mm_day": 90.0452,
+      "mean_peak_recovery_ratio": 2.469,
+      "extreme_footprint_iou": 0.0622
+    }
+  }
+}

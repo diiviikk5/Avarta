@@ -26,6 +26,81 @@ if str(REPO_ROOT) not in sys.path:
 
 CHECKPOINT_PATH = REPO_ROOT / "checkpoints" / "best_downscaler.pt"
 BENCHMARK_PATH = REPO_ROOT / "data" / "real_imd_training_results.json"
+STAGE2_DDPM_PATH = REPO_ROOT / "checkpoints" / "avarta_ddpm_stage2_demo.ckpt"
+STAGE2_DDPM_META_PATH = REPO_ROOT / "reports" / "stage2_ddpm_checkpoint.json"
+STAGE2_CORPUS_MANIFEST_PATH = REPO_ROOT / "data" / "stage2" / "paired_12km_5km_manifest.json"
+STAGE2_SKILL_REPORT_PATH = REPO_ROOT / "reports" / "stage2_multi_event_skill.json"
+
+
+def _read_json(path: Path) -> Dict[str, Any]:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def get_stage2_evidence() -> Dict[str, Any]:
+    """Verify each Stage-2 artifact and its cross-linked checksums."""
+    checkpoint_meta = _read_json(STAGE2_DDPM_META_PATH)
+    corpus_meta = _read_json(STAGE2_CORPUS_MANIFEST_PATH)
+    skill_report = _read_json(STAGE2_SKILL_REPORT_PATH)
+    corpus_artifact = REPO_ROOT / str(corpus_meta.get("artifact", ""))
+
+    checkpoint_hash = _sha256(STAGE2_DDPM_PATH) if STAGE2_DDPM_PATH.exists() else ""
+    corpus_hash = _sha256(corpus_artifact) if corpus_artifact.is_file() else ""
+    checkpoint_ready = bool(
+        checkpoint_meta.get("ready")
+        and checkpoint_meta.get("optimizer_steps", 0) > 0
+        and checkpoint_hash == checkpoint_meta.get("sha256")
+    )
+    corpus_ready = bool(
+        corpus_meta.get("sample_count", 0) >= 12
+        and corpus_meta.get("heldout_samples", 0) >= 3
+        and corpus_hash == corpus_meta.get("sha256")
+    )
+    report_ready = bool(
+        skill_report.get("ready")
+        and skill_report.get("event_count", 0) >= 3
+        and skill_report.get("heldout_samples", 0) >= 3
+        and skill_report.get("checkpoint_sha256") == checkpoint_hash
+        and skill_report.get("corpus_sha256") == corpus_hash
+    )
+    return {
+        "scope": "reproducible_demo_evidence_not_operational_validation",
+        "all_ready": checkpoint_ready and corpus_ready and report_ready,
+        "trained_ddpm_checkpoint": {
+            "ready": checkpoint_ready,
+            "path": str(STAGE2_DDPM_PATH.relative_to(REPO_ROOT)),
+            "sha256": checkpoint_hash,
+            "optimizer_steps": checkpoint_meta.get("optimizer_steps", 0),
+            "epochs": checkpoint_meta.get("epochs", 0),
+        },
+        "paired_12km_5km_corpus": {
+            "ready": corpus_ready,
+            "path": str(corpus_artifact.relative_to(REPO_ROOT)) if corpus_artifact.is_file() else "",
+            "sha256": corpus_hash,
+            "sample_count": corpus_meta.get("sample_count", 0),
+            "heldout_samples": corpus_meta.get("heldout_samples", 0),
+            "event_types": corpus_meta.get("event_types", []),
+        },
+        "heldout_multi_event_report": {
+            "ready": report_ready,
+            "path": str(STAGE2_SKILL_REPORT_PATH.relative_to(REPO_ROOT)),
+            "heldout_samples": skill_report.get("heldout_samples", 0),
+            "event_count": skill_report.get("event_count", 0),
+            "metrics": skill_report.get("ddpm", {}),
+            "operational_validation": False,
+        },
+    }
 
 
 def get_checkpoint_metadata() -> Dict[str, Any]:
@@ -232,6 +307,7 @@ def get_diffusion_denoise_telemetry() -> Dict[str, Any]:
     from models.conditional_diffusion.precip_ddpm import ConditionalPrecipitationDiffusion
 
     model = ConditionalPrecipitationDiffusion(coarse_channels=7, steps=100)
+    stage2_evidence = get_stage2_evidence()
     return {
         "total_timesteps": 100,
         "diffusion_schedule": "Linear beta schedule [1e-4 -> 0.02]",
@@ -243,8 +319,9 @@ def get_diffusion_denoise_telemetry() -> Dict[str, Any]:
             "extreme_peak_preservation",
             "optional_moisture_flux_and_continuity",
         ],
-        "trained_checkpoint": False,
+        "trained_checkpoint": stage2_evidence["trained_ddpm_checkpoint"]["ready"],
         "validated_5km_skill": False,
+        "evidence_gates": stage2_evidence,
     }
 
 

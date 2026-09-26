@@ -62,10 +62,10 @@ const EVIDENCE_ITEMS: Array<{
     id: "03",
     title: "Conditional diffusion downscaler",
     promise: "Generate probabilistic 12 km → 5 km rainfall scenarios without erasing extremes.",
-    reality: "A 100-step conditional DDPM implements ancestral sampling and five extreme-aware objective terms.",
-    evidence: "Tensor contracts and differentiability are tested; no trained DDPM checkpoint or held-out 5 km skill exists.",
-    metric: "Architecture only",
-    tier: "candidate",
+    reality: "A conditional DDPM now has a reproducible trained demo checkpoint, paired coarse/fine fixture and multi-event holdout report.",
+    evidence: "The end-to-end software path is checksum-verified. Its physics-shaped fixture is explicitly not operational MoES/IMD data or scientific 5 km skill.",
+    metric: "Stage-2 demo complete",
+    tier: "experimental",
     href: "/dashboard/downscaling",
     linkLabel: "Inspect Stage 2",
   },
@@ -164,6 +164,13 @@ interface MLStatus {
     objective_terms?: string[];
     trained_checkpoint?: boolean;
     validated_5km_skill?: boolean;
+    evidence_gates?: {
+      scope?: string;
+      all_ready?: boolean;
+      trained_ddpm_checkpoint?: { ready?: boolean; path?: string; sha256?: string; optimizer_steps?: number; epochs?: number };
+      paired_12km_5km_corpus?: { ready?: boolean; path?: string; sha256?: string; sample_count?: number; heldout_samples?: number; event_types?: string[] };
+      heldout_multi_event_report?: { ready?: boolean; path?: string; heldout_samples?: number; event_count?: number; operational_validation?: boolean; metrics?: Record<string, number> };
+    };
   };
   gnn?: {
     parameters?: number;
@@ -844,12 +851,34 @@ export default function TrainingLab() {
     return () => window.clearTimeout(timeout);
   }, [isRunning, currentStep, executeStep]);
 
+  const evidenceGates = mlStatus?.diffusion?.evidence_gates;
+  const readinessItems = [
+    { ready: true, label: "Architecture forward/backward tests", detail: "PYTORCH" },
+    { ready: true, label: "DDPM sampling + diagnostics contract", detail: "5 OBJECTIVES" },
+    {
+      ready: Boolean(evidenceGates?.trained_ddpm_checkpoint?.ready),
+      label: "Trained DDPM checkpoint",
+      detail: `${evidenceGates?.trained_ddpm_checkpoint?.optimizer_steps ?? 0} OPTIMIZER STEPS`,
+    },
+    {
+      ready: Boolean(evidenceGates?.paired_12km_5km_corpus?.ready),
+      label: "Paired 12 km → 5 km training corpus",
+      detail: `${evidenceGates?.paired_12km_5km_corpus?.sample_count ?? 0} PAIRS`,
+    },
+    {
+      ready: Boolean(evidenceGates?.heldout_multi_event_report?.ready),
+      label: "Held-out multi-event skill report",
+      detail: `${evidenceGates?.heldout_multi_event_report?.event_count ?? 0} EVENTS · ${evidenceGates?.heldout_multi_event_report?.heldout_samples ?? 0} HOLDOUT`,
+    },
+  ];
+  const readinessCount = readinessItems.filter((item) => item.ready).length;
+
   const DIFFUSION_STEPS = [
     { t: 100, label: "T = 100", title: "Gaussian Noise Prior", psd: "Not measured", peak: "Not measured", desc: "Architecture view: initialize from isotropic noise N(0, I)." },
     { t: 75, label: "T = 75", title: "Synoptic Conditioning", psd: "Not measured", peak: "Not measured", desc: "Architecture view: inject coarse NWP channels into the denoiser." },
     { t: 50, label: "T = 50", title: "Terrain Conditioning", psd: "Not measured", peak: "Not measured", desc: "Architecture view: condition the fine grid on terrain without asserting a trained result." },
     { t: 25, label: "T = 25", title: "Fine-scale Denoising", psd: "Not measured", peak: "Not measured", desc: "Architecture view: recover stochastic spatial detail through reverse diffusion." },
-    { t: 0, label: "T = 0", title: "Multi-objective Output", psd: "Not measured", peak: "Not measured", desc: "Training objective combines tail, FFT spectrum, coarse consistency, peak and optional physics losses. No trained DDPM checkpoint exists yet." },
+    { t: 0, label: "T = 0", title: "Multi-objective Output", psd: "See held-out report", peak: "See held-out report", desc: "Training combines tail, FFT spectrum, coarse consistency, peak and optional physics losses. A checksum-linked demo checkpoint now exercises the path; operational skill remains unvalidated." },
   ];
   const activeDiffusion = DIFFUSION_STEPS[diffusionStep];
 
@@ -1332,7 +1361,7 @@ export default function TrainingLab() {
                 <div className="flex items-start gap-3 rounded-2xl bg-amber-500/[0.07] border border-amber-500/20 p-4">
                   <AlertTriangle size={16} className="text-amber-300 mt-0.5 shrink-0" />
                   <p className="text-[11px] text-amber-100/75 leading-relaxed m-0">
-                    The field responds to the timestep control, but it is deterministic UI artwork. No rainfall value, spectrum score, or local peak is reported until a trained checkpoint is evaluated on held-out events.
+                    The field responds to the timestep control, but it remains deterministic UI artwork. Measured results live in the checksum-linked held-out demo report; this canvas does not substitute them or imply operational forecast skill.
                   </p>
                 </div>
               </div>
@@ -1393,26 +1422,22 @@ export default function TrainingLab() {
             <section className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15 flex flex-col">
               <div className="flex items-center justify-between gap-3">
                 <div><span className="text-[10px] font-mono text-zinc-500">STAGE 2 READINESS</span><h4 className="text-lg font-bold text-white mt-1">Evidence gates</h4></div>
-                <strong className="text-3xl text-amber-300 font-mono">2 / 5</strong>
+                <strong className={`text-3xl font-mono ${readinessCount === 5 ? "text-emerald-300" : "text-amber-300"}`}>{readinessCount} / 5</strong>
               </div>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 <div className="rounded-xl bg-white/[0.035] border border-white/10 p-3"><span className="text-[9px] text-zinc-500 font-mono">PARAMETERS</span><strong className="text-lg text-white block mt-1">{(mlStatus?.diffusion?.parameters ?? 23713).toLocaleString()}</strong></div>
                 <div className="rounded-xl bg-white/[0.035] border border-white/10 p-3"><span className="text-[9px] text-zinc-500 font-mono">OBJECTIVES</span><strong className="text-lg text-white block mt-1">{mlStatus?.diffusion?.objective_terms?.length ?? 5}</strong></div>
               </div>
               <div className="space-y-2 mt-5 text-xs">
-                {[
-                  { ready: true, label: "Architecture forward/backward tests" },
-                  { ready: true, label: "DDPM sampling + diagnostics contract" },
-                  { ready: false, label: "Trained DDPM checkpoint" },
-                  { ready: false, label: "Paired 12 km → 5 km training corpus" },
-                  { ready: false, label: "Held-out multi-event skill report" },
-                ].map(({ ready, label }) => (
+                {readinessItems.map(({ ready, label, detail }) => (
                   <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.025] border border-white/[0.07]">
                     {ready ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0" /> : <span className="w-[15px] h-[15px] rounded-full border border-amber-400/50 shrink-0" />}
-                    <span className={ready ? "text-zinc-300" : "text-zinc-500"}>{label}</span>
+                    <span className={`flex-1 ${ready ? "text-zinc-300" : "text-zinc-500"}`}>{label}</span>
+                    <span className="text-[9px] text-zinc-600 font-mono text-right">{detail}</span>
                   </div>
                 ))}
               </div>
+              {evidenceGates?.all_ready && <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] p-3"><ShieldCheck size={15} className="text-emerald-400 shrink-0 mt-0.5"/><p className="m-0 text-[10px] leading-relaxed text-emerald-100/70">All Stage-2 software evidence artifacts are present and checksum-linked. Scope: reproducible demonstration fixture, not operational forecast validation.</p></div>}
               <Link href="/dashboard/downscaling" className="mt-5 inline-flex items-center justify-between gap-3 rounded-xl bg-white text-black px-4 py-3 text-xs font-semibold hover:bg-zinc-200 transition-colors">
                 Open quantitative downscaling lab <ArrowUpRight size={14} />
               </Link>
@@ -1437,8 +1462,8 @@ export default function TrainingLab() {
               <div className="grid grid-cols-3 gap-2 min-w-full lg:min-w-[390px]">
                 {[
                   { value: 3, label: "Runtime verified", color: "text-emerald-300", border: "border-emerald-400/20" },
-                  { value: 3, label: "Scoped evidence", color: "text-sky-300", border: "border-sky-400/20" },
-                  { value: 2, label: "Untrained", color: "text-amber-300", border: "border-amber-400/20" },
+                  { value: 4, label: "Scoped evidence", color: "text-sky-300", border: "border-sky-400/20" },
+                  { value: 1, label: "Architecture only", color: "text-amber-300", border: "border-amber-400/20" },
                 ].map((item) => (
                   <div key={item.label} className={`rounded-2xl border ${item.border} bg-black/30 p-4`}>
                     <strong className={`text-3xl font-mono ${item.color}`}>{item.value}</strong>
@@ -1456,8 +1481,8 @@ export default function TrainingLab() {
                 {[
                   { key: "all" as const, label: "All", count: 8 },
                   { key: "verified" as const, label: "Verified", count: 3 },
-                  { key: "experimental" as const, label: "Experimental", count: 3 },
-                  { key: "candidate" as const, label: "Architecture only", count: 2 },
+                  { key: "experimental" as const, label: "Experimental", count: 4 },
+                  { key: "candidate" as const, label: "Architecture only", count: 1 },
                 ].map((filter) => (
                   <button key={filter.key} onClick={() => setMatrixFilter(filter.key)} className={`px-3 py-2 rounded-full border text-[10px] font-mono transition-colors ${matrixFilter === filter.key ? "bg-white text-black border-white" : "bg-white/[0.03] text-zinc-400 border-white/10 hover:text-white"}`}>
                     {filter.label} <span className="opacity-60 ml-1">{filter.count}</span>
