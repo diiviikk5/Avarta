@@ -181,7 +181,7 @@ export default function LandingView() {
       {/* Hero Single Viewport */}
       <section className="relative z-10 w-full h-screen h-dvh flex flex-col justify-between items-center p-[clamp(16px,2.4vh,28px)_clamp(14px,3vw,32px)]">
         {/* Header */}
-        <header className="w-full max-w-[860px] mx-auto flex items-center justify-between gap-4 shrink-0 z-50">
+        <header className="w-full max-w-[1040px] mx-auto flex items-center justify-between gap-3 sm:gap-4 shrink-0 z-50">
           <Link
             href="/"
             className="w-11 h-11 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.16)] grid place-items-center cursor-pointer transition-all duration-300 hover:scale-105 shrink-0"
@@ -190,31 +190,31 @@ export default function LandingView() {
             <img src="/assets/logo.webp" alt="Avarta" width={52} height={52} className="w-[72%] h-[72%] object-contain" />
           </Link>
 
-          <nav className="hidden md:flex bg-white h-11 px-3 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.16)] items-center justify-around gap-1 flex-1 max-w-[560px]">
-            <Link href="/" className="font-sans font-medium text-[13px] tracking-tight px-3 py-1.5 rounded-full text-[#2e2e2e] relative active-link">
+          <nav className="hidden md:flex bg-white h-11 px-4 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.16)] items-center justify-between gap-1 flex-1 max-w-[660px]">
+            <Link href="/" className="font-sans font-medium text-[13px] tracking-tight px-3.5 py-1.5 rounded-full text-[#2e2e2e] relative active-link whitespace-nowrap">
               Home
               <span className="absolute bottom-[4px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full bg-black shadow-[-5px_0_0_#000,5px_0_0_#000]" />
             </Link>
-            <Link href="/dashboard" className="font-sans font-medium text-[13px] tracking-tight px-3 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors">
+            <Link href="/dashboard" className="font-sans font-medium text-[13px] tracking-tight px-3.5 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors whitespace-nowrap">
               Replay Lab
             </Link>
-            <Link href="/dashboard/downscaling" className="font-sans font-medium text-[13px] tracking-tight px-3 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors">
-              PINN Downscale
+            <Link href="/dashboard/downscaling" className="font-sans font-medium text-[13px] tracking-tight px-3.5 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors whitespace-nowrap">
+              Downscale
             </Link>
-            <Link href="/dashboard/risk" className="font-sans font-medium text-[13px] tracking-tight px-3 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors">
+            <Link href="/dashboard/risk" className="font-sans font-medium text-[13px] tracking-tight px-3.5 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors whitespace-nowrap">
               Risk Grid
             </Link>
-            <Link href="/dashboard/terminal" className="font-sans font-medium text-[13px] tracking-tight px-3 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors">
-              Terminal CLI
+            <Link href="/dashboard/terminal" className="font-sans font-medium text-[13px] tracking-tight px-3.5 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors whitespace-nowrap">
+              Terminal
             </Link>
-            <Link href="/dashboard/inspector" className="font-sans font-medium text-[13px] tracking-tight px-3 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors">
+            <Link href="/dashboard/inspector" className="font-sans font-medium text-[13px] tracking-tight px-3.5 py-1.5 rounded-full text-[#2e2e2e]/60 hover:text-black transition-colors whitespace-nowrap">
               CAP Feed
             </Link>
           </nav>
 
           <Link
             href="/dashboard"
-            className="hidden md:inline-flex bg-[#28282a] text-[#c8c8c8] hover:bg-[#323234] hover:text-white h-11 px-5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.16)] items-center justify-center font-sans font-medium text-[13px] tracking-tight transition-all"
+            className="hidden md:inline-flex bg-[#28282a] text-[#c8c8c8] hover:bg-[#323234] hover:text-white h-11 px-5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.16)] items-center justify-center font-sans font-medium text-[13px] tracking-tight transition-all shrink-0 whitespace-nowrap"
           >
             Launch Console
           </Link>
@@ -237,13 +237,14 @@ export default function LandingView() {
                 <span className="font-bold text-sm tracking-wider uppercase">Navigation</span>
                 <button onClick={() => setMobileMenuOpen(false)} className="text-zinc-600 hover:text-black font-bold">✕</button>
               </div>
-              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">Overview Replay</Link>
-              <Link href="/dashboard/downscaling" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">PINN Downscaling Lab</Link>
+              <Link href="/" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">Home</Link>
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">Replay Lab</Link>
+              <Link href="/dashboard/downscaling" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">PINN Downscaling</Link>
               <Link href="/dashboard/risk" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">All-India Risk Map</Link>
               <Link href="/dashboard/trajectory" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">Kalman 4D Trajectory</Link>
               <Link href="/dashboard/terminal" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">Terminal Mission Control</Link>
               <Link href="/dashboard/inspector" onClick={() => setMobileMenuOpen(false)} className="py-2 px-3 rounded-lg hover:bg-zinc-100 font-medium text-sm">OASIS CAP 1.2 Feed</Link>
-              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="w-full bg-[#28282a] text-white py-3 rounded-full text-center font-medium text-sm mt-2">Open Full App</Link>
+              <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="w-full bg-[#28282a] text-white py-3 rounded-full text-center font-medium text-sm mt-2">Launch Console</Link>
             </div>
           </div>
         )}
@@ -278,11 +279,10 @@ export default function LandingView() {
 
           {/* Headline */}
           <h1
-            className="text-white text-[clamp(26px,5.8vw,76px)] leading-[1.12] tracking-[-0.04em] font-normal select-none m-0 p-0"
+            className="text-white text-[clamp(44px,11vw,120px)] leading-[0.98] tracking-[-0.03em] font-normal select-none m-0 p-0 uppercase"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            <span className="block">Atmospheric Intelligence</span>
-            <span className="block">Designed To Evolve</span>
+            AVARTA
           </h1>
 
           {/* Subhead */}
