@@ -7,7 +7,7 @@ export default function AskPage() {
       <PageHeading
         eyebrow="09 / WHAT HAPPENS HERE?"
         title="Ask about your area"
-        blurb="Plain-language briefings: expected rainfall, window, impacts, radius and confidence. Draft decision support only."
+        blurb="Explore 29 Indian regions or any coordinate through animated rainfall timelines, local impact explanations, confidence drivers and practical next steps. Draft decision support only."
       />
       <AskPanel picked={null} />
     </>

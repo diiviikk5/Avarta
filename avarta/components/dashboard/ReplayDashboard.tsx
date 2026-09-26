@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, Box, CalendarDays, ChevronRight, CircleDot, Clock3, Download, FlaskConical, Gauge, Layers3, MapPin, Navigation, Radar, Route, Satellite, ShieldAlert, Sparkles, Search, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
+import Image from "next/image";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Box, Building2, CalendarDays, CheckCircle2, ChevronRight, CircleDot, Clock3, CloudRain, Download, Droplets, FlaskConical, Gauge, Layers3, MapPin, Navigation, Radar, Route, Satellite, ShieldAlert, Sparkles, Search, RefreshCw, ChevronUp, ChevronDown, Umbrella, Waves } from "lucide-react";
 import type { BenchmarkReport, ReplayCase } from "@/lib/replay";
-import { impactsFor, nearestPlace, regionRiskRows, replayTrackLegs, riskScore, type RegionRiskRow } from "@/lib/forecast";
+import { BRIEFING_REGIONS, impactsFor, nearestPlace, regionRiskRows, replayTrackLegs, riskScore, type RegionRiskRow } from "@/lib/forecast";
 import RiskIndia3D from "@/components/dashboard/RiskIndia3D";
 import { MOCK_THREATS } from "@/lib/mock-weather-data";
 import styles from "./replay.module.css";
@@ -702,37 +703,166 @@ export function DownscalePanel() {
   );
 }
 
+interface AreaBriefing {
+  location: string;
+  coordinates: { lat: number; lon: number };
+  headline: string;
+  expected_rainfall_mm: [number, number];
+  forecast_window: string;
+  potential_impacts: string[];
+  risk_radius_km: number;
+  confidence: number;
+  confidence_percent: number;
+  anomaly_sigma: number;
+  severity: "LOW" | "MODERATE" | "HIGH" | "SEVERE";
+  risk_score: number;
+  risk_band: string;
+  narrative: string;
+  hourly_timeline: Array<{ lead_hour: number; label: string; rainfall_rate_mm_hr: number; accumulated_rainfall_mm: number; probability_percent: number }>;
+  risk_components: Array<{ label: string; score: number }>;
+  recommended_actions: string[];
+  explanations: { meteorology: string; impacts: string; confidence: string };
+  visual_context: { image: string; alt: string; label: string };
+  provenance: { model: string; initialization_time: string; grid_note: string };
+}
+
+function RainfallBriefingChart({ points }: { points: AreaBriefing["hourly_timeline"] }) {
+  const max = Math.max(1, ...points.map((point) => point.rainfall_rate_mm_hr));
+  const polyline = points.map((point, index) => `${28 + index * 71},${145 - (point.rainfall_rate_mm_hr / max) * 108}`).join(" ");
+  return (
+    <div className={styles.askChart} aria-label="Rainfall intensity through the forecast window">
+      <div className={styles.askChartHead}><div><span>Forecast evolution</span><strong>Rainfall intensity & support</strong></div><span className={styles.askLivePill}><i /> animated model curve</span></div>
+      <svg viewBox="0 0 480 175" role="img" aria-label="Animated rainfall intensity graph">
+        {[38, 73, 108, 143].map((y) => <line key={y} x1="28" y1={y} x2="454" y2={y} className={styles.askGridLine} />)}
+        <polygon points={`28,145 ${polyline} 454,145`} className={styles.askChartArea} />
+        <polyline points={polyline} className={styles.askChartLine} />
+        {points.map((point, index) => {
+          const x = 28 + index * 71;
+          const y = 145 - (point.rainfall_rate_mm_hr / max) * 108;
+          return <g key={point.label}><circle cx={x} cy={y} r="4" className={styles.askChartDot} /><text x={x} y="166" textAnchor="middle">{point.label}</text></g>;
+        })}
+      </svg>
+      <div className={styles.askTimelineNumbers}>{points.map((point) => <div key={point.label}><strong>{point.rainfall_rate_mm_hr}</strong><span>mm/h · {point.probability_percent}% support</span></div>)}</div>
+    </div>
+  );
+}
+
+function BriefingGauge({ score, band }: { score: number; band: string }) {
+  const dash = Math.max(0, Math.min(100, score)) * 2.64;
+  return (
+    <div className={styles.askGaugeWrap}>
+      <svg viewBox="0 0 110 110" aria-label={`Risk score ${score} out of 100`}>
+        <circle cx="55" cy="55" r="42" className={styles.askGaugeTrack} />
+        <circle cx="55" cy="55" r="42" className={styles.askGaugeValue} style={{ strokeDasharray: `${dash} 264` }} />
+      </svg>
+      <div><strong>{score}</strong><span>/ 100</span><b>{band}</b></div>
+    </div>
+  );
+}
+
 export function AskPanel({ picked }: { picked: { lat: number; lon: number } | null }) {
   const [lat, setLat] = useState("28.53");
   const [lon, setLon] = useState("77.39");
-  const [answer, setAnswer] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<AreaBriefing | null>(null);
+  const [region, setRegion] = useState("Noida");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const ask = async (aLat: string, aLon: string) => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/what-happens-here?lat=${encodeURIComponent(aLat)}&lon=${encodeURIComponent(aLon)}`);
+      if (!res.ok) throw new Error("The briefing service could not validate these coordinates.");
       const data = await res.json();
-      setAnswer(data.narrative ?? JSON.stringify(data));
-    } catch {
-      setAnswer("Could not reach the explainer API.");
+      setAnswer(data as AreaBriefing);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not reach the explainer API.");
     } finally {
       setLoading(false);
     }
   };
+  const chooseRegion = (name: string) => {
+    const selected = BRIEFING_REGIONS.find((item) => item.name === name);
+    if (!selected) return;
+    const nextLat = String(selected.lat);
+    const nextLon = String(selected.lon);
+    setRegion(name);
+    setLat(nextLat);
+    setLon(nextLon);
+    void ask(nextLat, nextLon);
+  };
+  const groupedRegions = useMemo(() => Object.entries(BRIEFING_REGIONS.reduce<Record<string, typeof BRIEFING_REGIONS>>((groups, item) => {
+    (groups[item.zone] ??= []).push(item);
+    return groups;
+  }, {})), []);
+  const quickRegions = ["Noida", "Delhi", "Mumbai", "Kolkata", "Bhubaneswar", "Chennai", "Guwahati"];
   return (
-    <section className={styles.lower} id="ask">
-      <div className={styles.lowerHead}><div><div className={styles.eyebrow}>09 / WHAT HAPPENS HERE?</div><h2>Plain-language briefing</h2></div><span>GET /api/what-happens-here?lat & lon</span></div>
-      <p className={styles.muted}>Ask about your area in numbers you can act on — expected rainfall, window, impacts, radius and confidence.</p>
-      <div className={styles.askRow}>
-        <label>Lat <input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" aria-label="Latitude" /></label>
-        <label>Lon <input value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" aria-label="Longitude" /></label>
-        <button onClick={() => ask(lat, lon)} disabled={loading}>{loading ? "Briefing…" : "What will happen here?"}</button>
-        <button className={styles.ghostBtn} onClick={() => { setLat("28.40"); setLon("77.31"); ask("28.40", "77.31"); }}>Faridabad</button>
-        <button className={styles.ghostBtn} onClick={() => { setLat("28.53"); setLon("77.39"); ask("28.53", "77.39"); }}>Noida</button>
-        {picked && <button className={styles.ghostBtn} onClick={() => { setLat(String(picked.lat)); setLon(String(picked.lon)); ask(String(picked.lat), String(picked.lon)); }}>Use map pin 📍</button>}
+    <section className={`${styles.lower} ${styles.askWorkspace}`} id="ask">
+      <div className={styles.lowerHead}><div><div className={styles.eyebrow}>09 / WHAT HAPPENS HERE?</div><h2>Local impact intelligence</h2></div><span>29 regions · custom coordinates · visual briefing</span></div>
+      <p className={styles.askIntro}>Choose a major Indian region or enter any coordinate. AVARTA translates the nearest model-grid signal into a visual timeline, likely local impacts, uncertainty and practical next steps.</p>
+      <div className={styles.askControls}>
+        <label className={styles.askRegionSelect}>Explore a region
+          <select value={region} onChange={(event) => chooseRegion(event.target.value)} aria-label="Choose an Indian region">
+            {groupedRegions.map(([zone, items]) => <optgroup key={zone} label={zone}>{items.map((item) => <option key={item.name} value={item.name}>{item.name} · {item.state}</option>)}</optgroup>)}
+          </select>
+        </label>
+        <div className={styles.askCoordinateGroup}>
+          <label>Latitude <input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" aria-label="Latitude" /></label>
+          <label>Longitude <input value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" aria-label="Longitude" /></label>
+        </div>
+        <button className={styles.askPrimaryButton} onClick={() => ask(lat, lon)} disabled={loading}>{loading ? <><RefreshCw size={16} className={styles.askSpin} /> Building briefing…</> : <><Sparkles size={16} /> What will happen here?</>}</button>
+        {picked && <button className={styles.ghostBtn} onClick={() => { setLat(String(picked.lat)); setLon(String(picked.lon)); void ask(String(picked.lat), String(picked.lon)); }}><MapPin size={14} /> Use map pin</button>}
       </div>
-      {answer && <p className={styles.askAnswer}>📍 {answer}</p>}
-      <p className={styles.benchmarkNote}>Example: Noida → extreme rainfall 145–175 mm in 8–14 h, urban flooding, ~5 km radius, 81% uncalibrated confidence. Draft only.</p>
+      <div className={styles.askQuickRegions}>{quickRegions.map((name) => <button key={name} className={region === name ? styles.askQuickActive : ""} onClick={() => chooseRegion(name)}>{name}</button>)}</div>
+      {error && <div className={styles.askError}><AlertTriangle size={16} /> {error}</div>}
+      {loading && <div className={styles.askLoading} aria-live="polite"><div /><div /><div /><span>Sampling the replay grid and translating the signal into local impacts…</span></div>}
+      {answer && !loading && (
+        <div className={styles.askBriefing} key={`${answer.location}-${answer.coordinates.lat}-${answer.coordinates.lon}`}>
+          <div className={styles.askHero}>
+            <Image src={answer.visual_context.image} alt={answer.visual_context.alt} width={1200} height={620} priority className={styles.askHeroImage} />
+            <div className={styles.askHeroShade} />
+            <div className={styles.askHeroContent}>
+              <div className={styles.askHeroTop}><span className={`${styles.askSeverity} ${styles[`ask${answer.severity}`]}`}><i /> {answer.severity}</span><span><MapPin size={13} /> {answer.coordinates.lat.toFixed(2)}°N · {answer.coordinates.lon.toFixed(2)}°E</span></div>
+              <span className={styles.askKicker}>AVARTA LOCAL BRIEF · DRAFT DECISION SUPPORT</span>
+              <h3>{answer.location}</h3>
+              <p>{answer.narrative}</p>
+              <small>{answer.visual_context.label}</small>
+            </div>
+            <div className={styles.askRadarPulse}><span /><span /><MapPin size={18} /></div>
+          </div>
+
+          <div className={styles.askMetrics}>
+            <article><CloudRain size={18} /><span>Expected rainfall</span><strong>{answer.expected_rainfall_mm[0]}–{answer.expected_rainfall_mm[1]}<small> mm</small></strong><p>{answer.forecast_window}</p></article>
+            <article><Gauge size={18} /><span>Model confidence</span><strong>{answer.confidence_percent}<small>%</small></strong><p>Support, not personal-risk probability</p></article>
+            <article><Waves size={18} /><span>Anomaly</span><strong>{answer.anomaly_sigma >= 0 ? "+" : ""}{answer.anomaly_sigma}<small>σ</small></strong><p>vs provisional climatology</p></article>
+            <article><MapPin size={18} /><span>Indicative radius</span><strong>~{answer.risk_radius_km}<small> km</small></strong><p>nearest-grid impact envelope</p></article>
+          </div>
+
+          <div className={styles.askVisualGrid}>
+            <RainfallBriefingChart points={answer.hourly_timeline} />
+            <article className={styles.askRiskCard}>
+              <div className={styles.askSectionLabel}>Composite signal</div>
+              <h4>Why this risk level?</h4>
+              <BriefingGauge score={answer.risk_score} band={answer.risk_band} />
+              <div className={styles.askRiskBars}>{answer.risk_components.map((component) => <div key={component.label}><span>{component.label}<b>{component.score}%</b></span><i><em style={{ width: `${component.score}%` }} /></i></div>)}</div>
+            </article>
+          </div>
+
+          <div className={styles.askExplanationGrid}>
+            <article><span className={styles.askIconBox}><Radar size={18} /></span><div><div className={styles.askSectionLabel}>What the atmosphere is doing</div><h4>Model signal, decoded</h4><p>{answer.explanations.meteorology}</p></div></article>
+            <article><span className={styles.askIconBox}><Building2 size={18} /></span><div><div className={styles.askSectionLabel}>What it can mean locally</div><h4>From rainfall to disruption</h4><p>{answer.explanations.impacts}</p></div></article>
+            <article><span className={styles.askIconBox}><ShieldAlert size={18} /></span><div><div className={styles.askSectionLabel}>How sure are we?</div><h4>Confidence with caveats</h4><p>{answer.explanations.confidence}</p></div></article>
+          </div>
+
+          <div className={styles.askBottomGrid}>
+            <article className={styles.askImpactCard}><div className={styles.askSectionLabel}>Likely local effects</div><h4>Watch these first</h4><div>{answer.potential_impacts.map((impact, index) => <span key={impact}>{index === 0 ? <Droplets size={15} /> : index === 1 ? <Waves size={15} /> : <AlertTriangle size={15} />}{impact}</span>)}</div></article>
+            <article className={styles.askActionCard}><div className={styles.askSectionLabel}>Practical preparation</div><h4>What you can do now</h4><ol>{answer.recommended_actions.map((action) => <li key={action}><CheckCircle2 size={16} /><span>{action}</span></li>)}</ol></article>
+          </div>
+
+          <footer className={styles.askProvenance}><Umbrella size={16} /><div><strong>Interpretation boundary</strong><span>{answer.provenance.grid_note} Model: {answer.provenance.model}. Initialised {time(answer.provenance.initialization_time)} UTC. Always follow official IMD and district authority warnings.</span></div><a href={`/api/what-happens-here?lat=${answer.coordinates.lat}&lon=${answer.coordinates.lon}`} target="_blank" rel="noreferrer">Open machine-readable brief <ArrowUpRight size={13} /></a></footer>
+        </div>
+      )}
+      {!answer && !loading && <div className={styles.askEmpty}><div className={styles.askEmptyVisual}><span /><span /><Radar size={38} /></div><div><strong>Select a region to generate a visual briefing</strong><p>The result will include a forecast graph, risk drivers, impact explanation and recommended actions—not just a one-line answer.</p></div></div>}
     </section>
   );
 }

@@ -17,21 +17,48 @@ export interface PinpointForecast {
   status: string;
 }
 
-const KNOWN_PLACES: [string, number, number][] = [
-  ["Faridabad", 28.4, 77.31],
-  ["Noida", 28.53, 77.39],
-  ["Delhi", 28.61, 77.21],
-  ["Gurugram", 28.46, 77.03],
-  ["Jaipur", 26.91, 75.79],
-  ["Lucknow", 26.85, 80.95],
-  ["Patna", 25.59, 85.14],
-  ["Chandigarh", 30.73, 76.78],
-  ["Dehradun", 30.32, 78.03],
-  ["Amritsar", 31.63, 74.87],
-  ["Agra", 27.18, 78.01],
-  ["Nagpur", 21.15, 79.09],
-  ["Kolkata", 22.57, 88.36],
+export interface BriefingRegion {
+  name: string;
+  state: string;
+  zone: "North" | "West" | "Central" | "East" | "South" | "Northeast" | "Islands";
+  lat: number;
+  lon: number;
+}
+
+/** Judge-demo presets for the local briefing workspace. Coordinates remain editable. */
+export const BRIEFING_REGIONS: BriefingRegion[] = [
+  { name: "Noida", state: "Uttar Pradesh", zone: "North", lat: 28.53, lon: 77.39 },
+  { name: "Faridabad", state: "Haryana", zone: "North", lat: 28.4, lon: 77.31 },
+  { name: "Delhi", state: "Delhi", zone: "North", lat: 28.61, lon: 77.21 },
+  { name: "Gurugram", state: "Haryana", zone: "North", lat: 28.46, lon: 77.03 },
+  { name: "Srinagar", state: "Jammu & Kashmir", zone: "North", lat: 34.08, lon: 74.8 },
+  { name: "Dehradun", state: "Uttarakhand", zone: "North", lat: 30.32, lon: 78.03 },
+  { name: "Chandigarh", state: "Chandigarh", zone: "North", lat: 30.73, lon: 76.78 },
+  { name: "Jaipur", state: "Rajasthan", zone: "West", lat: 26.91, lon: 75.79 },
+  { name: "Ahmedabad", state: "Gujarat", zone: "West", lat: 23.02, lon: 72.57 },
+  { name: "Mumbai", state: "Maharashtra", zone: "West", lat: 19.07, lon: 72.87 },
+  { name: "Panaji", state: "Goa", zone: "West", lat: 15.5, lon: 73.83 },
+  { name: "Nagpur", state: "Maharashtra", zone: "West", lat: 21.15, lon: 79.09 },
+  { name: "Bhopal", state: "Madhya Pradesh", zone: "Central", lat: 23.26, lon: 77.41 },
+  { name: "Raipur", state: "Chhattisgarh", zone: "Central", lat: 21.25, lon: 81.63 },
+  { name: "Lucknow", state: "Uttar Pradesh", zone: "East", lat: 26.85, lon: 80.95 },
+  { name: "Patna", state: "Bihar", zone: "East", lat: 25.6, lon: 85.14 },
+  { name: "Kolkata", state: "West Bengal", zone: "East", lat: 22.57, lon: 88.36 },
+  { name: "Bhubaneswar", state: "Odisha", zone: "East", lat: 20.3, lon: 85.82 },
+  { name: "Visakhapatnam", state: "Andhra Pradesh", zone: "South", lat: 17.69, lon: 83.22 },
+  { name: "Hyderabad", state: "Telangana", zone: "South", lat: 17.38, lon: 78.49 },
+  { name: "Bengaluru", state: "Karnataka", zone: "South", lat: 12.97, lon: 77.59 },
+  { name: "Chennai", state: "Tamil Nadu", zone: "South", lat: 13.08, lon: 80.27 },
+  { name: "Kochi", state: "Kerala", zone: "South", lat: 9.93, lon: 76.27 },
+  { name: "Guwahati", state: "Assam", zone: "Northeast", lat: 26.14, lon: 91.74 },
+  { name: "Shillong", state: "Meghalaya", zone: "Northeast", lat: 25.58, lon: 91.89 },
+  { name: "Imphal", state: "Manipur", zone: "Northeast", lat: 24.81, lon: 93.93 },
+  { name: "Gangtok", state: "Sikkim", zone: "Northeast", lat: 27.34, lon: 88.61 },
+  { name: "Port Blair", state: "Andaman & Nicobar Islands", zone: "Islands", lat: 11.62, lon: 92.73 },
+  { name: "Kavaratti", state: "Lakshadweep", zone: "Islands", lat: 10.56, lon: 72.64 },
 ];
+
+const KNOWN_PLACES: [string, number, number][] = BRIEFING_REGIONS.map(({ name, lat, lon }) => [name, lat, lon]);
 
 export function nearestPlace(lat: number, lon: number): string {
   let best = `${lat.toFixed(2)}N ${lon.toFixed(2)}E`;
