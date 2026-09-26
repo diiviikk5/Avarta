@@ -66,23 +66,23 @@ function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
+  const isDark = mounted ? theme === "dark" : true;
+
   return (
     <button
       onClick={toggleTheme}
-      className={`${styles.themeBtn} ${mounted && theme === "dark" ? styles.themeBtnDark : ""}`}
-      aria-label={mounted && theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      title={mounted && theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      className={`w-8 h-8 rounded-full border grid place-items-center transition-all shadow-sm hover:scale-105 shrink-0 ${
+        isDark
+          ? "bg-[#1c1c1f] hover:bg-[#28282c] border-white/10 text-amber-400 hover:text-amber-300"
+          : "bg-zinc-100 hover:bg-zinc-200 border-zinc-300 text-sky-600 hover:text-sky-700"
+      }`}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
-      {mounted && theme === "dark" ? (
-        <>
-          <Sun size={13} className={styles.themeSun} />
-          <span>Light</span>
-        </>
+      {isDark ? (
+        <Sun size={15} className="hover:rotate-12 transition-transform" />
       ) : (
-        <>
-          <Moon size={13} className={styles.themeMoon} />
-          <span>Dark</span>
-        </>
+        <Moon size={15} className="hover:-rotate-12 transition-transform" />
       )}
     </button>
   );
@@ -216,88 +216,97 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           })}
         </nav>
 
-        {/* Theme Toggle in Sidebar */}
-        <div style={{ marginTop: "auto", paddingTop: "14px", paddingLeft: "4px", paddingRight: "4px" }}>
-          <ThemeToggle />
-        </div>
-
         <div className={styles.railBottom}>
           <span className={styles.railPulse} />
           <span>Research prototype<br /><small>MoES / NCMRWF 26078</small></span>
         </div>
       </aside>
 
-      {/* Floating Sidebar Reopen Controls (When Sidebar is Collapsed) */}
-      {!isSidebarOpen && (
-        <div className={styles.floatingControlGroup}>
-          <button
-            onClick={toggleSidebar}
-            className={styles.floatingSidebarOpener}
-            title="Open sidebar (Ctrl+B)"
-            aria-label="Open sidebar"
-          >
-            <PanelLeftOpen size={16} />
-            <span>Open Menu</span>
-          </button>
-          <ThemeToggle />
-        </div>
-      )}
-
       {/* Content Area with Signature Argus Floating Header */}
       <div className={styles.content}>
-        <header className="sticky top-0 z-40 w-full py-3 px-6 flex items-center justify-between gap-4 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="flex items-center gap-3">
+        <header className={`sticky top-0 z-40 w-full py-2.5 px-4 sm:px-6 flex items-center justify-between gap-4 backdrop-blur-xl border-b transition-colors ${
+          theme === "dark" ? "bg-black/85 border-white/10 text-white" : "bg-white/90 border-black/10 text-zinc-900"
+        }`}>
+          <div className="flex items-center gap-2.5 shrink-0">
             <Link
               href="/"
-              className="w-10 h-10 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.16)] grid place-items-center hover:scale-105 transition-transform shrink-0"
+              className={`w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full shadow-sm grid place-items-center hover:scale-105 transition-transform shrink-0 ${
+                theme === "dark" ? "bg-white" : "bg-white border border-zinc-200"
+              }`}
               title="Return to Landing Portal"
             >
-              <img src="/assets/logo.webp" alt="Avarta" width={44} height={44} className="w-[70%] h-[70%] object-contain" />
+              <img src="/assets/logo.webp" alt="Avarta" width={36} height={36} className="w-[70%] h-[70%] object-contain" />
             </Link>
+
             <button
               onClick={toggleSidebar}
-              className="p-2 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
-              title="Toggle Sidebar (Ctrl+B)"
+              className={`h-8 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-all shadow-sm shrink-0 ${
+                isSidebarOpen
+                  ? "p-2 bg-transparent hover:bg-white/10 text-zinc-400 hover:text-white"
+                  : theme === "dark"
+                  ? "px-2.5 bg-[#18181b] hover:bg-[#27272a] border border-white/15 text-zinc-200 hover:text-white"
+                  : "px-2.5 bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-800 hover:text-black"
+              }`}
+              title={isSidebarOpen ? "Collapse sidebar (Ctrl+B)" : "Open sidebar menu (Ctrl+B)"}
+              aria-label={isSidebarOpen ? "Collapse sidebar" : "Open sidebar menu"}
             >
-              {isSidebarOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+              {isSidebarOpen ? (
+                <PanelLeftClose size={15} />
+              ) : (
+                <>
+                  <PanelLeftOpen size={13} className={theme === "dark" ? "text-emerald-400" : "text-emerald-600"} />
+                  <span className="text-[11px] font-sans font-medium">Menu</span>
+                </>
+              )}
             </button>
           </div>
 
           {/* Centered White Nav Pill with 3-dot active indicator */}
-          <nav className="hidden xl:flex bg-white h-10 px-3 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.2)] items-center justify-around gap-1 max-w-[850px]">
+          <nav className={`hidden xl:flex h-9 px-3 rounded-full shadow-sm items-center justify-around gap-1 max-w-[850px] transition-colors ${
+            theme === "dark" ? "bg-white text-black shadow-[0_4px_14px_rgba(0,0,0,0.2)]" : "bg-zinc-100 text-black border border-zinc-200"
+          }`}>
             {TOP_PILL_LINKS.map((link) => {
               const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`font-sans font-medium text-[12px] tracking-tight px-3 py-1.5 rounded-full transition-all relative ${
+                  className={`font-sans font-medium text-[12px] tracking-tight px-3 py-1 rounded-full transition-all relative ${
                     active ? "text-black font-semibold" : "text-[#2e2e2e]/60 hover:text-black"
                   }`}
                 >
                   {link.label}
                   {active && (
-                    <span className="absolute bottom-[4px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full bg-black shadow-[-5px_0_0_#000,5px_0_0_#000]" />
+                    <span className="absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full bg-black shadow-[-5px_0_0_#000,5px_0_0_#000]" />
                   )}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
             <Link
               href="/dashboard/terminal"
-              className="bg-[#28282a] text-[#c8c8c8] hover:bg-[#323234] hover:text-white h-9 px-3.5 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
+              className={`h-8 px-3 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors ${
+                theme === "dark"
+                  ? "bg-[#28282a] text-[#c8c8c8] hover:bg-[#323234] hover:text-white"
+                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-black border border-zinc-200"
+              }`}
             >
               <Terminal size={13} />
-              <span>CLI</span>
+              <span className="hidden sm:inline">CLI</span>
             </Link>
             <Link
               href="/"
-              className="bg-white text-black hover:opacity-90 h-9 px-4 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-opacity shadow-sm"
+              className={`h-8 px-3.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-opacity shadow-sm ${
+                theme === "dark"
+                  ? "bg-white text-black hover:opacity-90"
+                  : "bg-black text-white hover:bg-zinc-800"
+              }`}
             >
               <Sparkles size={13} />
-              <span>Portal</span>
+              <span className="hidden sm:inline">Portal</span>
             </Link>
           </div>
         </header>

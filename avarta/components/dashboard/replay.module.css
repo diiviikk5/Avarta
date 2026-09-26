@@ -310,9 +310,6 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .sidebarHeader{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
 .sidebarToggleBtn{background:transparent;border:1px solid rgba(255,255,255,0.15);color:#adc6ba;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;cursor:pointer;transition:all .15s ease}
 .sidebarToggleBtn:hover{background:rgba(255,255,255,0.1);color:#ffffff;border-color:rgba(255,255,255,0.3)}
-.floatingControlGroup{position:fixed;top:16px;left:16px;z-index:90;display:flex;align-items:center;gap:8px}
-.floatingSidebarOpener{display:flex;align-items:center;gap:7px;background:rgba(23,61,57,0.92);backdrop-filter:blur(10px);border:1px solid rgba(131,178,160,0.3);padding:7px 13px;border-radius:100px;color:#e9f1e9;box-shadow:0 4px 16px rgba(0,0,0,0.25);cursor:pointer;font-size:12px;font-weight:700;transition:all .2s ease}
-.floatingSidebarOpener:hover{background:#1f5c53;transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,0.35)}
 .sidebarHazardGroup{margin:24px 0 16px;padding:0 2px}
 .sidebarHazardLabel{font-size:9.5px;font-weight:800;letter-spacing:1.5px;color:#7da598;margin-bottom:8px;text-transform:uppercase}
 .sidebarHazardPills{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -321,8 +318,6 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .sidebarHazardBtnActive{background:#2b5850;border-color:#5bc5b2;color:#ffffff;box-shadow:inset 2px 0 #5bc5b2}
 
 /* Dark Mode Overrides for Collapsible Sidebar */
-.shellDark .floatingSidebarOpener{background:rgba(12,26,23,0.94);border-color:#244940;color:#5ec4ad}
-.shellDark .floatingSidebarOpener:hover{background:#17332d;color:#fff}
 .shellDark .sidebarHazardBtnActive{background:#16322b;border-color:#5bc5b2;color:#fff}
 
 /* Interactive Replay Lab Case Switcher Tabs */
