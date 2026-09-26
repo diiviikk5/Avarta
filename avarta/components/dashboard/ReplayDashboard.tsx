@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, CalendarDays, ChevronRight, CloudRain, Download, FlaskConical, Layers3, MapPin, Navigation, Radar, ShieldAlert, Sparkles, Thermometer, Search, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Box, CalendarDays, ChevronRight, CircleDot, Clock3, Download, FlaskConical, Gauge, Layers3, MapPin, Navigation, Radar, Route, Satellite, ShieldAlert, Sparkles, Search, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import type { BenchmarkReport, ReplayCase } from "@/lib/replay";
 import { impactsFor, nearestPlace, regionRiskRows, replayTrackLegs, riskScore, type RegionRiskRow } from "@/lib/forecast";
 import RiskIndia3D from "@/components/dashboard/RiskIndia3D";
@@ -9,6 +9,23 @@ import { MOCK_THREATS } from "@/lib/mock-weather-data";
 import styles from "./replay.module.css";
 
 type Mode = "historical" | "demo";
+
+interface LiveRiskRegion {
+  name: string;
+  state?: string;
+  zone?: string;
+  latitude: number;
+  longitude: number;
+  rain_sum_24h_mm?: number;
+  rainfall_mm?: number;
+  anomaly_sigma?: number;
+  score: number;
+  band: string;
+  hazard_alert?: string;
+  temperature_c?: number;
+  max_temp_c?: number;
+  wind_gust_kmh?: number;
+}
 
 const time = (iso: string) => new Date(iso).toLocaleString("en-GB", {
   day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "UTC",
@@ -219,30 +236,151 @@ export function LocationInspector({ replay, picked }: { replay: ReplayCase; pick
 
 export function TrajectoryPanel({ replay }: { replay: ReplayCase }) {
   const legs = useMemo(() => replayTrackLegs(replay), [replay]);
-  if (!legs.length) return null;
+  const [selectedTrack, setSelectedTrack] = useState(0);
+  const [selectedLead, setSelectedLead] = useState(24);
+
+  if (!legs.length) {
+    return (
+      <section className={styles.trajectoryEmpty}>
+        <Radar size={28} />
+        <div><strong>No linked event track in this replay frame</strong><span>The tracker needs at least one detected footprint before a trajectory can be extrapolated.</span></div>
+      </section>
+    );
+  }
+
+  const leg = legs[Math.min(selectedTrack, legs.length - 1)];
+  const activeStep = selectedLead === 0 ? null : leg.steps.find((step) => step.lead_hours === selectedLead) ?? leg.steps[0];
+  const activePoint = activeStep ?? leg.current;
+  const sourcePoints = [...leg.history, leg.current, ...leg.steps];
+  const latMin = Math.min(...sourcePoints.map((point) => point.lat)) - 1.2;
+  const latMax = Math.max(...sourcePoints.map((point) => point.lat)) + 1.2;
+  const lonMin = Math.min(...sourcePoints.map((point) => point.lon)) - 1.2;
+  const lonMax = Math.max(...sourcePoints.map((point) => point.lon)) + 1.2;
+  const x = (lon: number) => 60 + ((lon - lonMin) / Math.max(0.1, lonMax - lonMin)) * 780;
+  const y = (lat: number) => 42 + ((latMax - lat) / Math.max(0.1, latMax - latMin)) * 416;
+  const frameGapHours = Math.max(1, (replay.frames.at(-1)?.lead_hour ?? 3) - (replay.frames.at(-2)?.lead_hour ?? 0));
+  const northKmh = leg.velocity_degrees_per_3h.lat * 111 / frameGapHours;
+  const eastKmh = leg.velocity_degrees_per_3h.lon * 111 * Math.cos(leg.current.lat * Math.PI / 180) / frameGapHours;
+  const speedKmh = Math.hypot(northKmh, eastKmh);
+  const bearing = (Math.atan2(eastKmh, northKmh) * 180 / Math.PI + 360) % 360;
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const direction = directions[Math.round(bearing / 45) % 8];
+  const peakUnit = replay.hazard_type === "cyclone" ? "km/h" : replay.hazard_type === "heatwave" ? "°C" : "mm/3h";
+  const bboxWidthKm = Math.abs(leg.bbox[3] - leg.bbox[1]) * 111 * Math.cos(leg.current.lat * Math.PI / 180);
+  const bboxHeightKm = Math.abs(leg.bbox[2] - leg.bbox[0]) * 111;
+  const selectedUncertainty = activeStep?.uncertainty_radius_km ?? 0;
+  const uncertaintyPixels = Math.max(0, selectedUncertainty / 111 / Math.max(0.1, lonMax - lonMin) * 780);
+  const colorForLead = (lead: number) => lead === 24 ? "#facc15" : lead === 48 ? "#fb923c" : lead === 72 ? "#f43f5e" : "#ffb4c8";
+
   return (
-    <section className={styles.lower} id="trajectory">
-      <div className={styles.lowerHead}><div><div className={styles.eyebrow}>06 / EVENT TRACKING · T+24 / T+48 / T+72</div><h2>Where is the anomaly moving?</h2></div><span>Kalman-linked footprints + extrapolated legs · 4D bbox per event</span></div>
-      <div className={styles.evidenceGrid}>
-        {legs.map((leg) => (
-          <article key={leg.event_id}>
-            <span className={styles.evidenceIcon}><Navigation size={18} /></span>
-            <h3>{leg.event_id} · peak {leg.peak.toFixed(1)} mm/3h</h3>
-            <p>Now: {leg.current.lat.toFixed(2)}N {leg.current.lon.toFixed(2)}E · bbox S {leg.bbox[0].toFixed(1)} W {leg.bbox[1].toFixed(1)} N {leg.bbox[2].toFixed(1)} E {leg.bbox[3].toFixed(1)}</p>
-            {leg.steps.map((s, i) => (
-              <p key={s.lead_hours}>{i === 0 ? "🟡" : i === 1 ? "🟠" : "🔴"} T+{s.lead_hours}h → {s.lat.toFixed(2)}N {s.lon.toFixed(2)}E · ±{s.uncertainty_radius_km.toFixed(0)} km</p>
-            ))}
-          </article>
+    <div className={styles.trajectorySuite} id="trajectory">
+      <section className={styles.trajectoryHero}>
+        <div>
+          <div className={styles.eyebrow}>KINEMATIC TRACK OPERATIONS</div>
+          <h2>Event trajectory command view</h2>
+          <p>Inspect linked footprint history, motion vectors, future centroids, uncertainty growth and the active 4D bounding box from one auditable surface.</p>
+        </div>
+        <div className={styles.trajectoryTruth}><CircleDot size={14} /><span>TRACK EXTRAPOLATION</span><strong>NOT A NEW WEATHER FORECAST</strong></div>
+      </section>
+
+      <div className={styles.trackSelector} aria-label="Tracked events">
+        {legs.map((candidate, index) => (
+          <button key={candidate.event_id} className={index === selectedTrack ? styles.trackSelectorActive : ""} onClick={() => setSelectedTrack(index)}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>{candidate.event_id}</strong>
+            <small>{candidate.peak.toFixed(1)} {peakUnit}</small>
+          </button>
         ))}
       </div>
-      <p className={styles.benchmarkNote}>Legs extrapolate detected-footprint velocity with linearly growing uncertainty. They track the anomaly — they do not predict new weather. <a href="/api/events" target="_blank" rel="noreferrer">View /api/events <ArrowUpRight size={12} /></a></p>
-    </section>
+
+      <section className={styles.trajectoryMetrics} aria-label="Track summary">
+        <article><span><Satellite size={14} /> TRACKS LINKED</span><strong>{legs.length}</strong><small>{leg.history.length} measured positions on selected track</small></article>
+        <article><span><Gauge size={14} /> MOTION SPEED</span><strong>{speedKmh.toFixed(1)} <em>km/h</em></strong><small>{direction} · bearing {bearing.toFixed(0)}°</small></article>
+        <article><span><Box size={14} /> CURRENT FOOTPRINT</span><strong>{bboxWidthKm.toFixed(0)} × {bboxHeightKm.toFixed(0)} <em>km</em></strong><small>{leg.bbox[0].toFixed(1)}–{leg.bbox[2].toFixed(1)}°N</small></article>
+        <article><span><Radar size={14} /> T+72 UNCERTAINTY</span><strong>±{leg.steps.at(-1)?.uncertainty_radius_km.toFixed(0)} <em>km</em></strong><small>linear lead-time growth</small></article>
+      </section>
+
+      <section className={styles.trajectoryWorkspace}>
+        <div className={styles.trajectoryMapCard}>
+          <div className={styles.trajectoryMapHead}>
+            <div><span>SPATIAL TRACK CANVAS</span><strong>{leg.event_id}</strong></div>
+            <div className={styles.leadControls}>
+              {[0, 24, 48, 72].map((lead) => <button key={lead} className={selectedLead === lead ? styles.leadControlActive : ""} onClick={() => setSelectedLead(lead)}>{lead === 0 ? "NOW" : `T+${lead}`}</button>)}
+            </div>
+          </div>
+          <div className={styles.trajectoryCanvas}>
+            <svg viewBox="0 0 900 500" role="img" aria-label={`Track map for ${leg.event_id} at ${selectedLead ? `T plus ${selectedLead} hours` : "the current position"}`}>
+              <defs>
+                <radialGradient id="trackGlow"><stop offset="0" stopColor="#ffb4c8" stopOpacity=".18"/><stop offset="1" stopColor="#ffb4c8" stopOpacity="0"/></radialGradient>
+                <marker id="trackArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#ffb4c8"/></marker>
+              </defs>
+              <rect width="900" height="500" rx="18" fill="#08080b" />
+              <circle cx={x(activePoint.lon)} cy={y(activePoint.lat)} r="150" fill="url(#trackGlow)" />
+              {[1,2,3,4,5].map((index) => <line key={`v${index}`} x1={index * 150} x2={index * 150} y1="25" y2="470" stroke="rgba(255,255,255,.07)" strokeDasharray="3 7"/>)}
+              {[1,2,3,4].map((index) => <line key={`h${index}`} x1="35" x2="865" y1={index * 100} y2={index * 100} stroke="rgba(255,255,255,.07)" strokeDasharray="3 7"/>)}
+              {leg.history.length > 1 && <polyline points={leg.history.map((point) => `${x(point.lon)},${y(point.lat)}`).join(" ")} fill="none" stroke="#38bdf8" strokeWidth="3" opacity=".7" />}
+              <polyline points={[leg.current, ...leg.steps].map((point) => `${x(point.lon)},${y(point.lat)}`).join(" ")} fill="none" stroke="#ffb4c8" strokeWidth="3" strokeDasharray="8 7" markerEnd="url(#trackArrow)" />
+              <rect x={x(leg.bbox[1])} y={y(leg.bbox[2])} width={Math.max(8, x(leg.bbox[3]) - x(leg.bbox[1]))} height={Math.max(8, y(leg.bbox[0]) - y(leg.bbox[2]))} fill="rgba(255,180,200,.08)" stroke="#ffb4c8" strokeWidth="2" strokeDasharray="5 4" />
+              {leg.history.map((point, index) => <circle key={`history-${index}`} cx={x(point.lon)} cy={y(point.lat)} r="5" fill="#38bdf8" stroke="#08080b" strokeWidth="2" />)}
+              <circle cx={x(leg.current.lon)} cy={y(leg.current.lat)} r="9" fill="#ffb4c8" stroke="white" strokeWidth="3" />
+              <text x={x(leg.current.lon) + 14} y={y(leg.current.lat) - 12} fill="white">NOW · {leg.current.lat.toFixed(2)}N {leg.current.lon.toFixed(2)}E</text>
+              {leg.steps.map((step) => {
+                const isActive = selectedLead === step.lead_hours;
+                const radius = step.uncertainty_radius_km / 111 / Math.max(0.1, lonMax - lonMin) * 780;
+                return <g key={step.lead_hours} opacity={selectedLead === 0 || isActive ? 1 : .48}>
+                  <circle cx={x(step.lon)} cy={y(step.lat)} r={Math.max(12, radius)} fill={`${colorForLead(step.lead_hours)}12`} stroke={colorForLead(step.lead_hours)} strokeWidth={isActive ? 3 : 1.5} strokeDasharray="5 5" />
+                  <circle cx={x(step.lon)} cy={y(step.lat)} r={isActive ? 8 : 5} fill={colorForLead(step.lead_hours)} />
+                  <text x={x(step.lon) + 11} y={y(step.lat) - 9} fill={colorForLead(step.lead_hours)}>T+{step.lead_hours} · ±{step.uncertainty_radius_km.toFixed(0)} km</text>
+                </g>;
+              })}
+              {activeStep && <circle cx={x(activeStep.lon)} cy={y(activeStep.lat)} r={Math.max(15, uncertaintyPixels)} fill="none" stroke="white" strokeWidth="1" opacity=".35" />}
+              <text x="42" y="482" fill="#71717a">{lonMin.toFixed(1)}°E</text><text x="815" y="482" fill="#71717a">{lonMax.toFixed(1)}°E</text>
+              <text x="15" y="45" fill="#71717a">{latMax.toFixed(1)}°N</text><text x="15" y="460" fill="#71717a">{latMin.toFixed(1)}°N</text>
+            </svg>
+          </div>
+          <div className={styles.trajectoryLegend}><span><i className={styles.historyLegend}/>Measured centroids</span><span><i className={styles.projectedLegend}/>Kinematic extrapolation</span><span><i className={styles.bboxLegend}/>Current footprint</span><span>Rings = uncertainty radius</span></div>
+        </div>
+
+        <aside className={styles.trajectoryInspector}>
+          <div className={styles.inspectorStatus}><span>SELECTED HORIZON</span><strong>{selectedLead === 0 ? "CURRENT" : `T+${selectedLead} HOURS`}</strong></div>
+          <div className={styles.coordinateReadout}><MapPin size={18}/><div><span>PROJECTED CENTROID</span><strong>{activePoint.lat.toFixed(3)}°N</strong><strong>{activePoint.lon.toFixed(3)}°E</strong></div></div>
+          <div className={styles.motionVector}>
+            <div><span>NORTH COMPONENT</span><strong>{northKmh >= 0 ? "+" : ""}{northKmh.toFixed(1)} km/h</strong></div>
+            <div><span>EAST COMPONENT</span><strong>{eastKmh >= 0 ? "+" : ""}{eastKmh.toFixed(1)} km/h</strong></div>
+          </div>
+          <div className={styles.uncertaintyBlock}><div><span>UNCERTAINTY ENVELOPE</span><strong>{activeStep ? `±${activeStep.uncertainty_radius_km.toFixed(0)} km` : "observed footprint"}</strong></div><div className={styles.uncertaintyBar}><i style={{width: `${activeStep ? Math.min(100, activeStep.uncertainty_radius_km / 1.2) : 8}%`}}/></div><small>Expands linearly with extrapolation lead time.</small></div>
+          <div className={styles.qualityGates}>
+            <span>METHOD GATES</span>
+            <p><b>✓</b> Track identity linked across frames</p>
+            <p><b>✓</b> Velocity derived from measured centroids</p>
+            <p><i>!</i> No atmospheric evolution after final frame</p>
+          </div>
+          <a href="/api/events" target="_blank" rel="noreferrer">Inspect event JSON <ArrowUpRight size={14}/></a>
+        </aside>
+      </section>
+
+      <section className={styles.leadDeck}>
+        {leg.steps.map((step) => (
+          <button key={step.lead_hours} onClick={() => setSelectedLead(step.lead_hours)} className={selectedLead === step.lead_hours ? styles.leadDeckActive : ""}>
+            <span style={{color: colorForLead(step.lead_hours)}}><Clock3 size={14}/> T+{step.lead_hours}H</span>
+            <strong>{step.lat.toFixed(2)}°N · {step.lon.toFixed(2)}°E</strong>
+            <small>±{step.uncertainty_radius_km.toFixed(0)} km envelope</small>
+            <i><Route size={15}/></i>
+          </button>
+        ))}
+      </section>
+
+      <section className={styles.trajectoryMethod}>
+        <div><Navigation size={18}/><p><strong>What this can answer:</strong> where the already-detected footprint would move if its latest velocity persists.</p></div>
+        <div><ShieldAlert size={18}/><p><strong>What it cannot answer:</strong> intensification, decay, splitting, terrain interaction or newly developing weather.</p></div>
+      </section>
+    </div>
   );
 }
 
 export function RiskPanel({ replay, onSelect }: { replay: ReplayCase; onSelect: (lat: number, lon: number) => void }) {
   const [liveMode, setLiveMode] = useState<boolean>(true);
-  const [liveRegions, setLiveRegions] = useState<any[]>([]);
+  const [liveRegions, setLiveRegions] = useState<LiveRiskRegion[]>([]);
   const [selectedName, setSelectedName] = useState<string>("");
   const [zoneFilter, setZoneFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -268,16 +406,19 @@ export function RiskPanel({ replay, onSelect }: { replay: ReplayCase; onSelect: 
   };
 
   useEffect(() => {
-    void fetchLiveRisk();
+    const initial = window.setTimeout(() => void fetchLiveRisk(), 0);
     const interval = setInterval(() => {
       void fetchLiveRisk();
     }, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(initial);
+      clearInterval(interval);
+    };
   }, []);
 
   const allRows: RegionRiskRow[] = useMemo(() => {
     if (liveMode && liveRegions.length > 0) {
-      return liveRegions.map((lr: any) => ({
+      return liveRegions.map((lr) => ({
         name: lr.name,
         state: lr.state,
         zone: lr.zone,

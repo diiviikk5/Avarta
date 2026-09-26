@@ -16,10 +16,115 @@ import {
   Zap,
   BarChart3,
   ArrowUpRight,
+  FileCheck2,
+  FlaskConical,
   Sliders,
 } from "lucide-react";
 
 const TOTAL_PROBES = 50;
+
+type EvidenceTier = "verified" | "experimental" | "candidate";
+
+const EVIDENCE_ITEMS: Array<{
+  id: string;
+  title: string;
+  promise: string;
+  reality: string;
+  evidence: string;
+  metric: string;
+  tier: EvidenceTier;
+  href: string;
+  linkLabel: string;
+}> = [
+  {
+    id: "01",
+    title: "Spherical ensemble GNN",
+    promise: "Message passing on an icosahedral mesh with EFI-aware anomaly tracking.",
+    reality: "Member attention → Earth-relative graph messages → lead-time GRU → probability, EFI, uncertainty and motion heads.",
+    evidence: "Forward-pass, gradient and member-permutation-invariance tests exist; meteorological weights are not trained.",
+    metric: "Architecture test",
+    tier: "candidate",
+    href: "/dashboard/training",
+    linkLabel: "Inspect GNN",
+  },
+  {
+    id: "02",
+    title: "Operational threat tracking",
+    promise: "Automated 4D bounding boxes around evolving anomaly footprints.",
+    reality: "A Kalman state estimator and Hungarian assignment link detected objects across replay frames.",
+    evidence: "Replay output exposes stable event IDs, centroids, bounding boxes and T+24 / T+48 / T+72 extrapolation.",
+    metric: "Replay verified",
+    tier: "verified",
+    href: "/dashboard/trajectory",
+    linkLabel: "Open trajectory lab",
+  },
+  {
+    id: "03",
+    title: "Conditional diffusion downscaler",
+    promise: "Generate probabilistic 12 km → 5 km rainfall scenarios without erasing extremes.",
+    reality: "A 100-step conditional DDPM implements ancestral sampling and five extreme-aware objective terms.",
+    evidence: "Tensor contracts and differentiability are tested; no trained DDPM checkpoint or held-out 5 km skill exists.",
+    metric: "Architecture only",
+    tier: "candidate",
+    href: "/dashboard/downscaling",
+    linkLabel: "Inspect Stage 2",
+  },
+  {
+    id: "04",
+    title: "Physics-informed loss",
+    promise: "Penalize moisture-flux, non-negativity and continuity violations.",
+    reality: "PINNPhysicsLoss is a differentiable PyTorch layer with five decomposed conservation terms.",
+    evidence: "Real forward/backward probes return each term plus a measured gradient norm; failures are never replaced by fake values.",
+    metric: "5 loss terms",
+    tier: "verified",
+    href: "/dashboard/training",
+    linkLabel: "Run a gradient probe",
+  },
+  {
+    id: "05",
+    title: "Training and checkpoints",
+    promise: "Train the downscaler on paired operational NWP and fine-grid observations.",
+    reality: "A deterministic residual CNN checkpoint exists from an IMD 0.25° coarse-proxy reconstruction experiment.",
+    evidence: "Measured checkpoint history is exposed, while the UI explicitly says this is neither a forecast nor true 5 km validation.",
+    metric: "Scoped experiment",
+    tier: "experimental",
+    href: "/dashboard/training",
+    linkLabel: "Inspect weights",
+  },
+  {
+    id: "06",
+    title: "Climatology and extremeness",
+    promise: "Score anomalies against a long climatological reference using EFI and SOT.",
+    reality: "Numerical EFI, SOT and exceedance calculations are implemented with explicit climatology inputs.",
+    evidence: "Formula tests exist; a complete operational 30-year IMDAA/ERA5 baseline is still an external data requirement.",
+    metric: "EFI + SOT",
+    tier: "experimental",
+    href: "/api/intelligence",
+    linkLabel: "View intelligence API",
+  },
+  {
+    id: "07",
+    title: "Historical forecast replay",
+    promise: "Reconstruct high-impact events from archived NWP and independent observations.",
+    reality: "The replay reads NOAA GEFS GRIB ranges and verifies against IMD plus an independent CHIRPS product.",
+    evidence: "Artifacts carry source URLs, hashes, timing notes, grid spacing and explicit failed-skill metrics such as zero IoU.",
+    metric: "Provenance traced",
+    tier: "verified",
+    href: "/dashboard",
+    linkLabel: "Open replay evidence",
+  },
+  {
+    id: "08",
+    title: "Decision-support interfaces",
+    promise: "Expose maps, CAP alerts, APIs and terminal workflows from one platform.",
+    reality: "The dashboard, risk grid, inspector, CAP endpoint, APIs and VT100-style terminal run through one Next.js service.",
+    evidence: "Interfaces are research demonstrations; warnings and CAP documents are not represented as operational agency alerts.",
+    metric: "Single-port UI",
+    tier: "experimental",
+    href: "/api/cap",
+    linkLabel: "Inspect CAP output",
+  },
+];
 
 interface LossPoint {
   step: number;
@@ -649,6 +754,7 @@ export default function TrainingLab() {
   const [checkpointMeta, setCheckpointMeta] = useState<CheckpointMeta | null>(null);
   const [mlStatus, setMlStatus] = useState<MLStatus | null>(null);
   const [diffusionStep, setDiffusionStep] = useState(4); // 0 to 4 (t=100 down to t=0)
+  const [matrixFilter, setMatrixFilter] = useState<"all" | EvidenceTier>("all");
 
   // This is a queue of independent probes, not a persistent training epoch.
   const currentProbe = Math.min(TOTAL_PROBES, Math.max(0, currentStep));
@@ -1317,116 +1423,88 @@ export default function TrainingLab() {
 
       {/* TAB 4: JUDGE TRANSPARENCY & EVIDENCE MATRIX */}
       {activeTab === "matrix" && (
-        <div className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15 backdrop-blur-xl space-y-6">
-          <div className="space-y-2">
-            <span className="font-mono text-xs text-[#ffb4c8] font-bold block">AUDIT COMPLIANCE</span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Capability &amp; Evidence Matrix for Judges</h2>
-            <p className="text-xs text-zinc-400 leading-relaxed font-sans max-w-3xl">
-              An unvarnished, rigorous scientific accounting of what is validated in production, what is empirically trained, and what neural architectures are ready for multi-GPU scaling.
-            </p>
+        <div className="space-y-6">
+          <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-[radial-gradient(circle_at_15%_0%,rgba(52,211,153,.12),transparent_32%),radial-gradient(circle_at_90%_10%,rgba(255,180,200,.13),transparent_35%),#101013] p-6 sm:p-8">
+            <div className="absolute right-0 top-0 h-44 w-44 rounded-full border border-white/[0.04] translate-x-1/3 -translate-y-1/3" />
+            <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+              <div className="max-w-3xl">
+                <span className="font-mono text-[10px] tracking-[0.2em] text-[#ffb4c8] font-bold">AUDIT COMPLIANCE · CLAIMS VS EVIDENCE</span>
+                <h2 className="text-3xl sm:text-4xl font-bold text-white mt-3 tracking-tight">Judge-ready evidence ledger</h2>
+                <p className="text-sm text-zinc-400 leading-relaxed mt-3">
+                  Every major promise is separated into what the code implements, what the repository actually proves, and what still requires data or trained weights. Nothing receives a green badge for architecture alone.
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 min-w-full lg:min-w-[390px]">
+                {[
+                  { value: 3, label: "Runtime verified", color: "text-emerald-300", border: "border-emerald-400/20" },
+                  { value: 3, label: "Scoped evidence", color: "text-sky-300", border: "border-sky-400/20" },
+                  { value: 2, label: "Untrained", color: "text-amber-300", border: "border-amber-400/20" },
+                ].map((item) => (
+                  <div key={item.label} className={`rounded-2xl border ${item.border} bg-black/30 p-4`}>
+                    <strong className={`text-3xl font-mono ${item.color}`}>{item.value}</strong>
+                    <span className="text-[9px] text-zinc-500 font-mono block mt-2 uppercase tracking-wide">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/15 bg-zinc-900/80 p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3"><FileCheck2 size={18} className="text-[#ffb4c8]"/><div><strong className="text-sm text-white block">8 capability contracts</strong><span className="text-[10px] text-zinc-500">Filter by evidence maturity</span></div></div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: "all" as const, label: "All", count: 8 },
+                  { key: "verified" as const, label: "Verified", count: 3 },
+                  { key: "experimental" as const, label: "Experimental", count: 3 },
+                  { key: "candidate" as const, label: "Architecture only", count: 2 },
+                ].map((filter) => (
+                  <button key={filter.key} onClick={() => setMatrixFilter(filter.key)} className={`px-3 py-2 rounded-full border text-[10px] font-mono transition-colors ${matrixFilter === filter.key ? "bg-white text-black border-white" : "bg-white/[0.03] text-zinc-400 border-white/10 hover:text-white"}`}>
+                    {filter.label} <span className="opacity-60 ml-1">{filter.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {EVIDENCE_ITEMS.filter((item) => matrixFilter === "all" || item.tier === matrixFilter).map((item) => {
+              const tier = item.tier === "verified"
+                ? { label: "VERIFIED RUNTIME", badge: "bg-emerald-400/10 border-emerald-400/25 text-emerald-300", dot: "bg-emerald-400" }
+                : item.tier === "experimental"
+                  ? { label: "SCOPED EVIDENCE", badge: "bg-sky-400/10 border-sky-400/25 text-sky-300", dot: "bg-sky-400" }
+                  : { label: "ARCHITECTURE ONLY", badge: "bg-amber-400/10 border-amber-400/25 text-amber-300", dot: "bg-amber-400" };
+              return (
+                <article key={item.id} className="rounded-3xl border border-white/12 bg-[linear-gradient(145deg,rgba(255,255,255,.045),rgba(9,9,11,.8))] p-5 sm:p-6 hover:border-white/20 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3"><span className="w-8 h-8 rounded-xl grid place-items-center bg-white/[0.05] border border-white/10 text-[10px] font-mono text-zinc-500">{item.id}</span><div><h3 className="text-base font-bold text-white">{item.title}</h3><span className="text-[10px] font-mono text-zinc-500 mt-1 block">{item.metric}</span></div></div>
+                    <span className={`shrink-0 inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full border text-[9px] font-mono ${tier.badge}`}><i className={`w-1.5 h-1.5 rounded-full ${tier.dot}`} />{tier.label}</span>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                    <div className="rounded-2xl bg-black/25 border border-white/[0.07] p-4"><span className="text-[9px] font-mono text-zinc-600 tracking-wide">PROMISED CAPABILITY</span><p className="text-xs text-zinc-300 leading-relaxed mt-2 mb-0">{item.promise}</p></div>
+                    <div className="rounded-2xl bg-black/25 border border-white/[0.07] p-4"><span className="text-[9px] font-mono text-zinc-600 tracking-wide">IMPLEMENTED REALITY</span><p className="text-[11px] font-mono text-zinc-400 leading-relaxed mt-2 mb-0">{item.reality}</p></div>
+                  </div>
+
+                  <div className="flex items-start gap-3 mt-4 rounded-2xl bg-white/[0.025] border border-white/[0.07] p-4">
+                    {item.tier === "verified" ? <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5"/> : item.tier === "candidate" ? <AlertTriangle size={16} className="text-amber-300 shrink-0 mt-0.5"/> : <FlaskConical size={16} className="text-sky-300 shrink-0 mt-0.5"/>}
+                    <div className="flex-1"><span className="text-[9px] font-mono text-zinc-600">EVIDENCE BOUNDARY</span><p className="text-[11px] text-zinc-400 leading-relaxed mt-1 mb-0">{item.evidence}</p></div>
+                  </div>
+
+                  <Link href={item.href} className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold text-[#ffb4c8] hover:text-white transition-colors">{item.linkLabel}<ArrowUpRight size={13}/></Link>
+                </article>
+              );
+            })}
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-sans border-collapse">
-              <thead>
-                <tr className="border-b border-white/15 text-zinc-400 font-mono text-[11px]">
-                  <th className="py-3 px-4">Problem Statement Component</th>
-                  <th className="py-3 px-4">Promised in Proposal</th>
-                  <th className="py-3 px-4">Actual Codebase Reality</th>
-                  <th className="py-3 px-4">Status &amp; Verification</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">Stage 1: Spherical GNN Tracker</td>
-                  <td className="py-3 px-4 text-zinc-300">Message-passing GNN on icosahedral mesh computing EFI against 30-yr ERA5 baseline</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">Member attention → Earth-relative graph messages → lead-time GRU → probability, EFI, uncertainty and motion heads.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-mono">
-                      Architecture Ready (Untrained)
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">Operational Threat Tracking</td>
-                  <td className="py-3 px-4 text-zinc-300">Automated 4D bounding boxes around evolving anomalies</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">services/tracking/kalman_tracker.py uses a classical Kalman Filter with Hungarian assignment.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      Implemented &amp; replay-tested
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">Stage 2: Generative Diffusion Downscaler</td>
-                  <td className="py-3 px-4 text-zinc-300">Conditional DDPM downscaling 12 km to 5 km while preserving extreme amplitudes</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">models/conditional_diffusion/precip_ddpm.py implements DDPM noise schedules and ancestral sampling.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-mono">
-                      Architecture Ready (Untrained)
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">Physics-Informed Loss (PINN)</td>
-                  <td className="py-3 px-4 text-zinc-300">Penalize fluid violations: -∇·(qv), non-negativity P ≥ 0, continuity</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">models/physics_guard/pinn_loss.py is a real differentiable PyTorch loss layer with 5 conservation terms.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      Real Differentiable PyTorch Code
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">Training Pipeline &amp; Checkpoints</td>
-                  <td className="py-3 px-4 text-zinc-300">Large-scale training on NCMRWF NEPS-G &amp; ERA5</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">training/train_imd_real.py trained ResidualDownscaler CNN on IMD 2025 daily rainfall. Checkpoint saved.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      Trained Checkpoint (174k params)
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">30-Year Climatological Baseline</td>
-                  <td className="py-3 px-4 text-zinc-300">Historical IMDAA / ERA5 reanalysis</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">services/detection/climatology_engine.py implements numerical EFI integration formulas.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[10px] font-mono">
-                      Formulas Implemented
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">NWP Forecast Replay</td>
-                  <td className="py-3 px-4 text-zinc-300">Historical GEFS / IMD cases</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">services/replay/august_2025.py pulls real NOAA GEFS GRIB2 messages and compares against IMD/CHIRPS.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      Real Archived Historical Data
-                    </span>
-                  </td>
-                </tr>
-
-                <tr className="hover:bg-white/[0.02]">
-                  <td className="py-3 px-4 font-semibold text-white">Dashboard, CAP 1.2, TUI, APIs</td>
-                  <td className="py-3 px-4 text-zinc-300">Interactive 5 km centroid arrays, OASIS CAP 1.2 alerts, NDRF targeting</td>
-                  <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">Fully unified single-port web platform across 30 routes + VT100 TUI terminal.</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                      Research UI · alerts not operational
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <section className="rounded-3xl border border-white/15 bg-zinc-900/80 p-6">
+            <div className="flex items-center gap-3 mb-5"><ShieldCheck size={19} className="text-[#ffb4c8]"/><div><span className="text-[10px] font-mono text-zinc-500">JUDGE READING GUIDE</span><h3 className="text-lg font-bold">How to interpret the badges</h3></div></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="rounded-2xl bg-emerald-400/[0.06] border border-emerald-400/15 p-4"><strong className="text-emerald-300">Verified runtime</strong><p className="text-zinc-500 leading-relaxed mt-2 mb-0">Executable code plus repository tests or traceable replay output support the claim.</p></div>
+              <div className="rounded-2xl bg-sky-400/[0.06] border border-sky-400/15 p-4"><strong className="text-sky-300">Scoped evidence</strong><p className="text-zinc-500 leading-relaxed mt-2 mb-0">A real experiment exists, but its dataset or evaluation scope is narrower than the proposal.</p></div>
+              <div className="rounded-2xl bg-amber-400/[0.06] border border-amber-400/15 p-4"><strong className="text-amber-300">Architecture only</strong><p className="text-zinc-500 leading-relaxed mt-2 mb-0">Shapes and gradients work; scientific skill is intentionally not claimed before training.</p></div>
+            </div>
+          </section>
         </div>
       )}
 

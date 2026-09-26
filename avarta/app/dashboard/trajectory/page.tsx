@@ -8,8 +8,8 @@ export default async function TrajectoryPage() {
     <>
       <PageHeading
         eyebrow="06 / EVENT TRACKING · T+24 / T+48 / T+72"
-        title="Event tracking"
-        blurb="Kalman-linked forecast footprints with extrapolated trajectory legs and dynamic 4D bounding boxes."
+        title="Trajectory intelligence"
+        blurb="An interactive command view for linked event identities, measured motion vectors, projected centroids, uncertainty envelopes and dynamic 4D footprints."
       />
       <TrajectorySection replay={replay} />
     </>

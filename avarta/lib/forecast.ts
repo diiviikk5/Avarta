@@ -296,6 +296,12 @@ export function replayTrackLegs(replay: ReplayCase) {
       event_id: obj.track_id ?? `EVT-0${i + 1}42`.slice(0, 7),
       track_id: obj.track_id ?? `track-${i}`,
       current: { lat: obj.centroid[0], lon: obj.centroid[1] },
+      previous: prev ? { lat: prev.centroid[0], lon: prev.centroid[1] } : null,
+      velocity_degrees_per_3h: { lat: dLat, lon: dLon },
+      history: replay.frames.flatMap((frame) => {
+        const match = frame.objects.find((candidate) => candidate.track_id === obj.track_id);
+        return match ? [{ lat: match.centroid[0], lon: match.centroid[1], lead_hour: frame.lead_hour }] : [];
+      }),
       peak: peakVal,
       bbox: obj.bbox,
       steps,
