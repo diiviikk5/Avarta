@@ -343,12 +343,6 @@ export default function ReplayDashboard({ replay, benchmark }: { replay: ReplayC
   const [picked, setPicked] = useState<{ lat: number; lon: number } | null>({ lat: 28.4, lon: 77.31 });
   const v = replay.verification;
   return <div className={styles.shell}>
-    <aside className={styles.rail}>
-      <a href="/dashboard" className={styles.logo} aria-label="Avarta home"><span className={styles.logoMark}>a</span><span>avarta<span className={styles.logoDot}>.</span></span></a>
-      <p className={styles.railLabel}>WORKSPACE</p>
-      <nav className={styles.nav}><a className={styles.navActive} href="/dashboard"><Layers3 size={17}/> Overview</a><a href="#case"><CloudRain size={17}/> Case study</a><a href="#validation"><FlaskConical size={17}/> Validation</a><a href="#alerts"><ShieldAlert size={17}/> Alert policy</a><a href="#inspector"><MapPin size={17}/> Inspector</a><a href="#trajectory"><Navigation size={17}/> Trajectory</a><a href="#risk"><Thermometer size={17}/> Risk map</a><a href="#ask"><Sparkles size={17}/> Ask</a></nav>
-      <div className={styles.railBottom}><span className={styles.railPulse}/><span>Research prototype<br/><small>SIH 26078 · Not operational</small></span></div>
-    </aside>
     <div className={styles.content}>
       <header className={styles.topbar}><div className={styles.breadcrumb}>Avarta <ChevronRight size={13}/> Weather intelligence <ChevronRight size={13}/> <strong>Overview</strong></div><div className={styles.topRight}>{mode === "historical" && <span className={styles.topDate}><CalendarDays size={14}/> 23 August 2025</span>}<span className={styles.status}>{mode === "historical" ? "HISTORICAL REPLAY" : "SYNTHETIC DEMO"}</span></div></header>
       <main className={styles.main}>
