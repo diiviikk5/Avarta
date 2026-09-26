@@ -40,12 +40,25 @@ function landPath(dy = 0) {
 export default function RiskIndia3D({
   replay,
   onSelect,
+  liveMode: propLiveMode,
+  onLiveModeChange,
+  selectedName: propSelectedName,
+  onSelectedNameChange,
 }: {
   replay: ReplayCase;
   onSelect: (lat: number, lon: number) => void;
+  liveMode?: boolean;
+  onLiveModeChange?: (live: boolean) => void;
+  selectedName?: string;
+  onSelectedNameChange?: (name: string) => void;
 }) {
   const isCaseLive = replay.hazard_type === "live" || replay.id?.includes("live");
-  const [liveMode, setLiveMode] = useState<boolean>(true);
+  const [internalLiveMode, setInternalLiveMode] = useState<boolean>(true);
+  const liveMode = propLiveMode !== undefined ? propLiveMode : internalLiveMode;
+  const setLiveMode = (val: boolean) => {
+    setInternalLiveMode(val);
+    onLiveModeChange?.(val);
+  };
   const [liveRegions, setLiveRegions] = useState<any[]>([]);
   const [liveSource, setLiveSource] = useState<string>("");
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<string>("");
@@ -98,7 +111,13 @@ export default function RiskIndia3D({
     return regionRiskRows(replay, liveMode);
   }, [replay, liveMode, liveRegions]);
 
-  const [selectedName, setSelectedName] = useState<string>("");
+  const [internalSelectedName, setInternalSelectedName] = useState<string>("");
+  const selectedName = propSelectedName !== undefined ? propSelectedName : internalSelectedName;
+  const setSelectedName = (val: string | ((prev: string) => string)) => {
+    const nextVal = typeof val === "function" ? val(selectedName) : val;
+    setInternalSelectedName(nextVal);
+    onSelectedNameChange?.(nextVal);
+  };
   const [tourPaused, setTourPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState<boolean>(() =>
     typeof window !== "undefined" &&
@@ -326,7 +345,7 @@ export default function RiskIndia3D({
             </span>
           ))}
           <span className={styles.risk3dHint}>
-            {liveMode ? "number = mm rain or °C temp · 30 stations nationwide" : "number = mm/day · click a pin to inspect"}
+            {liveMode ? "number = mm rain or °C temp · 40 stations nationwide (all 28 states & 8 UTs)" : "number = mm/day · click a pin to inspect"}
           </span>
         </div>
       </div>

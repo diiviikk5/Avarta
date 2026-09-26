@@ -182,37 +182,60 @@ const HEATWAVE_ANCHORS: [string, number, number][] = [
   ["Nagpur", 21.15, 79.09],
 ];
 
-export const ALL_INDIA_ANCHORS: [string, number, number][] = [
-  ["Srinagar (J&K)", 34.08, 74.80],
-  ["Leh (Ladakh)", 34.15, 77.58],
-  ["Shimla (HP)", 31.10, 77.17],
-  ["Dehradun (UK)", 30.32, 78.03],
-  ["Amritsar (PB)", 31.63, 74.87],
-  ["Chandigarh", 30.73, 76.78],
-  ["Delhi (NCR)", 28.61, 77.21],
-  ["Lucknow (UP)", 26.85, 80.95],
-  ["Jaipur (RJ)", 26.91, 75.79],
-  ["Jodhpur (RJ)", 26.24, 73.02],
-  ["Ahmedabad (GJ)", 23.02, 72.57],
-  ["Mumbai (MH)", 19.07, 72.87],
-  ["Nagpur (MH)", 21.15, 79.09],
-  ["Panaji (Goa)", 15.50, 73.83],
-  ["Bhopal (MP)", 23.26, 77.41],
-  ["Raipur (CG)", 21.25, 81.63],
-  ["Patna (BR)", 25.60, 85.14],
-  ["Ranchi (JH)", 23.34, 85.31],
-  ["Kolkata (WB)", 22.57, 88.36],
-  ["Bhubaneswar (OD)", 20.30, 85.82],
-  ["Hyderabad (TS)", 17.38, 78.49],
-  ["Visakhapatnam (AP)", 17.69, 83.22],
-  ["Bengaluru (KA)", 12.97, 77.59],
-  ["Chennai (TN)", 13.08, 80.27],
-  ["Kochi (KL)", 9.93, 76.27],
-  ["Guwahati (AS)", 26.14, 91.74],
-  ["Shillong (ML)", 25.58, 91.89],
-  ["Itanagar (AR)", 27.09, 93.61],
-  ["Gangtok (SK)", 27.34, 88.61],
-  ["Port Blair (AN)", 11.62, 92.73],
+export const ALL_INDIA_ANCHORS: [string, number, number, string, string][] = [
+  // North (9)
+  ["Srinagar (J&K)", 34.08, 74.80, "Jammu & Kashmir", "North"],
+  ["Leh (Ladakh)", 34.15, 77.58, "Ladakh", "North"],
+  ["Shimla (HP)", 31.10, 77.17, "Himachal Pradesh", "North"],
+  ["Dehradun (UK)", 30.32, 78.03, "Uttarakhand", "North"],
+  ["Amritsar (PB)", 31.63, 74.87, "Punjab", "North"],
+  ["Chandigarh", 30.73, 76.78, "Chandigarh (UT)", "North"],
+  ["Delhi (NCR)", 28.61, 77.21, "Delhi", "North"],
+  ["Gurugram (HR)", 28.46, 77.03, "Haryana", "North"],
+  ["Lucknow (UP)", 26.85, 80.95, "Uttar Pradesh", "North"],
+
+  // West (7)
+  ["Jaipur (RJ)", 26.91, 75.79, "Rajasthan", "West"],
+  ["Jodhpur (RJ)", 26.24, 73.02, "Rajasthan", "West"],
+  ["Ahmedabad (GJ)", 23.02, 72.57, "Gujarat", "West"],
+  ["Mumbai (MH)", 19.07, 72.87, "Maharashtra", "West"],
+  ["Nagpur (MH)", 21.15, 79.09, "Maharashtra", "West"],
+  ["Panaji (Goa)", 15.50, 73.83, "Goa", "West"],
+  ["Daman", 20.42, 72.83, "Dadra & Nagar Haveli and Daman & Diu", "West"],
+
+  // Central (3)
+  ["Bhopal (MP)", 23.26, 77.41, "Madhya Pradesh", "Central"],
+  ["Indore (MP)", 22.71, 75.85, "Madhya Pradesh", "Central"],
+  ["Raipur (CG)", 21.25, 81.63, "Chhattisgarh", "Central"],
+
+  // East (4)
+  ["Patna (BR)", 25.60, 85.14, "Bihar", "East"],
+  ["Ranchi (JH)", 23.34, 85.31, "Jharkhand", "East"],
+  ["Kolkata (WB)", 22.57, 88.36, "West Bengal", "East"],
+  ["Bhubaneswar (OD)", 20.30, 85.82, "Odisha", "East"],
+
+  // South (7)
+  ["Hyderabad (TS)", 17.38, 78.49, "Telangana", "South"],
+  ["Visakhapatnam (AP)", 17.69, 83.22, "Andhra Pradesh", "South"],
+  ["Vijayawada (AP)", 16.50, 80.64, "Andhra Pradesh", "South"],
+  ["Bengaluru (KA)", 12.97, 77.59, "Karnataka", "South"],
+  ["Chennai (TN)", 13.08, 80.27, "Tamil Nadu", "South"],
+  ["Kochi (KL)", 9.93, 76.27, "Kerala", "South"],
+  ["Puducherry (PY)", 11.94, 79.80, "Puducherry (UT)", "South"],
+
+  // Northeast (8)
+  ["Guwahati (AS)", 26.14, 91.74, "Assam", "Northeast"],
+  ["Shillong (ML)", 25.58, 91.89, "Meghalaya", "Northeast"],
+  ["Itanagar (AR)", 27.09, 93.61, "Arunachal Pradesh", "Northeast"],
+  ["Kohima (NL)", 25.67, 94.10, "Nagaland", "Northeast"],
+  ["Imphal (MN)", 24.81, 93.93, "Manipur", "Northeast"],
+  ["Aizawl (MZ)", 23.73, 92.71, "Mizoram", "Northeast"],
+  ["Agartala (TR)", 23.83, 91.28, "Tripura", "Northeast"],
+  ["Gangtok (SK)", 27.34, 88.61, "Sikkim", "Northeast"],
+
+  // Islands (2)
+  ["Port Blair (AN)", 11.62, 92.73, "Andaman & Nicobar Islands", "Islands"],
+  ["Kavaratti (LD)", 10.56, 72.64, "Lakshadweep", "Islands"],
 ];
 
 /** State-level risk rows sampled from the replay grid or all-India stations, most severe first. */
@@ -222,7 +245,12 @@ export function regionRiskRows(replay: ReplayCase, allIndia = false): RegionRisk
   const isHeat = (replay.hazard_type === "heatwave") || replay.id?.includes("heat");
   const anchors = isLive ? ALL_INDIA_ANCHORS : isCyclone ? CYCLONE_ANCHORS : isHeat ? HEATWAVE_ANCHORS : RAIN_ANCHORS;
 
-  return anchors.map(([name, lat, lon]) => {
+  return anchors.map((anchor) => {
+    const name = anchor[0];
+    const lat = anchor[1];
+    const lon = anchor[2];
+    const state = anchor[3];
+    const zone = anchor[4];
     const grid = nearestGrid(replay, lat, lon);
     const baseline = isHeat ? 40.0 : isCyclone ? 50.0 : 18.0;
     const sigma = (grid.rainfall - baseline) / (baseline * 0.5);
@@ -233,6 +261,8 @@ export function regionRiskRows(replay: ReplayCase, allIndia = false): RegionRisk
     });
     return {
       name,
+      state,
+      zone,
       latitude: lat,
       longitude: lon,
       rainfall: Math.round(grid.rainfall * 10) / 10,

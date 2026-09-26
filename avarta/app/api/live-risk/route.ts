@@ -21,49 +21,59 @@ export interface LiveRegionRisk {
 }
 
 export const ALL_INDIA_LOCATIONS = [
-  // North
+  // North (9)
   { name: "Srinagar", state: "Jammu & Kashmir", lat: 34.08, lon: 74.80, zone: "North" as const },
   { name: "Leh", state: "Ladakh", lat: 34.15, lon: 77.58, zone: "North" as const },
   { name: "Shimla", state: "Himachal Pradesh", lat: 31.10, lon: 77.17, zone: "North" as const },
   { name: "Dehradun", state: "Uttarakhand", lat: 30.32, lon: 78.03, zone: "North" as const },
   { name: "Amritsar", state: "Punjab", lat: 31.63, lon: 74.87, zone: "North" as const },
-  { name: "Chandigarh", state: "Punjab/Haryana", lat: 30.73, lon: 76.78, zone: "North" as const },
+  { name: "Chandigarh", state: "Chandigarh (UT)", lat: 30.73, lon: 76.78, zone: "North" as const },
   { name: "Delhi (NCR)", state: "Delhi", lat: 28.61, lon: 77.21, zone: "North" as const },
+  { name: "Gurugram", state: "Haryana", lat: 28.46, lon: 77.03, zone: "North" as const },
   { name: "Lucknow", state: "Uttar Pradesh", lat: 26.85, lon: 80.95, zone: "North" as const },
 
-  // West
+  // West (7)
   { name: "Jaipur", state: "Rajasthan", lat: 26.91, lon: 75.79, zone: "West" as const },
   { name: "Jodhpur", state: "Rajasthan", lat: 26.24, lon: 73.02, zone: "West" as const },
   { name: "Ahmedabad", state: "Gujarat", lat: 23.02, lon: 72.57, zone: "West" as const },
   { name: "Mumbai", state: "Maharashtra", lat: 19.07, lon: 72.87, zone: "West" as const },
   { name: "Nagpur", state: "Maharashtra", lat: 21.15, lon: 79.09, zone: "West" as const },
   { name: "Panaji", state: "Goa", lat: 15.50, lon: 73.83, zone: "West" as const },
+  { name: "Daman", state: "Dadra & Nagar Haveli and Daman & Diu", lat: 20.42, lon: 72.83, zone: "West" as const },
 
-  // Central
+  // Central (3)
   { name: "Bhopal", state: "Madhya Pradesh", lat: 23.26, lon: 77.41, zone: "Central" as const },
+  { name: "Indore", state: "Madhya Pradesh", lat: 22.71, lon: 75.85, zone: "Central" as const },
   { name: "Raipur", state: "Chhattisgarh", lat: 21.25, lon: 81.63, zone: "Central" as const },
 
-  // East
+  // East (4)
   { name: "Patna", state: "Bihar", lat: 25.60, lon: 85.14, zone: "East" as const },
   { name: "Ranchi", state: "Jharkhand", lat: 23.34, lon: 85.31, zone: "East" as const },
   { name: "Kolkata", state: "West Bengal", lat: 22.57, lon: 88.36, zone: "East" as const },
   { name: "Bhubaneswar", state: "Odisha", lat: 20.30, lon: 85.82, zone: "East" as const },
 
-  // South
+  // South (7)
   { name: "Hyderabad", state: "Telangana", lat: 17.38, lon: 78.49, zone: "South" as const },
   { name: "Visakhapatnam", state: "Andhra Pradesh", lat: 17.69, lon: 83.22, zone: "South" as const },
+  { name: "Vijayawada", state: "Andhra Pradesh", lat: 16.50, lon: 80.64, zone: "South" as const },
   { name: "Bengaluru", state: "Karnataka", lat: 12.97, lon: 77.59, zone: "South" as const },
   { name: "Chennai", state: "Tamil Nadu", lat: 13.08, lon: 80.27, zone: "South" as const },
   { name: "Kochi", state: "Kerala", lat: 9.93, lon: 76.27, zone: "South" as const },
+  { name: "Puducherry", state: "Puducherry (UT)", lat: 11.94, lon: 79.80, zone: "South" as const },
 
-  // Northeast
+  // Northeast (8)
   { name: "Guwahati", state: "Assam", lat: 26.14, lon: 91.74, zone: "Northeast" as const },
   { name: "Shillong", state: "Meghalaya", lat: 25.58, lon: 91.89, zone: "Northeast" as const },
   { name: "Itanagar", state: "Arunachal Pradesh", lat: 27.09, lon: 93.61, zone: "Northeast" as const },
+  { name: "Kohima", state: "Nagaland", lat: 25.67, lon: 94.10, zone: "Northeast" as const },
+  { name: "Imphal", state: "Manipur", lat: 24.81, lon: 93.93, zone: "Northeast" as const },
+  { name: "Aizawl", state: "Mizoram", lat: 23.73, lon: 92.71, zone: "Northeast" as const },
+  { name: "Agartala", state: "Tripura", lat: 23.83, lon: 91.28, zone: "Northeast" as const },
   { name: "Gangtok", state: "Sikkim", lat: 27.34, lon: 88.61, zone: "Northeast" as const },
 
-  // Islands
-  { name: "Port Blair", state: "Andaman & Nicobar", lat: 11.62, lon: 92.73, zone: "Islands" as const },
+  // Islands (2)
+  { name: "Port Blair", state: "Andaman & Nicobar Islands", lat: 11.62, lon: 92.73, zone: "Islands" as const },
+  { name: "Kavaratti", state: "Lakshadweep", lat: 10.56, lon: 72.64, zone: "Islands" as const },
 ];
 
 function calculateRisk(rain24h: number, maxTemp: number, windGust: number): { score: number; band: "LOW" | "MODERATE" | "HIGH" | "SEVERE"; alert?: string } {

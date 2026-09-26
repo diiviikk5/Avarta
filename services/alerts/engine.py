@@ -209,13 +209,59 @@ def region_risk_table() -> List[Dict[str, Any]]:
     values instead of hand-written intensities.
     """
     anchors = [
-        ("Punjab", 30.9, 75.8),
-        ("Delhi", 28.6, 77.2),
-        ("Uttar Pradesh", 27.5, 80.5),
-        ("Bihar", 25.8, 85.5),
-        ("Rajasthan", 26.5, 73.8),
-        ("Haryana", 29.3, 76.0),
-        ("Uttarakhand", 30.3, 78.5),
+        # North (9)
+        ("Srinagar", 34.08, 74.80),
+        ("Leh", 34.15, 77.58),
+        ("Shimla", 31.10, 77.17),
+        ("Dehradun", 30.32, 78.03),
+        ("Amritsar", 31.63, 74.87),
+        ("Chandigarh", 30.73, 76.78),
+        ("Delhi (NCR)", 28.61, 77.21),
+        ("Gurugram", 28.46, 77.03),
+        ("Lucknow", 26.85, 80.95),
+
+        # West (7)
+        ("Jaipur", 26.91, 75.79),
+        ("Jodhpur", 26.24, 73.02),
+        ("Ahmedabad", 23.02, 72.57),
+        ("Mumbai", 19.07, 72.87),
+        ("Nagpur", 21.15, 79.09),
+        ("Panaji", 15.50, 73.83),
+        ("Daman", 20.42, 72.83),
+
+        # Central (3)
+        ("Bhopal", 23.26, 77.41),
+        ("Indore", 22.71, 75.85),
+        ("Raipur", 21.25, 81.63),
+
+        # East (4)
+        ("Patna", 25.60, 85.14),
+        ("Ranchi", 23.34, 85.31),
+        ("Kolkata", 22.57, 88.36),
+        ("Bhubaneswar", 20.30, 85.82),
+
+        # South (7)
+        ("Hyderabad", 17.38, 78.49),
+        ("Visakhapatnam", 17.69, 83.22),
+        ("Vijayawada", 16.50, 80.64),
+        ("Bengaluru", 12.97, 77.59),
+        ("Chennai", 13.08, 80.27),
+        ("Kochi", 9.93, 76.27),
+        ("Puducherry", 11.94, 79.80),
+
+        # Northeast (8)
+        ("Guwahati", 26.14, 91.74),
+        ("Shillong", 25.58, 91.89),
+        ("Itanagar", 27.09, 93.61),
+        ("Kohima", 25.67, 94.10),
+        ("Imphal", 24.81, 93.93),
+        ("Aizawl", 23.73, 92.71),
+        ("Agartala", 23.83, 91.28),
+        ("Gangtok", 27.34, 88.61),
+
+        # Islands (2)
+        ("Port Blair", 11.62, 92.73),
+        ("Kavaratti", 10.56, 72.64),
     ]
     case = _load_case()
     rows = []

@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, CalendarDays, ChevronRight, CloudRain, Download, FlaskConical, Layers3, MapPin, Navigation, Radar, ShieldAlert, Sparkles, Thermometer } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDownRight, ArrowUpRight, CalendarDays, ChevronRight, CloudRain, Download, FlaskConical, Layers3, MapPin, Navigation, Radar, ShieldAlert, Sparkles, Thermometer, Search, RefreshCw, ChevronUp, ChevronDown } from "lucide-react";
 import type { BenchmarkReport, ReplayCase } from "@/lib/replay";
-import { impactsFor, nearestPlace, regionRiskRows, replayTrackLegs, riskScore } from "@/lib/forecast";
+import { impactsFor, nearestPlace, regionRiskRows, replayTrackLegs, riskScore, type RegionRiskRow } from "@/lib/forecast";
 import RiskIndia3D from "@/components/dashboard/RiskIndia3D";
 import { MOCK_THREATS } from "@/lib/mock-weather-data";
 import styles from "./replay.module.css";
@@ -241,33 +241,306 @@ export function TrajectoryPanel({ replay }: { replay: ReplayCase }) {
 }
 
 export function RiskPanel({ replay, onSelect }: { replay: ReplayCase; onSelect: (lat: number, lon: number) => void }) {
-  const rows = useMemo(() => regionRiskRows(replay), [replay]);
+  const [liveMode, setLiveMode] = useState<boolean>(true);
+  const [liveRegions, setLiveRegions] = useState<any[]>([]);
+  const [selectedName, setSelectedName] = useState<string>("");
+  const [zoneFilter, setZoneFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortField, setSortField] = useState<"score" | "rainfall" | "name" | "sigma">("score");
+  const [sortAsc, setSortAsc] = useState<boolean>(false);
+  const [loadingLive, setLoadingLive] = useState<boolean>(false);
+
+  const fetchLiveRisk = async () => {
+    setLoadingLive(true);
+    try {
+      const res = await fetch("/api/live-risk");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.regions) {
+          setLiveRegions(data.regions);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch live risk:", err);
+    } finally {
+      setLoadingLive(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchLiveRisk();
+    const interval = setInterval(() => {
+      void fetchLiveRisk();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const allRows: RegionRiskRow[] = useMemo(() => {
+    if (liveMode && liveRegions.length > 0) {
+      return liveRegions.map((lr: any) => ({
+        name: lr.name,
+        state: lr.state,
+        zone: lr.zone,
+        latitude: lr.latitude,
+        longitude: lr.longitude,
+        rainfall: lr.rain_sum_24h_mm ?? lr.rainfall_mm ?? 0,
+        sigma: lr.anomaly_sigma ?? Math.round(((lr.rain_sum_24h_mm ?? lr.rainfall_mm ?? 0) - 5.0) / 10.0 * 100) / 100,
+        score: lr.score,
+        band: lr.band,
+        hazard_alert: lr.hazard_alert,
+        temperature_c: lr.temperature_c,
+        max_temp_c: lr.max_temp_c,
+        wind_gust_kmh: lr.wind_gust_kmh,
+      }));
+    }
+    return regionRiskRows(replay, liveMode);
+  }, [replay, liveMode, liveRegions]);
+
+  const filteredRows = useMemo(() => {
+    return allRows
+      .filter((r) => {
+        if (zoneFilter !== "ALL" && r.zone !== zoneFilter) return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchName = r.name.toLowerCase().includes(q);
+          const matchState = (r.state ?? "").toLowerCase().includes(q);
+          const matchZone = (r.zone ?? "").toLowerCase().includes(q);
+          if (!matchName && !matchState && !matchZone) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        let diff = 0;
+        if (sortField === "score") diff = a.score - b.score;
+        else if (sortField === "rainfall") diff = a.rainfall - b.rainfall;
+        else if (sortField === "sigma") diff = a.sigma - b.sigma;
+        else if (sortField === "name") diff = a.name.localeCompare(b.name);
+        return sortAsc ? diff : -diff;
+      });
+  }, [allRows, zoneFilter, searchQuery, sortField, sortAsc]);
+
+  const handleRowClick = (r: RegionRiskRow) => {
+    setSelectedName(r.name);
+    onSelect(r.latitude, r.longitude);
+  };
+
+  const handleSort = (field: "score" | "rainfall" | "name" | "sigma") => {
+    if (sortField === field) {
+      setSortAsc(!sortAsc);
+    } else {
+      setSortField(field);
+      setSortAsc(field === "name");
+    }
+  };
+
+  const zones = ["ALL", "North", "West", "Central", "East", "South", "Northeast", "Islands"];
+
   return (
     <section className={styles.lower} id="risk">
-      <div className={styles.lowerHead}><div><div className={styles.eyebrow}>07 / RISK MAP · 0–100</div><h2>Categorized spatial alerts</h2></div><span>LOW 0–30 · MODERATE 30–60 · HIGH 60–80 · SEVERE 80–100 · ~5 km radius (provisional)</span></div>
-      <div style={{ paddingTop: 20 }}>
-      <RiskIndia3D replay={replay} onSelect={onSelect} />
+      <div className={styles.lowerHead}>
+        <div>
+          <div className={styles.eyebrow}>07 / RISK MAP · 0–100</div>
+          <h2>Categorized spatial alerts</h2>
+        </div>
+        <span>LOW 0–30 · MODERATE 30–60 · HIGH 60–80 · SEVERE 80–100 · ~5 km radius (provisional)</span>
       </div>
-      <div className={styles.riskTableCard}>
-      <div className={styles.benchmarkScroll}>
-        <table className={styles.riskTable}>
-          <thead><tr><th>Region</th><th>Forecast (mm/day)</th><th>Anomaly (σ)</th><th>Risk (0–100)</th><th>Band</th></tr></thead>
-          <tbody>
-            {rows.map((r) => {
-              const color = r.band === "SEVERE" ? "#c03a2b" : r.band === "HIGH" ? "#dd6f2d" : r.band === "MODERATE" ? "#d9a521" : "#43a854";
+
+      <div style={{ paddingTop: 20 }}>
+        <RiskIndia3D
+          replay={replay}
+          onSelect={onSelect}
+          liveMode={liveMode}
+          onLiveModeChange={setLiveMode}
+          selectedName={selectedName}
+          onSelectedNameChange={setSelectedName}
+        />
+      </div>
+
+      {/* Table Controls & Search */}
+      <div style={{ marginTop: 24, marginBottom: 12, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#ffffff", letterSpacing: "0.4px" }}>
+              {liveMode ? "LIVE ALL-INDIA REGIONAL RISK TABLE" : "CASE REPLAY RISK TABLE"}
+            </span>
+            <span style={{ fontSize: 11, background: "rgba(255, 180, 200, 0.15)", color: "#ffb4c8", padding: "2px 8px", borderRadius: 100, fontWeight: 600 }}>
+              {filteredRows.length} {filteredRows.length === 1 ? "Region" : "Regions"}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ position: "relative", minWidth: 200 }}>
+              <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#71717a" }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search region or state..."
+                style={{
+                  background: "rgba(18, 18, 22, 0.9)",
+                  border: "1px solid rgba(255, 255, 255, 0.14)",
+                  borderRadius: 100,
+                  padding: "6px 12px 6px 30px",
+                  fontSize: 11.5,
+                  color: "#ffffff",
+                  outline: "none",
+                  width: "100%",
+                }}
+              />
+            </div>
+            {liveMode && (
+              <button
+                type="button"
+                onClick={() => void fetchLiveRisk()}
+                disabled={loadingLive}
+                style={{
+                  border: "1px solid rgba(255, 255, 255, 0.14)",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  color: "#d4d4d8",
+                  padding: "5px 10px",
+                  borderRadius: 100,
+                  fontSize: 11,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  cursor: "pointer",
+                }}
+                title="Refresh real-time meteorological observations"
+              >
+                <RefreshCw size={11} className={loadingLive ? "animate-spin" : ""} />
+                <span>{loadingLive ? "Refreshing…" : "Live Feed"}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Zone Filters Bar */}
+        {liveMode && (
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
+            {zones.map((z) => {
+              const count = z === "ALL" ? allRows.length : allRows.filter((r) => r.zone === z).length;
+              const active = zoneFilter === z;
               return (
-                <tr key={r.name}>
-                  <td><span className={styles.riskRegionCell}><span className={styles.riskDot} style={{ background: color, color }} />{r.name}</span></td>
-                  <td>{r.rainfall.toFixed(1)}</td>
-                  <td>{r.sigma >= 0 ? "+" : ""}{r.sigma.toFixed(1)}</td>
-                  <td>{r.score}</td>
-                  <td><span className={styles.bandPill} data-band={r.band}>{r.band}</span></td>
-                </tr>
+                <button
+                  key={z}
+                  type="button"
+                  onClick={() => setZoneFilter(z)}
+                  style={{
+                    border: active ? "1px solid rgba(255, 180, 200, 0.4)" : "1px solid rgba(255, 255, 255, 0.08)",
+                    background: active ? "rgba(255, 180, 200, 0.15)" : "rgba(255, 255, 255, 0.03)",
+                    color: active ? "#ffb4c8" : "#a1a1aa",
+                    padding: "4px 10px",
+                    borderRadius: 100,
+                    fontSize: 10.5,
+                    fontWeight: active ? 700 : 500,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {z === "ALL" ? "All India" : z} ({count})
+                </button>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        )}
       </div>
+
+      <div className={styles.riskTableCard}>
+        <div className={styles.benchmarkScroll} style={{ maxHeight: 480, overflowY: "auto" }}>
+          <table className={styles.riskTable}>
+            <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
+              <tr>
+                <th onClick={() => handleSort("name")} style={{ cursor: "pointer", userSelect: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>Region / State</span>
+                    {sortField === "name" && (sortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />)}
+                  </div>
+                </th>
+                <th onClick={() => handleSort("rainfall")} style={{ cursor: "pointer", userSelect: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>{liveMode ? "24h Rain / Max Temp" : "Forecast (mm/day)"}</span>
+                    {sortField === "rainfall" && (sortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />)}
+                  </div>
+                </th>
+                <th onClick={() => handleSort("sigma")} style={{ cursor: "pointer", userSelect: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>Anomaly (σ)</span>
+                    {sortField === "sigma" && (sortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />)}
+                  </div>
+                </th>
+                <th onClick={() => handleSort("score")} style={{ cursor: "pointer", userSelect: "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span>Risk (0–100)</span>
+                    {sortField === "score" && (sortAsc ? <ChevronUp size={11} /> : <ChevronDown size={11} />)}
+                  </div>
+                </th>
+                <th>Band</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: "center", padding: "30px 16px", color: "#71717a" }}>
+                    No regions matched &ldquo;{searchQuery}&rdquo;. Try another name or select &ldquo;All India&rdquo;.
+                  </td>
+                </tr>
+              ) : (
+                filteredRows.map((r) => {
+                  const color = r.band === "SEVERE" ? "#c03a2b" : r.band === "HIGH" ? "#dd6f2d" : r.band === "MODERATE" ? "#d9a521" : "#43a854";
+                  const isSelected = selectedName === r.name;
+                  return (
+                    <tr
+                      key={r.name}
+                      onClick={() => handleRowClick(r)}
+                      style={{
+                        cursor: "pointer",
+                        background: isSelected ? "rgba(255, 180, 200, 0.12)" : undefined,
+                        borderLeft: isSelected ? "3px solid #ffb4c8" : "3px solid transparent",
+                        transition: "all 0.15s ease",
+                      }}
+                      title="Click to inspect this region"
+                    >
+                      <td>
+                        <span className={styles.riskRegionCell}>
+                          <span className={styles.riskDot} style={{ background: color, color }} />
+                          <span style={{ fontWeight: 600, color: isSelected ? "#ffffff" : "#e4e4e7" }}>{r.name}</span>
+                          {r.state && (
+                            <span style={{ fontSize: 10, color: "#a1a1aa", marginLeft: 6, fontWeight: 400 }}>
+                              ({r.state})
+                            </span>
+                          )}
+                          {r.zone && (
+                            <span style={{ fontSize: 9, background: "rgba(255, 255, 255, 0.06)", color: "#d4d4d8", padding: "1px 6px", borderRadius: 100, marginLeft: 6, fontWeight: 500 }}>
+                              {r.zone}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td>
+                        {liveMode && r.rainfall === 0 && r.max_temp_c ? (
+                          <span>{r.max_temp_c.toFixed(1)}°C <span style={{ fontSize: 10, color: "#71717a" }}>(dry)</span></span>
+                        ) : (
+                          <span>{r.rainfall.toFixed(1)} <span style={{ fontSize: 10, color: "#71717a" }}>mm</span></span>
+                        )}
+                      </td>
+                      <td>{r.sigma >= 0 ? "+" : ""}{r.sigma.toFixed(1)}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontWeight: 700, minWidth: 24 }}>{r.score}</span>
+                          <div style={{ width: 44, height: 4, background: "rgba(255, 255, 255, 0.1)", borderRadius: 100, overflow: "hidden" }}>
+                            <div style={{ width: `${Math.min(100, r.score)}%`, height: "100%", background: color, borderRadius: 100 }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className={styles.bandPill} data-band={r.band}>{r.band}</span></td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <p className={styles.benchmarkNote}>Risk = rainfall + wind + temperature + historical extremeness + forecast uncertainty. Draft decision support — <a href="/api/risk-regions" target="_blank" rel="noreferrer">view /api/risk-regions <ArrowUpRight size={12} /></a></p>
     </section>
