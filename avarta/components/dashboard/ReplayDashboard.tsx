@@ -117,14 +117,14 @@ export function ForecastMap({ replay, frameIndex, picked, onPick }: { replay: Re
   return (
     <div className={styles.mapWrap}>
       <svg viewBox="0 0 860 570" role="img" onClick={handleClick} style={{ cursor: "crosshair" }} aria-label="Forecast spatial map with detected forecast footprints. Click to inspect a location.">
-        <rect x="58" y="36" width="744" height="485" rx="4" fill="#f0f1e9" />
+        <rect x="58" y="36" width="744" height="485" rx="4" fill="#0f0f13" />
         {forecastGrid.map((row, r) => row.map((value, c) => (
           <rect key={`${r}-${c}`} x={x(longitudes[c]) - cellW / 2} y={y(latitudes[r]) - cellH / 2}
             width={cellW} height={cellH} fill={fieldColor(value, replay.hazard_type)} opacity="0.95" />
         )))}
         {lonSteps.map((lon) => <g key={lon}><line x1={x(lon)} x2={x(lon)} y1="36" y2="521" stroke="#60766e" strokeOpacity=".27" strokeDasharray="3 5"/><text x={x(lon)} y="547" textAnchor="middle">{lon}°E</text></g>)}
         {latSteps.map((lat) => <g key={lat}><line x1="58" x2="802" y1={y(lat)} y2={y(lat)} stroke="#60766e" strokeOpacity=".27" strokeDasharray="3 5"/><text x="40" y={y(lat) + 4} textAnchor="end">{lat}°N</text></g>)}
-        {trail.length > 1 && <polyline points={trail.map((object) => `${x(object.centroid[1])},${y(object.centroid[0])}`).join(" ")} fill="none" stroke="#1e635f" strokeWidth="2" strokeDasharray="5 5" />}
+        {trail.length > 1 && <polyline points={trail.map((object) => `${x(object.centroid[1])},${y(object.centroid[0])}`).join(" ")} fill="none" stroke="#ffb4c8" strokeWidth="2" strokeDasharray="5 5" />}
         {legs.flatMap((leg) => leg.steps).map((step, i) => (
           <g key={`leg-${i}`}>
             <circle cx={x(step.lon)} cy={y(step.lat)} r={i === 0 ? 9 : 7} fill="none" stroke={i === 0 ? "#c08a2d" : i === 1 ? "#c25e2e" : "#b0322c"} strokeWidth="2" strokeDasharray="4 3" opacity="0.9" />
@@ -137,8 +137,8 @@ export function ForecastMap({ replay, frameIndex, picked, onPick }: { replay: Re
             fill="none" stroke="#7a4a1f" strokeWidth="2" />
         )}
         {selected.map((object, index) => <g key={object.track_id ?? index}>
-          <rect x={x(object.bbox[1])} y={y(object.bbox[2])} width={Math.max(10, x(object.bbox[3]) - x(object.bbox[1]))} height={Math.max(10, y(object.bbox[0]) - y(object.bbox[2]))} fill="none" stroke="#205d5c" strokeWidth="2" strokeDasharray="5 4" />
-          <circle cx={x(object.centroid[1])} cy={y(object.centroid[0])} r="6" fill="#205d5c" stroke="white" strokeWidth="2" />
+          <rect x={x(object.bbox[1])} y={y(object.bbox[2])} width={Math.max(10, x(object.bbox[3]) - x(object.bbox[1]))} height={Math.max(10, y(object.bbox[0]) - y(object.bbox[2]))} fill="none" stroke="#ffb4c8" strokeWidth="2" strokeDasharray="5 4" />
+          <circle cx={x(object.centroid[1])} cy={y(object.centroid[0])} r="6" fill="#ffb4c8" stroke="white" strokeWidth="2" />
         </g>)}
         {peakLoc && (
           <>
@@ -149,7 +149,7 @@ export function ForecastMap({ replay, frameIndex, picked, onPick }: { replay: Re
         )}
         {picked && (
           <g>
-            <circle cx={x(picked.lon)} cy={y(picked.lat)} r="10" fill="#1e635f" stroke="white" strokeWidth="3" />
+            <circle cx={x(picked.lon)} cy={y(picked.lat)} r="10" fill="#ffb4c8" stroke="white" strokeWidth="3" />
             <text x={x(picked.lon) + 14} y={y(picked.lat) + 4} fontWeight="bold">📍 {picked.lat.toFixed(2)}N {picked.lon.toFixed(2)}E</text>
           </g>
         )}

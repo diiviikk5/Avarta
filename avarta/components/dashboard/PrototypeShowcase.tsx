@@ -176,24 +176,24 @@ export default function PrototypeShowcase() {
       {/* Flagship Hero Header */}
       <div
         style={{
-          background: "linear-gradient(135deg, #173d39 0%, #0d2522 100%)",
-          color: "#eef6f2",
+          background: "linear-gradient(135deg, rgba(255, 180, 200, 0.12) 0%, rgba(18, 18, 22, 0.95) 100%)",
+          color: "#ffffff",
           borderRadius: "14px",
           padding: "32px 36px",
-          border: "1px solid #28554e",
-          boxShadow: "0 8px 30px rgba(11, 39, 34, 0.3)",
+          border: "1px solid rgba(255, 180, 200, 0.25)",
+          boxShadow: "0 8px 30px rgba(255, 180, 200, 0.08)",
           position: "relative",
           overflow: "hidden",
         }}
       >
         <div style={{ position: "relative", zIndex: 2, maxWidth: "880px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(91, 197, 178, 0.16)", border: "1px solid rgba(91, 197, 178, 0.35)", padding: "5px 12px", borderRadius: "100px", fontSize: "11px", fontWeight: 700, color: "#62d4c0", letterSpacing: "1px", marginBottom: "14px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255, 180, 200, 0.14)", border: "1px solid rgba(255, 180, 200, 0.3)", padding: "5px 12px", borderRadius: "100px", fontSize: "11px", fontWeight: 700, color: "#ffb4c8", letterSpacing: "1px", marginBottom: "14px" }}>
             <Sparkles size={13} /> INTERACTIVE EVALUATION & SCENARIO SIMULATOR
           </div>
-          <h1 style={{ fontFamily: "Georgia, serif", fontSize: "clamp(30px, 3.5vw, 44px)", fontWeight: 400, letterSpacing: "-1.5px", margin: "0 0 12px", color: "#f3faf6", lineHeight: 1.15 }}>
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: "clamp(30px, 3.5vw, 44px)", fontWeight: 400, letterSpacing: "-1.5px", margin: "0 0 12px", color: "#ffffff", lineHeight: 1.15 }}>
             Operational Extreme Weather Testing Lab
           </h1>
-          <p style={{ fontSize: "13.5px", lineHeight: "1.7", color: "#b3cbbf", margin: 0 }}>
+          <p style={{ fontSize: "13.5px", lineHeight: "1.7", color: "#a1a1aa", margin: 0 }}>
             Simulate and benchmark the physical impacts of atmospheric chaos in medium-range forecasts. Explore live radar dynamics, orographic downscaling, psychrometric wet-bulb danger, high-resolution satellite verification imagery, and physics-informed neural network (PINN) benchmarks.
           </p>
         </div>
@@ -244,20 +244,20 @@ export default function PrototypeShowcase() {
                 gap: "3px",
                 padding: "12px 18px",
                 borderRadius: "10px",
-                border: active ? "1px solid #1f5c53" : "1px solid var(--line, #dde5dc)",
-                background: active ? "#1f5c53" : "var(--cream, #ffffff)",
-                color: active ? "#ffffff" : "var(--ink, #1f3933)",
+                border: active ? "1px solid #ffb4c8" : "1px solid var(--line, rgba(255, 255, 255, 0.12))",
+                background: active ? "#ffb4c8" : "var(--cream, #121216)",
+                color: active ? "#000000" : "var(--ink, #ffffff)",
                 cursor: "pointer",
                 textAlign: "left",
                 transition: "all 0.18s ease",
-                boxShadow: active ? "0 4px 14px rgba(31, 92, 83, 0.28)" : "0 2px 6px rgba(0,0,0,0.03)",
+                boxShadow: active ? "0 4px 14px rgba(255, 180, 200, 0.25)" : "none",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "13px", fontWeight: 700 }}>
-                <Icon size={15} style={{ color: active ? "#62d4c0" : "#2d6b5e" }} />
+                <Icon size={15} style={{ color: active ? "#000000" : "#ffb4c8" }} />
                 <span>{s.label}</span>
               </div>
-              <small style={{ fontSize: "10.5px", color: active ? "#b9e3d9" : "var(--muted, #7b8e84)", fontWeight: 500 }}>
+              <small style={{ fontSize: "10.5px", color: active ? "#262626" : "var(--muted, #a1a1aa)", fontWeight: 500 }}>
                 {s.badge}
               </small>
             </button>
@@ -272,7 +272,7 @@ export default function PrototypeShowcase() {
           <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "24px", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <div>
-                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#2d6b5e" }}>EARTH OBSERVATION & SIMULATION</span>
+                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#ffb4c8" }}>EARTH OBSERVATION & SIMULATION</span>
                 <h3 style={{ fontFamily: "Georgia, serif", fontSize: "22px", margin: "4px 0", fontWeight: 400 }}>
                   {cycloneView === "radar" ? "Doppler Radar Eyewall & Vorticity" : "INSAT-3D Super Cyclone Satellite Feed"}
                 </h3>
@@ -283,18 +283,18 @@ export default function PrototypeShowcase() {
 
               {/* View Switcher & Animation Controls */}
               <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                <div style={{ display: "flex", background: "var(--line, #e5ede3)", borderRadius: "100px", padding: "2px" }}>
+                <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.08)", borderRadius: "100px", padding: "2px" }}>
                   <button
                     type="button"
                     onClick={() => setCycloneView("radar")}
-                    style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cycloneView === "radar" ? "#1f5c53" : "transparent", color: cycloneView === "radar" ? "#fff" : "var(--muted, #64756c)" }}
+                    style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cycloneView === "radar" ? "#ffb4c8" : "transparent", color: cycloneView === "radar" ? "#000000" : "var(--muted, #a1a1aa)" }}
                   >
                     Radar
                   </button>
                   <button
                     type="button"
                     onClick={() => setCycloneView("satellite")}
-                    style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cycloneView === "satellite" ? "#1f5c53" : "transparent", color: cycloneView === "satellite" ? "#fff" : "var(--muted, #64756c)" }}
+                    style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cycloneView === "satellite" ? "#ffb4c8" : "transparent", color: cycloneView === "satellite" ? "#000000" : "var(--muted, #a1a1aa)" }}
                   >
                     Satellite View
                   </button>
@@ -377,7 +377,7 @@ export default function PrototypeShowcase() {
                   style={{ width: "100%", height: "100%", maxHeight: "380px", objectFit: "cover", display: "block" }}
                 />
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(5, 18, 15, 0.9))", padding: "16px", color: "#e3f3ec" }}>
-                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#62d4c0" }}>INSAT-3D VISIBLE & INFRARED COMPOSITE · MAY 2020</div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, color: "#ffb4c8" }}>INSAT-3D VISIBLE & INFRARED COMPOSITE · MAY 2020</div>
                   <div style={{ fontSize: "10px", color: "#b3cbbf" }}>Central dense overcast with eye diameter of 30 km over Bay of Bengal approaching Kolkata/Sundarbans.</div>
                 </div>
               </div>
@@ -397,21 +397,21 @@ export default function PrototypeShowcase() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
               <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "10px", padding: "14px", textAlign: "center" }}>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--muted, #72877c)" }}>PEAK GUSTS</span>
-                <strong style={{ display: "block", fontSize: "24px", color: "#1c4e44", marginTop: "4px" }}>
+                <strong style={{ display: "block", fontSize: "24px", color: "var(--ink, #ffffff)", marginTop: "4px" }}>
                   {maxWindSpeed} <small style={{ fontSize: "12px" }}>km/h</small>
                 </strong>
                 <span style={{ fontSize: "10px", color: "#bb4f31" }}>Catastrophic</span>
               </div>
               <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "10px", padding: "14px", textAlign: "center" }}>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--muted, #72877c)" }}>850 hPa VORTICITY</span>
-                <strong style={{ display: "block", fontSize: "24px", color: "#1c4e44", marginTop: "4px" }}>
+                <strong style={{ display: "block", fontSize: "24px", color: "var(--ink, #ffffff)", marginTop: "4px" }}>
                   +{vorticity} <small style={{ fontSize: "11px" }}>×10⁻⁴ s⁻¹</small>
                 </strong>
-                <span style={{ fontSize: "10px", color: "#2d6b5e" }}>Extreme Circulation</span>
+                <span style={{ fontSize: "10px", color: "#ffb4c8" }}>Extreme Circulation</span>
               </div>
               <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "10px", padding: "14px", textAlign: "center" }}>
                 <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--muted, #72877c)" }}>STORM SURGE</span>
-                <strong style={{ display: "block", fontSize: "24px", color: "#1c4e44", marginTop: "4px" }}>
+                <strong style={{ display: "block", fontSize: "24px", color: "var(--ink, #ffffff)", marginTop: "4px" }}>
                   +{cycloneSurgeMeters.toFixed(1)} <small style={{ fontSize: "12px" }}>m</small>
                 </strong>
                 <span style={{ fontSize: "10px", color: "#bb4f31" }}>Sundarbans Breach</span>
@@ -420,7 +420,7 @@ export default function PrototypeShowcase() {
 
             {/* Interactive Sliders */}
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "20px" }}>
-              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Sliders size={14} /> Dynamic Parameter Controls
               </h4>
 
@@ -436,7 +436,7 @@ export default function PrototypeShowcase() {
                     max="960"
                     value={cyclonePressure}
                     onChange={(e) => setCyclonePressure(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                   <small style={{ fontSize: "10px", color: "var(--muted, #7a8e84)" }}>Lower pressure = tighter pressure gradient force = higher wind velocity</small>
                 </div>
@@ -452,7 +452,7 @@ export default function PrototypeShowcase() {
                     max="50"
                     value={cycloneRadius}
                     onChange={(e) => setCycloneRadius(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                   <small style={{ fontSize: "10px", color: "var(--muted, #7a8e84)" }}>Distance from eye center to the most violent eyewall wind ring</small>
                 </div>
@@ -460,7 +460,7 @@ export default function PrototypeShowcase() {
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 600, color: "var(--ink, #1f3b34)" }}>
                     <span>Peak Coastal Surge Inundation</span>
-                    <strong style={{ color: "#256b5e" }}>+{cycloneSurgeMeters} meters</strong>
+                    <strong style={{ color: "#ffb4c8" }}>+{cycloneSurgeMeters} meters</strong>
                   </div>
                   <input
                     type="range"
@@ -469,7 +469,7 @@ export default function PrototypeShowcase() {
                     step="0.1"
                     value={cycloneSurgeMeters}
                     onChange={(e) => setCycloneSurgeMeters(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                   <small style={{ fontSize: "10px", color: "var(--muted, #7a8e84)" }}>Inverse barometric effect + onshore wind shear driven wave setup</small>
                 </div>
@@ -496,7 +496,7 @@ export default function PrototypeShowcase() {
           <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <div>
-                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#2d6b5e" }}>HYDROLOGICAL & RADAR SIMULATION</span>
+                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#ffb4c8" }}>HYDROLOGICAL & RADAR SIMULATION</span>
                 <h3 style={{ fontFamily: "Georgia, serif", fontSize: "22px", margin: "4px 0 6px", fontWeight: 400 }}>
                   {cloudburstView === "hydrograph" ? "Urban Inflow Hydrograph vs Drainage" : "High-Resolution Cloudburst Radar Core"}
                 </h3>
@@ -506,18 +506,18 @@ export default function PrototypeShowcase() {
               </div>
 
               {/* View Switcher */}
-              <div style={{ display: "flex", background: "var(--line, #e5ede3)", borderRadius: "100px", padding: "2px" }}>
+              <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.08)", borderRadius: "100px", padding: "2px" }}>
                 <button
                   type="button"
                   onClick={() => setCloudburstView("hydrograph")}
-                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cloudburstView === "hydrograph" ? "#1f5c53" : "transparent", color: cloudburstView === "hydrograph" ? "#fff" : "var(--muted, #64756c)" }}
+                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cloudburstView === "hydrograph" ? "#ffb4c8" : "transparent", color: cloudburstView === "hydrograph" ? "#000000" : "var(--muted, #a1a1aa)" }}
                 >
                   Hydrograph
                 </button>
                 <button
                   type="button"
                   onClick={() => setCloudburstView("radar")}
-                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cloudburstView === "radar" ? "#1f5c53" : "transparent", color: cloudburstView === "radar" ? "#fff" : "var(--muted, #64756c)" }}
+                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: cloudburstView === "radar" ? "#ffb4c8" : "transparent", color: cloudburstView === "radar" ? "#000000" : "var(--muted, #a1a1aa)" }}
                 >
                   Radar Core
                 </button>
@@ -526,7 +526,7 @@ export default function PrototypeShowcase() {
 
             {/* Visual Display */}
             {cloudburstView === "hydrograph" ? (
-              <div style={{ background: "#f8faf7", border: "1px solid #e1ebe0", borderRadius: "8px", padding: "14px", overflow: "hidden" }}>
+              <div style={{ background: "var(--card, #121216)", border: "1px solid var(--line, rgba(255, 255, 255, 0.12))", borderRadius: "8px", padding: "14px", overflow: "hidden" }}>
                 <svg viewBox="0 0 460 220" style={{ width: "100%", height: "auto" }}>
                   {/* Horizontal drainage threshold line */}
                   <line x1="45" y1="120" x2="440" y2="120" stroke="#dc2626" strokeWidth="2" strokeDasharray="4 4" />
@@ -536,14 +536,14 @@ export default function PrototypeShowcase() {
 
                   {/* Gridlines */}
                   {[40, 80, 120, 160, 200].map((y) => (
-                    <line key={y} x1="45" y1={y} x2="440" y2={y} stroke="#d2ded1" strokeWidth="0.7" />
+                    <line key={y} x1="45" y1={y} x2="440" y2={y} stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.7" />
                   ))}
 
                   {/* Runoff curve */}
                   <path
                     d={`M 45 200 Q 120 180, 180 ${Math.max(25, 200 - rainRate * 1.6)} T 320 140 Q 380 180, 440 195`}
                     fill="none"
-                    stroke="#1c5c52"
+                    stroke="#ffb4c8"
                     strokeWidth="3.5"
                   />
                   <path
@@ -554,7 +554,7 @@ export default function PrototypeShowcase() {
 
                   {/* Peak point indicator */}
                   <circle cx="180" cy={Math.max(25, 200 - rainRate * 1.6)} r="6" fill="#e11d48" stroke="#fff" strokeWidth="2" />
-                  <text x="180" y={Math.max(15, 185 - rainRate * 1.6)} textAnchor="middle" fill="#1c4d44" fontSize="10" fontWeight="bold">
+                  <text x="180" y={Math.max(15, 185 - rainRate * 1.6)} textAnchor="middle" fill="#ffb4c8" fontSize="10" fontWeight="bold">
                     Peak: {rainRate} mm/h
                   </text>
 
@@ -568,8 +568,8 @@ export default function PrototypeShowcase() {
                   <defs>
                     <linearGradient id="floodGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#ef4444" />
-                      <stop offset="60%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                      <stop offset="60%" stopColor="#ffb4c8" />
+                      <stop offset="100%" stopColor="#ffb4c8" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -590,7 +590,7 @@ export default function PrototypeShowcase() {
 
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", fontSize: "11px", color: "var(--muted, #667b70)" }}>
               <span>T+0h Cloudburst Inception</span>
-              <strong style={{ color: inundationDeficit > 0 ? "#bb4a2d" : "#256b5e" }}>
+              <strong style={{ color: inundationDeficit > 0 ? "#bb4a2d" : "#ffb4c8" }}>
                 {inundationDeficit > 0 ? `Overflow Deficit: +${inundationDeficit} mm/h (Flooding)` : "Safe Drainage Flow"}
               </strong>
               <span>T+6h Runoff Dissipation</span>
@@ -601,7 +601,7 @@ export default function PrototypeShowcase() {
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* Interactive Sliders */}
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "20px" }}>
-              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <CloudLightning size={14} /> Rainfall & Drainage Controls
               </h4>
 
@@ -617,7 +617,7 @@ export default function PrototypeShowcase() {
                     max="160"
                     value={rainRate}
                     onChange={(e) => setRainRate(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                 </div>
 
@@ -632,7 +632,7 @@ export default function PrototypeShowcase() {
                     max="90"
                     value={drainCapacity}
                     onChange={(e) => setDrainCapacity(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                 </div>
               </div>
@@ -697,7 +697,7 @@ export default function PrototypeShowcase() {
           <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
               <div>
-                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#b94d2d" }}>THERMAL INFRARED OBSERVATION</span>
+                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#ffb4c8" }}>THERMAL INFRARED OBSERVATION</span>
                 <h3 style={{ fontFamily: "Georgia, serif", fontSize: "22px", margin: "4px 0 6px", fontWeight: 400 }}>
                   {heatView === "gauges" ? "Compound Heat Index & Stull Wet-Bulb" : "Satellite Thermal IR Heat Map of India"}
                 </h3>
@@ -707,18 +707,18 @@ export default function PrototypeShowcase() {
               </div>
 
               {/* View Switcher */}
-              <div style={{ display: "flex", background: "var(--line, #e5ede3)", borderRadius: "100px", padding: "2px" }}>
+              <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.08)", borderRadius: "100px", padding: "2px" }}>
                 <button
                   type="button"
                   onClick={() => setHeatView("gauges")}
-                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: heatView === "gauges" ? "#1f5c53" : "transparent", color: heatView === "gauges" ? "#fff" : "var(--muted, #64756c)" }}
+                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: heatView === "gauges" ? "#ffb4c8" : "transparent", color: heatView === "gauges" ? "#000000" : "var(--muted, #a1a1aa)" }}
                 >
                   Gauges
                 </button>
                 <button
                   type="button"
                   onClick={() => setHeatView("satellite")}
-                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: heatView === "satellite" ? "#1f5c53" : "transparent", color: heatView === "satellite" ? "#fff" : "var(--muted, #64756c)" }}
+                  style={{ border: 0, padding: "4px 10px", borderRadius: "100px", fontSize: "10.5px", fontWeight: 700, cursor: "pointer", background: heatView === "satellite" ? "#ffb4c8" : "transparent", color: heatView === "satellite" ? "#000000" : "var(--muted, #a1a1aa)" }}
                 >
                   Thermal Satellite
                 </button>
@@ -779,7 +779,7 @@ export default function PrototypeShowcase() {
           {/* Sliders & Grid Vulnerabilities */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "20px" }}>
-              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Sliders size={14} /> Psychrometric Input Controls
               </h4>
 
@@ -796,14 +796,14 @@ export default function PrototypeShowcase() {
                     step="0.2"
                     value={ambientTemp}
                     onChange={(e) => setAmbientTemp(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                 </div>
 
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 600 }}>
                     <span>Boundary-Layer Relative Humidity (RH)</span>
-                    <strong style={{ color: "#256b5e" }}>{humidity}%</strong>
+                    <strong style={{ color: "#ffb4c8" }}>{humidity}%</strong>
                   </div>
                   <input
                     type="range"
@@ -811,7 +811,7 @@ export default function PrototypeShowcase() {
                     max="80"
                     value={humidity}
                     onChange={(e) => setHumidity(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                   <small style={{ fontSize: "10px", color: "var(--muted, #7a8e84)" }}>Higher humidity blocks evaporative sweating efficiency</small>
                 </div>
@@ -820,7 +820,7 @@ export default function PrototypeShowcase() {
 
             {/* Critical Grid & Agriculture Impacts */}
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "18px" }}>
-              <h4 style={{ margin: "0 0 10px", fontSize: "12.5px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 10px", fontSize: "12.5px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Flame size={14} /> Multi-Sector Cascading Failures
               </h4>
               <div style={{ display: "grid", gap: "8px", fontSize: "11px" }}>
@@ -841,7 +841,7 @@ export default function PrototypeShowcase() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "20px" }}>
           {/* Fourier Power Spectral Density (PSD) Comparison */}
           <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "24px" }}>
-            <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#2d6b5e" }}>RADIAL 2D FOURIER POWER SPECTRUM</span>
+            <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#ffb4c8" }}>RADIAL 2D FOURIER POWER SPECTRUM</span>
             <h3 style={{ fontFamily: "Georgia, serif", fontSize: "22px", margin: "4px 0 6px", fontWeight: 400 }}>
               Resolving DL Spectral Smoothing
             </h3>
@@ -867,11 +867,11 @@ export default function PrototypeShowcase() {
                 <path d="M 45 40 Q 140 75, 230 130 T 440 175" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5 3" />
 
                 {/* Avarta PINN Diffusion (retains high-k) */}
-                <path d={`M 45 40 Q 140 ${60 - (pinnEnergyPct - 42) * 0.4}, 240 ${95 - (pinnEnergyPct - 42) * 0.6} T 440 ${138 - (pinnEnergyPct - 42) * 0.8}`} fill="none" stroke="#2dd4bf" strokeWidth="3" />
+                <path d={`M 45 40 Q 140 ${60 - (pinnEnergyPct - 42) * 0.4}, 240 ${95 - (pinnEnergyPct - 42) * 0.6} T 440 ${138 - (pinnEnergyPct - 42) * 0.8}`} fill="none" stroke="#ffb4c8" strokeWidth="3" />
 
                 {/* Legend */}
-                <circle cx="60" cy="185" r="4" fill="#2dd4bf" />
-                <text x="70" y="188" fill="#2dd4bf" fontSize="9.5" fontWeight="bold">Avarta PINN ({pinnEnergyPct}%)</text>
+                <circle cx="60" cy="185" r="4" fill="#ffb4c8" />
+                <text x="70" y="188" fill="#ffb4c8" fontSize="9.5" fontWeight="bold">Avarta PINN ({pinnEnergyPct}%)</text>
 
                 <circle cx="195" cy="185" r="4" fill="#f59e0b" />
                 <text x="205" y="188" fill="#f59e0b" fontSize="9.5">Standard CNN (11.7%)</text>
@@ -895,7 +895,7 @@ export default function PrototypeShowcase() {
           {/* Differentiable Loss Term Controls & Scorecard */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "20px" }}>
-              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 14px", fontSize: "13px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Cpu size={14} /> Differentiable PINN Physics Loss Weights
               </h4>
 
@@ -903,7 +903,7 @@ export default function PrototypeShowcase() {
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 600 }}>
                     <span>λ_moisture: -∇·(q v) Conservation</span>
-                    <strong style={{ color: "#256b5e" }}>{lambdaMoisture}</strong>
+                    <strong style={{ color: "#ffb4c8" }}>{lambdaMoisture}</strong>
                   </div>
                   <input
                     type="range"
@@ -912,14 +912,14 @@ export default function PrototypeShowcase() {
                     step="0.05"
                     value={lambdaMoisture}
                     onChange={(e) => setLambdaMoisture(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                 </div>
 
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 600 }}>
                     <span>λ_barrier: ReLU(-y)² Negative Rain Penalty</span>
-                    <strong style={{ color: "#256b5e" }}>{lambdaBarrier}</strong>
+                    <strong style={{ color: "#ffb4c8" }}>{lambdaBarrier}</strong>
                   </div>
                   <input
                     type="range"
@@ -928,14 +928,14 @@ export default function PrototypeShowcase() {
                     step="0.1"
                     value={lambdaBarrier}
                     onChange={(e) => setLambdaBarrier(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                 </div>
 
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 600 }}>
                     <span>λ_tail: 95th Percentile Extreme Tail Multiplier</span>
-                    <strong style={{ color: "#256b5e" }}>{lambdaTail}</strong>
+                    <strong style={{ color: "#ffb4c8" }}>{lambdaTail}</strong>
                   </div>
                   <input
                     type="range"
@@ -944,7 +944,7 @@ export default function PrototypeShowcase() {
                     step="0.1"
                     value={lambdaTail}
                     onChange={(e) => setLambdaTail(Number(e.target.value))}
-                    style={{ width: "100%", accentColor: "#1f5c53", cursor: "pointer" }}
+                    style={{ width: "100%", accentColor: "#ffb4c8", cursor: "pointer" }}
                   />
                 </div>
               </div>
@@ -952,25 +952,25 @@ export default function PrototypeShowcase() {
 
             {/* Empirical Metric Benchmark */}
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "18px" }}>
-              <h4 style={{ margin: "0 0 10px", fontSize: "12.5px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 10px", fontSize: "12.5px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <BarChart3 size={14} /> Empirical Verification Scorecard
               </h4>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "8px", fontSize: "11px" }}>
                 <div style={{ padding: "8px 10px", background: "#f5f9f6", borderRadius: "6px", border: "1px solid #d9e9df" }}>
                   <span style={{ color: "#5d786d" }}>Critical Success Index (CSI):</span>
-                  <strong style={{ display: "block", fontSize: "16px", color: "#1d584e" }}>0.684</strong>
+                  <strong style={{ display: "block", fontSize: "16px", color: "#ffb4c8" }}>0.684</strong>
                 </div>
                 <div style={{ padding: "8px 10px", background: "#f5f9f6", borderRadius: "6px", border: "1px solid #d9e9df" }}>
                   <span style={{ color: "#5d786d" }}>False Alarm Ratio (FAR):</span>
-                  <strong style={{ display: "block", fontSize: "16px", color: "#1d584e" }}>0.142</strong>
+                  <strong style={{ display: "block", fontSize: "16px", color: "#ffb4c8" }}>0.142</strong>
                 </div>
                 <div style={{ padding: "8px 10px", background: "#f5f9f6", borderRadius: "6px", border: "1px solid #d9e9df" }}>
                   <span style={{ color: "#5d786d" }}>Peak Absolute Error:</span>
-                  <strong style={{ display: "block", fontSize: "16px", color: "#1d584e" }}>14.2 mm</strong>
+                  <strong style={{ display: "block", fontSize: "16px", color: "#ffb4c8" }}>14.2 mm</strong>
                 </div>
                 <div style={{ padding: "8px 10px", background: "#f5f9f6", borderRadius: "6px", border: "1px solid #d9e9df" }}>
                   <span style={{ color: "#5d786d" }}>Extreme Footprint IoU:</span>
-                  <strong style={{ display: "block", fontSize: "16px", color: "#1d584e" }}>0.628</strong>
+                  <strong style={{ display: "block", fontSize: "16px", color: "#ffb4c8" }}>0.628</strong>
                 </div>
               </div>
             </div>
@@ -985,12 +985,12 @@ export default function PrototypeShowcase() {
           <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "24px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <div>
-                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#2d6b5e" }}>OASIS CAP 1.2 XML TELEMETRY</span>
+                <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#ffb4c8" }}>OASIS CAP 1.2 XML TELEMETRY</span>
                 <h3 style={{ fontFamily: "Georgia, serif", fontSize: "22px", margin: "4px 0", fontWeight: 400 }}>
                   Automated Multi-Agency Dispatch Feed
                 </h3>
               </div>
-              <span style={{ background: "#e8f5ed", color: "#227047", fontSize: "10.5px", fontWeight: 700, padding: "4px 8px", borderRadius: "6px", border: "1px solid #cce8d6" }}>
+              <span style={{ background: "rgba(255, 180, 200, 0.12)", color: "#ffb4c8", fontSize: "10.5px", fontWeight: 700, padding: "4px 8px", borderRadius: "6px", border: "1px solid rgba(255, 180, 200, 0.25)" }}>
                 SYNTAX VALIDATED
               </span>
             </div>
@@ -1038,7 +1038,7 @@ export default function PrototypeShowcase() {
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {/* GKMS Agromet */}
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "20px" }}>
-              <h4 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <CheckCircle2 size={14} color="#22c55e" /> GKMS District Crop Phenology Advisories
               </h4>
               <div style={{ display: "grid", gap: "10px", fontSize: "11px" }}>
@@ -1056,17 +1056,17 @@ export default function PrototypeShowcase() {
 
             {/* EOC Action Countdown */}
             <div style={{ background: "var(--cream, #fff)", border: "1px solid var(--line, #e2eae1)", borderRadius: "12px", padding: "20px" }}>
-              <h4 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "#1d473f", display: "flex", alignItems: "center", gap: "6px" }}>
+              <h4 style={{ margin: "0 0 12px", fontSize: "13px", fontWeight: 700, color: "var(--ink, #ffffff)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Activity size={14} /> Emergency Operations Center (EOC) Readiness Matrix
               </h4>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "11.5px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px", background: "#f7faf7", borderRadius: "6px" }}>
                   <span>T-72h: Reservoir Pre-Depletion Protocol</span>
-                  <strong style={{ color: "#256b5e" }}>COMPLETED</strong>
+                  <strong style={{ color: "#ffb4c8" }}>COMPLETED</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px", background: "#f7faf7", borderRadius: "6px" }}>
                   <span>T-48h: NDRF Battalion Staging (Ghaziabad)</span>
-                  <strong style={{ color: "#256b5e" }}>DEPLOYED (4 TEAMS)</strong>
+                  <strong style={{ color: "#ffb4c8" }}>DEPLOYED (4 TEAMS)</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", padding: "8px", background: "#fef9f5", borderRadius: "6px", border: "1px solid #fae8d8" }}>
                   <span>T-24h: Substation De-energization Pre-Alert</span>
@@ -1094,7 +1094,7 @@ export default function PrototypeShowcase() {
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px", marginBottom: "16px" }}>
           <div>
-            <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#2d6b5e" }}>REAL-TIME EMPIRICAL TESTING SUITE</span>
+            <span style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "1.2px", color: "#ffb4c8" }}>REAL-TIME EMPIRICAL TESTING SUITE</span>
             <h3 style={{ fontFamily: "Georgia, serif", fontSize: "22px", margin: "4px 0", fontWeight: 400 }}>
               Physical Invariance & Skill Verification Benchmarks
             </h3>
@@ -1113,29 +1113,29 @@ export default function PrototypeShowcase() {
               gap: "8px",
               padding: "10px 18px",
               borderRadius: "100px",
-              border: "1px solid #1f5c53",
-              background: testingRunning ? "#2d6b5e" : "#1f5c53",
-              color: "#fff",
+              border: "1px solid #ffb4c8",
+              background: testingRunning ? "rgba(255, 180, 200, 0.2)" : "#ffb4c8",
+              color: testingRunning ? "#ffb4c8" : "#000000",
               fontSize: "12px",
               fontWeight: 700,
               cursor: testingRunning ? "wait" : "pointer",
-              boxShadow: "0 2px 8px rgba(31, 92, 83, 0.25)",
+              boxShadow: "0 2px 8px rgba(255, 180, 200, 0.25)",
               transition: "all 0.15s ease",
             }}
           >
-            <Play size={13} fill="#fff" />
+            <Play size={13} fill={testingRunning ? "#ffb4c8" : "#000000"} />
             {testingRunning ? `Running Tests (${testProgress}%)…` : "▶ Run All Empirical Verification Tests"}
           </button>
         </div>
 
         {/* Live Test Progress Bar */}
         {testingRunning && (
-          <div style={{ width: "100%", height: "6px", background: "#e5ece4", borderRadius: "100px", overflow: "hidden", marginBottom: "16px" }}>
+          <div style={{ width: "100%", height: "6px", background: "rgba(255, 255, 255, 0.1)", borderRadius: "100px", overflow: "hidden", marginBottom: "16px" }}>
             <div
               style={{
                 width: `${testProgress}%`,
                 height: "100%",
-                background: "linear-gradient(90deg, #2dd4bf, #22c55e)",
+                background: "linear-gradient(90deg, #ffb4c8, #f43f5e)",
                 transition: "width 0.2s ease-out",
               }}
             />
@@ -1153,8 +1153,8 @@ export default function PrototypeShowcase() {
                 justifyContent: "space-between",
                 padding: "12px 14px",
                 borderRadius: "8px",
-                background: test.status === "running" ? "#f0fbf7" : "var(--cream, #fbfcfb)",
-                border: test.status === "running" ? "1px solid #5eead4" : "1px solid var(--line, #e2eae1)",
+                background: test.status === "running" ? "rgba(255, 180, 200, 0.1)" : "var(--cream, #121216)",
+                border: test.status === "running" ? "1px solid #ffb4c8" : "1px solid var(--line, rgba(255, 255, 255, 0.12))",
                 transition: "all 0.15s ease",
               }}
             >
@@ -1162,7 +1162,7 @@ export default function PrototypeShowcase() {
                 {test.status === "passed" ? (
                   <CheckCircle2 size={16} color="#16a34a" style={{ marginTop: "2px", flexShrink: 0 }} />
                 ) : test.status === "running" ? (
-                  <RefreshCw size={16} color="#0d9488" style={{ marginTop: "2px", flexShrink: 0, animation: "spin 1s linear infinite" }} />
+                  <RefreshCw size={16} color="#ffb4c8" style={{ marginTop: "2px", flexShrink: 0, animation: "spin 1s linear infinite" }} />
                 ) : (
                   <Clock size={16} color="#94a3b8" style={{ marginTop: "2px", flexShrink: 0 }} />
                 )}
@@ -1184,8 +1184,8 @@ export default function PrototypeShowcase() {
                     fontWeight: 800,
                     padding: "2px 7px",
                     borderRadius: "4px",
-                    background: test.status === "passed" ? "#dcfce7" : test.status === "running" ? "#ccfbf1" : "#f1f5f9",
-                    color: test.status === "passed" ? "#15803d" : test.status === "running" ? "#0f766e" : "#64748b",
+                    background: test.status === "passed" ? "rgba(255, 180, 200, 0.18)" : test.status === "running" ? "rgba(255, 180, 200, 0.3)" : "rgba(255, 255, 255, 0.05)",
+                    color: test.status === "passed" ? "#ffb4c8" : test.status === "running" ? "#ffffff" : "#a1a1aa",
                   }}
                 >
                   {test.status === "passed" ? "PASSED" : test.status === "running" ? "RUNNING" : "QUEUED"}

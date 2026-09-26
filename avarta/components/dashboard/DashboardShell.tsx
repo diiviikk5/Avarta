@@ -194,7 +194,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 <PanelLeftClose size={15} />
               ) : (
                 <>
-                  <PanelLeftOpen size={13} className="text-emerald-400" />
+                  <PanelLeftOpen size={13} className="text-[#ffb4c8]" />
                   <span className="text-[11px] font-sans font-medium">Menu</span>
                 </>
               )}

@@ -29,7 +29,8 @@ interface TerminalEntry {
 }
 
 const AVAILABLE_THEMES = [
-  { id: "forest", label: "🌲 Forest (Default)" },
+  { id: "rose", label: "🌸 Argus Rose (Default)" },
+  { id: "forest", label: "🌲 Forest" },
   { id: "midnight", label: "🌌 Midnight Slate" },
   { id: "cyan", label: "💠 Cyan Matrix" },
   { id: "amber", label: "🔥 Amber CRT" },
@@ -69,7 +70,7 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
   const [history, setHistory] = useState<TerminalEntry[]>([]);
   const [inputCmd, setInputCmd] = useState("");
   const [activeCase, setActiveCase] = useState(initialCase);
-  const [activeTheme, setActiveTheme] = useState("forest");
+  const [activeTheme, setActiveTheme] = useState("rose");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -112,7 +113,7 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
               command: trimmed,
               caseName: activeCase,
               themeName: themeArg,
-              html: `<div style="color: #34d399; font-weight: bold;">Switched TUI theme to: ${themeArg}</div>`,
+              html: `<div style="color: #ffb4c8; font-weight: bold;">Switched TUI theme to: ${themeArg}</div>`,
               raw: `Switched TUI theme to: ${themeArg}`,
               timestamp: new Date().toLocaleTimeString(),
               durationMs: 1,
@@ -134,7 +135,7 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
               command: trimmed,
               caseName: caseArg,
               themeName: activeTheme,
-              html: `<div style="color: #5bc5b2; font-weight: bold;">Switched active hazard case to: ${caseArg}</div>`,
+              html: `<div style="color: #ffb4c8; font-weight: bold;">Switched active hazard case to: ${caseArg}</div>`,
               raw: `Switched active hazard case to: ${caseArg}`,
               timestamp: new Date().toLocaleTimeString(),
               durationMs: 1,
@@ -308,7 +309,7 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
             title="Toggle fullscreen"
           />
           <div className={styles.terminalTitle}>
-            <TerminalIcon size={14} color="#5bc5b2" />
+            <TerminalIcon size={14} color="#ffb4c8" />
             <span>avarta-tui — python avarta_tui.py</span>
             <span className={styles.statusBadge}>
               <span className={styles.statusDot} />
@@ -356,7 +357,7 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
 
           {/* Action buttons */}
           <button className={styles.toolBtn} onClick={copyLog} title="Copy full session log">
-            {copied ? <Check size={12} color="#34d399" /> : <Copy size={12} />}
+            {copied ? <Check size={12} color="#ffb4c8" /> : <Copy size={12} />}
             <span>{copied ? "Copied" : "Copy Log"}</span>
           </button>
 
@@ -417,7 +418,7 @@ Evidence-First Terminal User Interface · NCMRWF #26078`}
           <div className={styles.welcomeText}>
             Connected to <strong>Avarta Meteorological Engine (Python Rich Runtime)</strong>.
           </div>
-          <div style={{ color: "#6a8279", fontSize: "11px" }}>
+          <div style={{ color: "#a1a1aa", fontSize: "11px" }}>
             Type any command (e.g. <code>overview</code>, <code>map</code>, <code>spectral</code>, <code>forecast 28.40 77.31</code>, or <code>1</code>–<code>15</code>) below or click the quick action chips.
           </div>
         </div>
@@ -437,7 +438,7 @@ Evidence-First Terminal User Interface · NCMRWF #26078`}
               <div className={styles.commandMeta}>
                 <span>{entry.timestamp}</span>
                 {entry.durationMs !== undefined && (
-                  <span style={{ marginLeft: "8px", color: "#5bc5b2" }}>
+                  <span style={{ marginLeft: "8px", color: "#ffb4c8" }}>
                     {entry.durationMs.toFixed(1)}ms
                   </span>
                 )}
@@ -453,7 +454,7 @@ Evidence-First Terminal User Interface · NCMRWF #26078`}
 
         {/* Loading Spinner */}
         {isLoading && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#5bc5b2", margin: "10px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#ffb4c8", margin: "10px 0" }}>
             <span className={styles.loadingSpinner} />
             <span style={{ fontSize: "12px", fontStyle: "italic" }}>
               Executing meteorological computation via Python backend…
@@ -502,7 +503,7 @@ Evidence-First Terminal User Interface · NCMRWF #26078`}
         </div>
         <div>
           <span>Active Case: </span>
-          <strong style={{ color: "#34d399" }}>{activeCase.toUpperCase()}</strong>
+          <strong style={{ color: "#ffb4c8" }}>{activeCase.toUpperCase()}</strong>
           &nbsp;•&nbsp;
           <span>Theme: </span>
           <strong style={{ color: "#60a5fa" }}>{activeTheme}</strong>

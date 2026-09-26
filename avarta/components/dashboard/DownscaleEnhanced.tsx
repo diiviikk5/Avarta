@@ -555,10 +555,10 @@ export function DownscaleEnhanced() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <span className={styles.eyebrow}>2D FFT POWER SPECTRAL DENSITY ANALYSIS</span>
-              <h3 style={{ margin: "6px 0", fontSize: "20px", color: "#1e463e" }}>
+              <h3 style={{ margin: "6px 0", fontSize: "20px", color: "#ffffff" }}>
                 Mathematical Proof: Spectral Smoothing Resolved
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#667870" }}>
+              <p style={{ margin: 0, fontSize: "12px", color: "#a1a1aa" }}>
                 Comparing high-frequency energy retention across spatial wavenumbers k (km⁻¹)
               </p>
             </div>
@@ -567,8 +567,9 @@ export function DownscaleEnhanced() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                background: "#e6f4ea",
-                color: "#1e7e34",
+                background: "rgba(255, 180, 200, 0.12)",
+                color: "#ffb4c8",
+                border: "1px solid rgba(255, 180, 200, 0.25)",
                 padding: "6px 14px",
                 borderRadius: "100px",
                 fontWeight: 700,
@@ -581,65 +582,65 @@ export function DownscaleEnhanced() {
 
           <div className={styles.spectralGrid}>
             <div className={styles.spectralMetric}>
-              <span style={{ fontSize: "10px", color: "#637b70", fontWeight: 700 }}>GENERATIVE DIFFUSION (5 KM)</span>
-              <strong style={{ color: "#1b6859" }}>
+              <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>GENERATIVE DIFFUSION (5 KM)</span>
+              <strong style={{ color: "#ffb4c8" }}>
                 {spectral ? `${(spectral.preservation_metrics.diffusion_retention_ratio * 100).toFixed(1)}%` : "50.7%"}
               </strong>
-              <small style={{ fontSize: "10px", color: "#7a8a81" }}>High-k energy retained (wavelengths &lt; 25 km)</small>
+              <small style={{ fontSize: "10px", color: "#71717a" }}>High-k energy retained (wavelengths &lt; 25 km)</small>
             </div>
             <div className={styles.spectralMetric}>
-              <span style={{ fontSize: "10px", color: "#637b70", fontWeight: 700 }}>RESIDUAL CNN</span>
+              <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>RESIDUAL CNN</span>
               <strong style={{ color: "#d97706" }}>
                 {spectral ? `${(spectral.preservation_metrics.cnn_retention_ratio * 100).toFixed(1)}%` : "11.7%"}
               </strong>
-              <small style={{ fontSize: "10px", color: "#7a8a81" }}>Attenuated turbulent variance</small>
+              <small style={{ fontSize: "10px", color: "#71717a" }}>Attenuated turbulent variance</small>
             </div>
             <div className={styles.spectralMetric}>
-              <span style={{ fontSize: "10px", color: "#637b70", fontWeight: 700 }}>BILINEAR UPSAMPLING</span>
+              <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>BILINEAR UPSAMPLING</span>
               <strong style={{ color: "#dc2626" }}>
                 {spectral ? `${(spectral.preservation_metrics.bilinear_retention_ratio * 100).toFixed(1)}%` : "1.7%"}
               </strong>
-              <small style={{ fontSize: "10px", color: "#7a8a81" }}>Severe spectral smoothing (98.3% lost)</small>
+              <small style={{ fontSize: "10px", color: "#71717a" }}>Severe spectral smoothing (98.3% lost)</small>
             </div>
             <div className={styles.spectralMetric}>
-              <span style={{ fontSize: "10px", color: "#637b70", fontWeight: 700 }}>DIFFUSION ADVANTAGE</span>
-              <strong style={{ color: "#1b6859" }}>29.8x</strong>
-              <small style={{ fontSize: "10px", color: "#7a8a81" }}>Retention ratio vs. Bilinear baseline</small>
+              <span style={{ fontSize: "10px", color: "#a1a1aa", fontWeight: 700 }}>DIFFUSION ADVANTAGE</span>
+              <strong style={{ color: "#ffb4c8" }}>29.8x</strong>
+              <small style={{ fontSize: "10px", color: "#71717a" }}>Retention ratio vs. Bilinear baseline</small>
             </div>
           </div>
 
           {/* SVG Power Spectral Density Curve */}
           <div className={styles.spectralSvgWrap}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "11px", color: "#546b60" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "11px", color: "#a1a1aa" }}>
               <span>Low Wavenumber (Synoptic Scales &gt; 100 km)</span>
               <span>High Wavenumber (Convective Peaks &lt; 15 km)</span>
             </div>
             <svg viewBox="0 0 700 220" style={{ width: "100%", height: "220px", display: "block" }}>
               {/* Grid Lines */}
-              <line x1="50" y1="20" x2="680" y2="20" stroke="#d5e0d4" strokeDasharray="3 3" />
-              <line x1="50" y1="70" x2="680" y2="70" stroke="#d5e0d4" strokeDasharray="3 3" />
-              <line x1="50" y1="120" x2="680" y2="120" stroke="#d5e0d4" strokeDasharray="3 3" />
-              <line x1="50" y1="170" x2="680" y2="170" stroke="#d5e0d4" strokeDasharray="3 3" />
+              <line x1="50" y1="20" x2="680" y2="20" stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="3 3" />
+              <line x1="50" y1="70" x2="680" y2="70" stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="3 3" />
+              <line x1="50" y1="120" x2="680" y2="120" stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="3 3" />
+              <line x1="50" y1="170" x2="680" y2="170" stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="3 3" />
 
               {/* Axis labels */}
-              <text x="15" y="24" fontSize="10" fill="#697a70">0 dB</text>
-              <text x="10" y="74" fontSize="10" fill="#697a70">-20 dB</text>
-              <text x="10" y="124" fontSize="10" fill="#697a70">-40 dB</text>
-              <text x="10" y="174" fontSize="10" fill="#697a70">-60 dB</text>
+              <text x="15" y="24" fontSize="10" fill="#71717a">0 dB</text>
+              <text x="10" y="74" fontSize="10" fill="#71717a">-20 dB</text>
+              <text x="10" y="124" fontSize="10" fill="#71717a">-40 dB</text>
+              <text x="10" y="174" fontSize="10" fill="#71717a">-60 dB</text>
 
-              {/* True Curve (Dark Green solid) */}
+              {/* True Curve (White solid) */}
               <path
                 d="M 60 25 C 150 45, 250 85, 380 110 C 480 130, 580 145, 660 152"
                 fill="none"
-                stroke="#173d39"
+                stroke="#ffffff"
                 strokeWidth="3"
               />
 
-              {/* Generative Diffusion Curve (Teal dashed, tracks True) */}
+              {/* Generative Diffusion Curve (Pink dashed, tracks True) */}
               <path
                 d="M 60 23 C 150 43, 250 82, 380 108 C 480 126, 580 140, 660 150"
                 fill="none"
-                stroke="#1d7f6e"
+                stroke="#ffb4c8"
                 strokeWidth="2.5"
                 strokeDasharray="5 3"
               />
@@ -663,11 +664,11 @@ export function DownscaleEnhanced() {
             </svg>
 
             <div style={{ display: "flex", gap: "20px", justifyContent: "center", marginTop: "12px", fontSize: "11px" }}>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#173d39", fontWeight: 700 }}>
-                <span style={{ width: "16px", height: "3px", background: "#173d39", display: "inline-block" }} /> Ground Truth
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#ffffff", fontWeight: 700 }}>
+                <span style={{ width: "16px", height: "3px", background: "#ffffff", display: "inline-block" }} /> Ground Truth
               </span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#1d7f6e", fontWeight: 700 }}>
-                <span style={{ width: "16px", height: "3px", background: "#1d7f6e", display: "inline-block" }} /> Generative Diffusion (5 km)
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#ffb4c8", fontWeight: 700 }}>
+                <span style={{ width: "16px", height: "3px", background: "#ffb4c8", display: "inline-block" }} /> Generative Diffusion (5 km)
               </span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#d97706", fontWeight: 700 }}>
                 <span style={{ width: "16px", height: "3px", background: "#d97706", display: "inline-block" }} /> Residual CNN (Smoothed)
@@ -677,7 +678,7 @@ export function DownscaleEnhanced() {
               </span>
             </div>
           </div>
-          <p style={{ margin: "10px 0 0", fontSize: "11.5px", color: "#5a6e64", lineHeight: "1.6" }}>
+          <p style={{ margin: "10px 0 0", fontSize: "11.5px", color: "#a1a1aa", lineHeight: "1.6" }}>
             {spectral?.scientific_interpretation ||
               "Bilinear and standard CNN show severe high-frequency roll-off (spectral smoothing), damping peak amplitudes by >50%. The generative diffusion downscaler matches the ground-truth slope across high spatial wavenumbers, preserving convective amplitudes."}
           </p>
@@ -689,7 +690,7 @@ export function DownscaleEnhanced() {
           {/* Top Controls: Region, View Mode, and Layer Toggles */}
           <div className={styles.downscaleControls}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "#19443b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                 <MapPin size={13} /> Region:
               </span>
               <div className={styles.downscaleButtonGroup}>
@@ -715,7 +716,7 @@ export function DownscaleEnhanced() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, color: "#19443b" }}>Mode:</span>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff" }}>Mode:</span>
               <div className={styles.downscaleButtonGroup}>
                 <button
                   className={`${styles.downscaleBtn} ${viewMode === "split" ? styles.downscaleBtnActive : ""}`}
@@ -768,13 +769,13 @@ export function DownscaleEnhanced() {
 
           {/* Subheading with Interactive Drag Instruction */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 700, color: "#1f4a42", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <Radar size={14} color="#1b6859" />
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "#ffffff", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <Radar size={14} color="#ffb4c8" />
               {viewMode === "split" && `Interactive Split Inspection: Coarse 12 km NWP vs 5 km Physics-Downscaled (${sliderPos}% Split)`}
               {viewMode === "side_by_side" && "Side-by-Side Synchronized Downscaling Comparison"}
               {viewMode === "diff" && "Unforecasted Extreme Precipitation Deficit: (5 km Generative PINN) - (12 km NWP)"}
             </span>
-            <span style={{ fontSize: "11px", color: "#667a70" }}>
+            <span style={{ fontSize: "11px", color: "#a1a1aa" }}>
               {viewMode === "split" ? "Drag circular handle ◀ ▶ across canvas to inspect" : "Hover over map for pinpoint elevation and rainfall telemetry"}
             </span>
           </div>
@@ -825,7 +826,7 @@ export function DownscaleEnhanced() {
                 style={{ left: `${sliderPos}%` }}
                 title="Drag to compare 12 km Coarse vs 5 km Downscaled"
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "2px", color: "#17463d" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "2px", color: "#ffb4c8" }}>
                   <SlidersHorizontal size={17} />
                 </div>
               </div>
@@ -863,24 +864,24 @@ export function DownscaleEnhanced() {
                   position: "absolute",
                   bottom: "16px",
                   right: "16px",
-                  background: "rgba(255, 255, 255, 0.94)",
-                  border: "1px solid #1f5c53",
-                  color: "#133830",
+                  background: "rgba(18, 18, 22, 0.94)",
+                  border: "1px solid rgba(255, 180, 200, 0.4)",
+                  color: "#ffffff",
                   padding: "8px 14px",
                   borderRadius: "8px",
                   fontSize: "11px",
                   pointerEvents: "none",
                   zIndex: 10,
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.5), 0 0 14px rgba(255,180,200,0.2)",
                   maxWidth: "340px",
                   textAlign: "right",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", fontWeight: 700, color: "#16594d" }}>
-                  5 km Generative PINN <Sparkles size={13} color="#1b6859" />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", fontWeight: 700, color: "#ffb4c8" }}>
+                  5 km Generative PINN <Sparkles size={13} color="#ffb4c8" />
                 </div>
-                <div style={{ fontSize: "10px", color: "#385c53", marginTop: "2px" }}>
-                  Resolved Peak: <strong>{activeMetrics.pinnPeak} mm/day</strong> · Orographically Enhanced (+{activeMetrics.gain}%)
+                <div style={{ fontSize: "10px", color: "#a1a1aa", marginTop: "2px" }}>
+                  Resolved Peak: <strong style={{ color: "#ffffff" }}>{activeMetrics.pinnPeak} mm/day</strong> · Orographically Enhanced (+{activeMetrics.gain}%)
                 </div>
               </div>
 
@@ -896,17 +897,17 @@ export function DownscaleEnhanced() {
                       top: Math.max(hoverProbe.y - 70, 14),
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: "#5bc5b2", marginBottom: "4px", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <div style={{ fontWeight: 700, color: "#ffb4c8", marginBottom: "4px", display: "flex", alignItems: "center", gap: "5px" }}>
                       <Crosshair size={12} /> {hoverProbe.location}
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", fontSize: "10.5px" }}>
                       <div>Elev: <strong style={{ color: "#fff" }}>{hoverProbe.elevation} m</strong></div>
                       <div>Lift: <strong style={{ color: "#f5a742" }}>{hoverProbe.lift} m/s</strong></div>
                       <div>12km NWP: <strong style={{ color: "#f5a742" }}>{hoverProbe.nwp} mm</strong></div>
-                      <div>5km PINN: <strong style={{ color: "#5bc5b2" }}>{hoverProbe.pinn} mm</strong></div>
+                      <div>5km PINN: <strong style={{ color: "#ffb4c8" }}>{hoverProbe.pinn} mm</strong></div>
                     </div>
-                    <div style={{ marginTop: "4px", fontSize: "10px", color: "#a5c4bc", borderTop: "1px solid #1a3c35", paddingTop: "3px" }}>
-                      Peak Gain: <span style={{ color: "#22c55e", fontWeight: 700 }}>+{hoverProbe.gain}% ({hoverProbe.diff} mm/day)</span>
+                    <div style={{ marginTop: "4px", fontSize: "10px", color: "#a1a1aa", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "3px" }}>
+                      Peak Gain: <span style={{ color: "#ffb4c8", fontWeight: 700 }}>+{hoverProbe.gain}% ({hoverProbe.diff} mm/day)</span>
                     </div>
                   </div>
                 </>
@@ -935,7 +936,7 @@ export function DownscaleEnhanced() {
                   height={380}
                   style={{ width: "100%", height: "100%", display: "block" }}
                 />
-                <div style={{ position: "absolute", bottom: "12px", right: "12px", background: "rgba(255,255,255,0.92)", color: "#133830", padding: "6px 12px", borderRadius: "6px", fontSize: "10.5px", fontWeight: 700 }}>
+                <div style={{ position: "absolute", bottom: "12px", right: "12px", background: "rgba(18, 18, 22, 0.92)", border: "1px solid rgba(255, 180, 200, 0.4)", color: "#ffb4c8", padding: "6px 12px", borderRadius: "6px", fontSize: "10.5px", fontWeight: 700 }}>
                   5 km Generative PINN (Peak: {activeMetrics.pinnPeak} mm/day)
                 </div>
               </div>
@@ -961,57 +962,57 @@ export function DownscaleEnhanced() {
           )}
 
           {/* Presets and Split Indicators */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "11px", color: "#66786f" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "11px", color: "#a1a1aa" }}>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <span style={{ fontWeight: 700, color: "#1a463d" }}>Quick Presets:</span>
+              <span style={{ fontWeight: 700, color: "#ffffff" }}>Quick Presets:</span>
               <button
                 className={styles.downscaleBtn}
-                style={{ border: "1px solid #d5e0d4", padding: "3px 8px" }}
+                style={{ border: "1px solid rgba(255, 255, 255, 0.12)", padding: "3px 8px" }}
                 onClick={() => setSliderPos(0)}
               >
                 12 km NWP (0%)
               </button>
               <button
                 className={styles.downscaleBtn}
-                style={{ border: "1px solid #d5e0d4", padding: "3px 8px" }}
+                style={{ border: "1px solid rgba(255, 255, 255, 0.12)", padding: "3px 8px" }}
                 onClick={() => setSliderPos(25)}
               >
                 25%
               </button>
               <button
                 className={`${styles.downscaleBtn} ${sliderPos === 50 ? styles.downscaleBtnActive : ""}`}
-                style={{ border: "1px solid #d5e0d4", padding: "3px 8px" }}
+                style={{ border: "1px solid rgba(255, 255, 255, 0.12)", padding: "3px 8px" }}
                 onClick={() => setSliderPos(50)}
               >
                 50 / 50 Split
               </button>
               <button
                 className={styles.downscaleBtn}
-                style={{ border: "1px solid #d5e0d4", padding: "3px 8px" }}
+                style={{ border: "1px solid rgba(255, 255, 255, 0.12)", padding: "3px 8px" }}
                 onClick={() => setSliderPos(75)}
               >
                 75%
               </button>
               <button
                 className={styles.downscaleBtn}
-                style={{ border: "1px solid #d5e0d4", padding: "3px 8px" }}
+                style={{ border: "1px solid rgba(255, 255, 255, 0.12)", padding: "3px 8px" }}
                 onClick={() => setSliderPos(100)}
               >
                 5 km PINN (100%)
               </button>
             </div>
-            <div style={{ fontWeight: 700, color: "#18453c" }}>
+            <div style={{ fontWeight: 700, color: "#ffb4c8" }}>
               Split Position: {sliderPos}%
             </div>
           </div>
 
           {/* Meteorological Standard Colorbar Legend */}
           <div className={styles.downscaleLegendBar}>
-            <div style={{ fontWeight: 700, color: "#19443c", display: "flex", alignItems: "center", gap: "5px" }}>
+            <div style={{ fontWeight: 700, color: "#ffffff", display: "flex", alignItems: "center", gap: "5px" }}>
               Precipitation (mm/day):
             </div>
             <div className={styles.colorGradientRamp} />
-            <div style={{ display: "flex", gap: "12px", fontSize: "10px", color: "#475c53" }}>
+            <div style={{ display: "flex", gap: "12px", fontSize: "10px", color: "#a1a1aa" }}>
               <span>0 (Dry)</span>
               <span>15 (Light)</span>
               <span>35 (Moderate)</span>
@@ -1022,8 +1023,8 @@ export function DownscaleEnhanced() {
           </div>
 
           {/* Scientific Callout Box */}
-          <div style={{ background: "#f0f6f3", border: "1px solid #d5e3dc", borderRadius: "8px", padding: "12px 16px", marginTop: "12px", fontSize: "11.5px", color: "#36534b", lineHeight: "1.5" }}>
-            <strong>Meteorological Validation Note:</strong> Conventional numerical weather prediction (NWP) averages spatial divergence across 144 km² grid cells, attenuating narrow convective cloudbursts by up to <strong>70%</strong>. Avarta&apos;s Physics-Informed generative downscaler enforces the 2D continuity equation and orographic moisture divergence <code style={{ background: "rgba(0,0,0,0.06)", padding: "1px 4px", borderRadius: "3px" }}>-∇·(qv) + w_oro(∇h)</code>, accurately reconstructing localized extreme rainfall.
+          <div style={{ background: "rgba(18, 18, 22, 0.88)", border: "1px solid rgba(255, 255, 255, 0.12)", borderRadius: "8px", padding: "12px 16px", marginTop: "12px", fontSize: "11.5px", color: "#e4e4e7", lineHeight: "1.5" }}>
+            <strong>Meteorological Validation Note:</strong> Conventional numerical weather prediction (NWP) averages spatial divergence across 144 km² grid cells, attenuating narrow convective cloudbursts by up to <strong>70%</strong>. Avarta&apos;s Physics-Informed generative downscaler enforces the 2D continuity equation and orographic moisture divergence <code style={{ background: "rgba(255,255,255,0.08)", color: "#ffb4c8", padding: "1px 4px", borderRadius: "3px" }}>-∇·(qv) + w_oro(∇h)</code>, accurately reconstructing localized extreme rainfall.
           </div>
         </div>
       )}
@@ -1034,11 +1035,11 @@ export function DownscaleEnhanced() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <span className={styles.eyebrow}>PROTECTING RURAL ECONOMIES · 3- TO 10-DAY LEAD TIME</span>
-              <h3 style={{ margin: "5px 0", fontSize: "20px", color: "#383120" }}>
+              <h3 style={{ margin: "5px 0", fontSize: "20px", color: "#ffffff" }}>
                 Gramin Krishi Mausam Sewa (GKMS) Farmer Advisories
               </h3>
             </div>
-            <span style={{ background: "#fef3c7", color: "#92400e", padding: "5px 12px", borderRadius: "100px", fontWeight: 700, fontSize: "11px" }}>
+            <span style={{ background: "rgba(250, 204, 21, 0.15)", color: "#facc15", border: "1px solid rgba(250, 204, 21, 0.3)", padding: "5px 12px", borderRadius: "100px", fontWeight: 700, fontSize: "11px" }}>
               72h Lead Operational Advisory
             </span>
           </div>
@@ -1057,31 +1058,31 @@ export function DownscaleEnhanced() {
                 <td><strong>Paddy (Basmati / Standing)</strong></td>
                 <td>Tillering / Flowering</td>
                 <td>Open field drainage channels immediately to prevent root-zone submergence. Postpone fertilizer application.</td>
-                <td><span style={{ color: "#b91c1c", fontWeight: 700 }}>Immediate within 24h</span></td>
+                <td><span style={{ color: "#fb7185", fontWeight: 700 }}>Immediate within 24h</span></td>
               </tr>
               <tr>
                 <td><strong>Cotton</strong></td>
                 <td>Boll Formation</td>
                 <td>Clear furrow furrows to drain water within 6 hours of downpour to avoid fungal boll rot and parawilt.</td>
-                <td><span style={{ color: "#d97706", fontWeight: 700 }}>Before rain onset</span></td>
+                <td><span style={{ color: "#facc15", fontWeight: 700 }}>Before rain onset</span></td>
               </tr>
               <tr>
                 <td><strong>Horticulture (Tomato, Chili)</strong></td>
                 <td>Fruiting / Nursery</td>
                 <td>Provide bamboo staking to prevent lodging. Spray Mancozeb (2g/L) after rain subsides.</td>
-                <td><span style={{ color: "#4b5563", fontWeight: 700 }}>Post-event follow-up</span></td>
+                <td><span style={{ color: "#a1a1aa", fontWeight: 700 }}>Post-event follow-up</span></td>
               </tr>
               <tr>
                 <td><strong>Harvested Produce &amp; Grain</strong></td>
                 <td>Post-Harvest Storage</td>
                 <td>Shift grain heaps from open mandis to elevated, waterproof warehouse storage or cover with silpaulin sheets.</td>
-                <td><span style={{ color: "#b91c1c", fontWeight: 700 }}>Critical / Next 12h</span></td>
+                <td><span style={{ color: "#fb7185", fontWeight: 700 }}>Critical / Next 12h</span></td>
               </tr>
             </tbody>
           </table>
 
-          <div style={{ background: "#f5f0e1", padding: "12px 16px", borderRadius: "8px", fontSize: "11.5px", color: "#544a33", marginTop: "12px" }}>
-            <strong>Livestock Management:</strong> Keep milch cattle in covered sheds with dry bedding. Discontinue open grazing near seasonal flood drains or high-voltage transformers.
+          <div style={{ background: "rgba(18, 18, 22, 0.88)", border: "1px solid rgba(255, 255, 255, 0.12)", padding: "12px 16px", borderRadius: "8px", fontSize: "11.5px", color: "#e4e4e7", marginTop: "12px" }}>
+            <strong style={{ color: "#ffb4c8" }}>Livestock Management:</strong> Keep milch cattle in covered sheds with dry bedding. Discontinue open grazing near seasonal flood drains or high-voltage transformers.
           </div>
         </div>
       )}
@@ -1091,7 +1092,7 @@ export function DownscaleEnhanced() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
             <div>
               <span className={styles.eyebrow}>OASIS COMMON ALERTING PROTOCOL (CAP v1.2)</span>
-              <h3 style={{ margin: "4px 0", fontSize: "18px", color: "#19443c" }}>Civil Defense Machine-to-Machine Payload</h3>
+              <h3 style={{ margin: "4px 0", fontSize: "18px", color: "#ffffff" }}>Civil Defense Machine-to-Machine Payload</h3>
             </div>
             <a
               href="/api/cap?format=xml"
@@ -1103,7 +1104,7 @@ export function DownscaleEnhanced() {
             </a>
           </div>
           <pre className={styles.capBox}>{capXml || "Loading OASIS CAP 1.2 XML payload…"}</pre>
-          <span style={{ fontSize: "10.5px", color: "#66786f" }}>
+          <span style={{ fontSize: "10.5px", color: "#a1a1aa" }}>
             Adheres to NDMA / SACHET alerting format for direct automated dispatch to National Disaster Response Force (NDRF) battalions.
           </span>
         </div>

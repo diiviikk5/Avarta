@@ -400,7 +400,7 @@ function OverviewInner({ initialReplay }: { initialReplay: ReplayCase }) {
             <div>
               <div className={styles.overviewCardHead}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <div style={{ background: "rgba(25,84,73,0.15)", padding: "8px", borderRadius: "8px", color: "#5bc5b2" }}>
+                  <div style={{ background: "rgba(255,180,200,0.15)", padding: "8px", borderRadius: "8px", color: "#ffb4c8" }}>
                     <CloudRain size={20} />
                   </div>
                   <div>
@@ -597,50 +597,50 @@ function OverviewInner({ initialReplay }: { initialReplay: ReplayCase }) {
         <div className={styles.quickNavGrid}>
           <Link href="/dashboard/inspector" className={styles.quickNavCard}>
             <div>
-              <strong><MapPin size={15} color="#5bc5b2" /> Point Location Inspector</strong>
+              <strong><MapPin size={15} color="#ffb4c8" /> Point Location Inspector</strong>
               <p>Click anywhere on the spatial raster for pinpoint rain rate, normal vs forecast, and sounding profile.</p>
             </div>
-            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#5bc5b2", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#ffb4c8", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               Open Inspector <ArrowUpRight size={12} />
             </span>
           </Link>
 
           <Link href="/dashboard/trajectory" className={styles.quickNavCard}>
             <div>
-              <strong><Navigation size={15} color="#5bc5b2" /> Storm Trajectory Tracker</strong>
+              <strong><Navigation size={15} color="#ffb4c8" /> Storm Trajectory Tracker</strong>
               <p>Hungarian algorithm 4D object association, Kalman filtering, and cone-of-uncertainty tracking.</p>
             </div>
-            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#5bc5b2", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#ffb4c8", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               View Trajectory <ArrowUpRight size={12} />
             </span>
           </Link>
 
           <Link href="/dashboard/downscaling" className={styles.quickNavCard}>
             <div>
-              <strong><Radar size={15} color="#5bc5b2" /> 5 km PINN Downscaler</strong>
+              <strong><Radar size={15} color="#ffb4c8" /> 5 km PINN Downscaler</strong>
               <p>Interactive 12km vs 5km split slider, DEM orographic contours, and 2D Fourier PSD benchmark.</p>
             </div>
-            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#5bc5b2", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#ffb4c8", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               Explore Downscaling <ArrowUpRight size={12} />
             </span>
           </Link>
 
           <Link href="/dashboard/demo" className={styles.quickNavCard}>
             <div>
-              <strong><FlaskConical size={15} color="#5bc5b2" /> Prototype Showcase Lab</strong>
+              <strong><FlaskConical size={15} color="#ffb4c8" /> Prototype Showcase Lab</strong>
               <p>Doppler radar eye animation, flood hydrographs, satellite imagery, and live empirical test runner.</p>
             </div>
-            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#5bc5b2", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#ffb4c8", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               Launch Simulator <ArrowUpRight size={12} />
             </span>
           </Link>
 
           <Link href="/dashboard/terminal" className={styles.quickNavCard}>
             <div>
-              <strong><Terminal size={15} color="#5bc5b2" /> Terminal & CLI Console</strong>
+              <strong><Terminal size={15} color="#ffb4c8" /> Terminal & CLI Console</strong>
               <p>Interactive web TUI running avarta_tui.py with rich ASCII maps, spectral diagnostics, and CAP alerts.</p>
             </div>
-            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#5bc5b2", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ marginTop: "10px", fontSize: "11px", fontWeight: 700, color: "#ffb4c8", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               Open Terminal <ArrowUpRight size={12} />
             </span>
           </Link>

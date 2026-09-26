@@ -159,13 +159,13 @@ export default function RiskIndia3D({
     <div>
       {/* Live All-India Control Bar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
-        <div style={{ display: "flex", gap: "6px", background: "var(--cream, #f4f7f2)", padding: "3px", borderRadius: "100px", border: "1px solid var(--line, #dbe4da)" }}>
+        <div style={{ display: "flex", gap: "6px", background: "rgba(18, 18, 22, 0.88)", padding: "3px", borderRadius: "100px", border: "1px solid rgba(255, 255, 255, 0.12)" }}>
           <button
             type="button"
             onClick={() => setLiveMode(true)}
             style={{
               border: 0,
-              padding: "5px 12px",
+              padding: "5px 14px",
               borderRadius: "100px",
               fontSize: "11px",
               fontWeight: 700,
@@ -173,12 +173,13 @@ export default function RiskIndia3D({
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              background: liveMode ? "#1f5c53" : "transparent",
-              color: liveMode ? "#ffffff" : "var(--muted, #62756d)",
+              background: liveMode ? "#ffb4c8" : "transparent",
+              color: liveMode ? "#000000" : "#a1a1aa",
+              boxShadow: liveMode ? "0 0 12px rgba(255, 180, 200, 0.35)" : "none",
               transition: "all 0.15s ease",
             }}
           >
-            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", boxShadow: liveMode ? "0 0 8px #4ade80" : "none" }} />
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: liveMode ? "#000000" : "#ffb4c8", boxShadow: liveMode ? "none" : "0 0 8px #ffb4c8" }} />
             🔴 Live All-India (30 Stations)
           </button>
           <button
@@ -186,13 +187,14 @@ export default function RiskIndia3D({
             onClick={() => setLiveMode(false)}
             style={{
               border: 0,
-              padding: "5px 12px",
+              padding: "5px 14px",
               borderRadius: "100px",
               fontSize: "11px",
               fontWeight: 700,
               cursor: "pointer",
-              background: !liveMode ? "#1f5c53" : "transparent",
-              color: !liveMode ? "#ffffff" : "var(--muted, #62756d)",
+              background: !liveMode ? "#ffb4c8" : "transparent",
+              color: !liveMode ? "#000000" : "#a1a1aa",
+              boxShadow: !liveMode ? "0 0 12px rgba(255, 180, 200, 0.35)" : "none",
               transition: "all 0.15s ease",
             }}
           >
@@ -201,13 +203,13 @@ export default function RiskIndia3D({
         </div>
 
         {liveMode && (
-          <div style={{ fontSize: "10.5px", color: "var(--muted, #678076)", display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ fontSize: "10.5px", color: "#a1a1aa", display: "flex", alignItems: "center", gap: "6px" }}>
             <span>Real-time ECMWF/GFS · {liveUpdatedAt ? new Date(liveUpdatedAt).toLocaleTimeString() : "Live"}</span>
             <button
               type="button"
               onClick={() => void fetchLiveRisk()}
               disabled={loadingLive}
-              style={{ border: 0, background: "transparent", cursor: "pointer", color: "#1f5c53", fontWeight: 700, fontSize: "10.5px", textDecoration: "underline" }}
+              style={{ border: 0, background: "transparent", cursor: "pointer", color: "#ffb4c8", fontWeight: 700, fontSize: "10.5px", textDecoration: "underline" }}
             >
               {loadingLive ? "Refreshing…" : "Refresh"}
             </button>
@@ -223,18 +225,18 @@ export default function RiskIndia3D({
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Three-dimensional risk map of India with animated regional forecast pins">
           <defs>
             <linearGradient id="risk3dLand" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2e6b5e" />
-              <stop offset="55%" stopColor="#1e4f45" />
-              <stop offset="100%" stopColor="#143b34" />
+              <stop offset="0%" stopColor="#2c1a26" />
+              <stop offset="55%" stopColor="#1c1219" />
+              <stop offset="100%" stopColor="#120c11" />
             </linearGradient>
             <linearGradient id="risk3dSweep" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-              <stop offset="50%" stopColor="#ffffff" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="0%" stopColor="#ffb4c8" stopOpacity="0" />
+              <stop offset="50%" stopColor="#ffb4c8" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#ffb4c8" stopOpacity="0" />
             </linearGradient>
             <linearGradient id="risk3dOcean" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#eef3ec" />
-              <stop offset="100%" stopColor="#dfe8dc" />
+              <stop offset="0%" stopColor="#0c0c0e" />
+              <stop offset="100%" stopColor="#08080a" />
             </linearGradient>
             <clipPath id="risk3dClip">
               <path d={topPath} />
@@ -251,7 +253,7 @@ export default function RiskIndia3D({
           <rect x="0" y="0" width={W} height={H} rx="14" fill="url(#risk3dOcean)" />
           {graticule.map((g, i) => (
             <g key={i}>
-              <line x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2} stroke="#5d7a6e" strokeOpacity="0.25" strokeDasharray="3 6" />
+              <line x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2} stroke="rgba(255, 255, 255, 0.08)" strokeOpacity="0.4" strokeDasharray="3 6" />
               <text
                 x={g.vertical ? g.x1 + 4 : 8}
                 y={g.vertical ? H - 10 : g.y1 - 5}
@@ -263,13 +265,13 @@ export default function RiskIndia3D({
           ))}
 
           {/* ground shadow */}
-          <ellipse cx={W / 2} cy={H - 46} rx={W / 2 - 90} ry={26} fill="#12342c" opacity="0.18" />
+          <ellipse cx={W / 2} cy={H - 46} rx={W / 2 - 90} ry={26} fill="#000000" opacity="0.4" />
 
           {/* 3D extrusion */}
           {[22, 15, 8].map((dy) => (
-            <path key={dy} d={landPath(dy)} fill="#0b2723" opacity={dy === 22 ? 0.85 : 0.55} />
+            <path key={dy} d={landPath(dy)} fill="#100a0f" opacity={dy === 22 ? 0.85 : 0.55} />
           ))}
-          <path d={topPath} fill="url(#risk3dLand)" stroke="#dcead9" strokeWidth="1.4" />
+          <path d={topPath} fill="url(#risk3dLand)" stroke="rgba(255, 180, 200, 0.35)" strokeWidth="1.4" />
 
           {/* animated light sweep across the landmass */}
           {!reducedMotion && (

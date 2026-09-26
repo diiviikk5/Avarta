@@ -1,17 +1,17 @@
-/* Terminal / TUI Web Emulator Styling */
+/* Terminal / TUI Web Emulator Styling - Argus Pink Retheme */
 
 .terminalContainer {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 40px);
   min-height: 650px;
-  background: #090e0d;
-  border: 1px solid #1c3631;
+  background: #0c0c0e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  color: #e2ede8;
+  color: #ffffff;
 }
 
 /* Window Chrome Topbar */
@@ -20,8 +20,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: #0d1715;
-  border-bottom: 1px solid #172c28;
+  background: #121216;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   user-select: none;
   flex-wrap: wrap;
   gap: 10px;
@@ -63,7 +63,7 @@
 .terminalTitle {
   font-size: 12px;
   font-weight: 600;
-  color: #9cb5ab;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -78,17 +78,17 @@
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 100px;
-  background: rgba(39, 201, 63, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(39, 201, 63, 0.3);
+  background: rgba(255, 180, 200, 0.12);
+  color: #ffb4c8;
+  border: 1px solid rgba(255, 180, 200, 0.25);
 }
 
 .statusDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #34d399;
-  box-shadow: 0 0 6px #34d399;
+  background: #ffb4c8;
+  box-shadow: 0 0 6px #ffb4c8;
 }
 
 .terminalToolbar {
@@ -99,9 +99,9 @@
 }
 
 .selectorSelect {
-  background: #11201d;
-  color: #d4e8e0;
-  border: 1px solid #1f4039;
+  background: #18181b;
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;
@@ -111,13 +111,13 @@
 }
 
 .selectorSelect:hover, .selectorSelect:focus {
-  border-color: #5bc5b2;
+  border-color: #ffb4c8;
 }
 
 .toolBtn {
-  background: #11201d;
-  color: #9cb5ab;
-  border: 1px solid #1f4039;
+  background: #18181b;
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;
@@ -130,9 +130,9 @@
 }
 
 .toolBtn:hover {
-  background: #19332e;
+  background: #27272a;
   color: #ffffff;
-  border-color: #5bc5b2;
+  border-color: #ffb4c8;
 }
 
 /* Quick Action Palette Ribbon */
@@ -141,8 +141,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: #0b1412;
-  border-bottom: 1px solid #152925;
+  background: #101014;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: thin;
@@ -153,23 +153,23 @@
 }
 
 .quickRibbon::-webkit-scrollbar-thumb {
-  background: #1c3631;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
 }
 
 .ribbonLabel {
   font-size: 10px;
   font-weight: 800;
-  color: #6c887e;
+  color: #71717a;
   letter-spacing: 1px;
   margin-right: 4px;
   text-transform: uppercase;
 }
 
 .quickChip {
-  background: rgba(25, 51, 46, 0.5);
-  border: 1px solid rgba(91, 197, 178, 0.2);
-  color: #b0c9bf;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
   padding: 3px 9px;
   border-radius: 6px;
   font-size: 11px;
@@ -182,16 +182,16 @@
 }
 
 .quickChip:hover {
-  background: #1b3d36;
+  background: #27272a;
   color: #ffffff;
-  border-color: #5bc5b2;
+  border-color: rgba(255, 180, 200, 0.4);
   transform: translateY(-1px);
 }
 
 .quickChipActive {
-  background: #1d6859;
-  color: #ffffff;
-  border-color: #5bc5b2;
+  background: #ffb4c8;
+  color: #000000;
+  border-color: #ffb4c8;
   font-weight: 700;
 }
 
@@ -203,33 +203,33 @@
   overflow-x: auto;
   font-size: 13px;
   line-height: 1.45;
-  background: radial-gradient(circle at 50% 0%, #0d1715 0%, #090e0d 75%);
+  background: radial-gradient(circle at 50% 0%, #121216 0%, #0c0c0e 75%);
   cursor: text;
 }
 
 .terminalWelcome {
   margin-bottom: 20px;
-  color: #5bc5b2;
+  color: #ffb4c8;
 }
 
 .welcomeAscii {
   font-size: 11px;
   line-height: 1.15;
-  color: #5bc5b2;
+  color: #ffb4c8;
   font-weight: 700;
   white-space: pre;
   margin-bottom: 8px;
 }
 
 .welcomeText {
-  color: #8da49a;
+  color: #a1a1aa;
   font-size: 12px;
   margin-bottom: 4px;
 }
 
 .historyBlock {
   margin-bottom: 18px;
-  border-left: 2px solid rgba(91, 197, 178, 0.25);
+  border-left: 2px solid rgba(255, 180, 200, 0.35);
   padding-left: 10px;
 }
 
@@ -242,25 +242,25 @@
 }
 
 .promptUser {
-  color: #34d399;
+  color: #ffb4c8;
   font-weight: 700;
 }
 
 .promptAt {
-  color: #9cb5ab;
+  color: #71717a;
 }
 
 .promptHost {
-  color: #60a5fa;
+  color: #ffffff;
   font-weight: 700;
 }
 
 .promptPath {
-  color: #fbbf24;
+  color: #ffb4c8;
 }
 
 .promptDollar {
-  color: #e2ede8;
+  color: #a1a1aa;
   margin-right: 6px;
 }
 
@@ -271,13 +271,13 @@
 
 .commandMeta {
   font-size: 10px;
-  color: #6a8279;
+  color: #71717a;
 }
 
 /* Rendered Output Box */
 .terminalOutput {
-  background: rgba(13, 23, 21, 0.7);
-  border: 1px solid rgba(27, 53, 48, 0.6);
+  background: rgba(18, 18, 22, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 12px 14px;
   overflow-x: auto;
@@ -285,7 +285,7 @@
   font-family: inherit;
   font-size: 12.5px;
   line-height: 1.4;
-  color: #e2ede8;
+  color: #e4e4e7;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -301,8 +301,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: #0d1715;
-  border-top: 1px solid #172c28;
+  background: #121216;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .promptPrefix {
@@ -323,18 +323,18 @@
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 500;
-  caret-color: #34d399;
+  caret-color: #ffb4c8;
 }
 
 .cmdInput::placeholder {
-  color: #4b665c;
+  color: #71717a;
   font-style: italic;
 }
 
 .runBtn {
-  background: #173d36;
-  color: #5bc5b2;
-  border: 1px solid #28574d;
+  background: #ffb4c8;
+  color: #000000;
+  border: 1px solid #ffb4c8;
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 11px;
@@ -348,9 +348,9 @@
 }
 
 .runBtn:hover:not(:disabled) {
-  background: #1d6859;
-  color: #ffffff;
-  border-color: #5bc5b2;
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
 }
 
 .runBtn:disabled {
@@ -362,8 +362,8 @@
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(91, 197, 178, 0.3);
-  border-top-color: #5bc5b2;
+  border: 2px solid rgba(255, 180, 200, 0.3);
+  border-top-color: #ffb4c8;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -380,19 +380,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 6px 16px;
-  background: #080c0b;
-  border-top: 1px solid #132220;
+  background: #09090b;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 10px;
-  color: #637a71;
+  color: #71717a;
   user-select: none;
 }
 
 .hintBar kbd {
-  background: #11201d;
-  border: 1px solid #1f3d35;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 3px;
   padding: 1px 4px;
   font-family: inherit;
-  color: #9cb5ab;
+  color: #a1a1aa;
   font-size: 9.5px;
 }
