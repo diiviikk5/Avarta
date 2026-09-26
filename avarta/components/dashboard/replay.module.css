@@ -59,14 +59,6 @@ table.riskTable tbody tr:hover{background:#f2f6ef}
 .agrometTable td{padding:10px 12px;border-top:1px solid #eee8d8;font-size:12px;color:#473f2c}
 .capBox{margin-top:18px;background:#182825;color:#e8f4f0;border-radius:8px;padding:16px;font-family:monospace;font-size:11px;overflow:auto;max-height:280px}
 
-/* Theme Toggle Button */
-.themeBtn{display:flex;align-items:center;gap:6px;background:#eef4ee;border:1px solid #d5e0d4;color:#385e54;font-size:11px;font-weight:700;padding:5px 12px;border-radius:100px;cursor:pointer;transition:all .2s ease;line-height:1}
-.themeBtn:hover{background:#e2ede0;border-color:#c4d6c2;color:#174239}
-.themeBtnDark{background:#172d27;border-color:#2b554b;color:#c5ece1}
-.themeBtnDark:hover{background:#1f3b33;border-color:#3b7466;color:#fff}
-.themeSun{color:#f5b73d;transition:transform .3s ease}
-.themeMoon{color:#35695c;transition:transform .3s ease}
-.themeBtn:hover .themeSun,.themeBtn:hover .themeMoon{transform:rotate(15deg)}
 
 /* Editorial Dark Mode Theme */
 .shellDark{--ink:#e2ede8;--muted:#8ea39b;--line:#1c3631;--cream:#0c1614;--green:#48b8a3;--orange:#e07255;background:#0c1614;color:#e2ede8}
