@@ -13,6 +13,7 @@ import AssistantWidget from "./AssistantWidget";
 const TOP_PILL_LINKS = [
   { href: "/dashboard", label: "Overview", exact: true },
   { href: "/dashboard/downscaling", label: "Downscale" },
+  { href: "/dashboard/training", label: "AI Core" },
   { href: "/dashboard/risk", label: "Risk Grid" },
   { href: "/dashboard/terminal", label: "Terminal" },
   { href: "/dashboard/trajectory", label: "Trajectory" },
