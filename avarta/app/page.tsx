@@ -1,9 +1,5 @@
-import HeroSection from "@/components/HeroSection";
+import LandingView from "@/components/LandingView";
 
 export default function Home() {
-  return (
-    <main>
-      <HeroSection />
-    </main>
-  );
+  return <LandingView />;
 }

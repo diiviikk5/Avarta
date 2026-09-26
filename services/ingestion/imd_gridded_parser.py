@@ -88,8 +88,8 @@ class IMDGriddedParser:
         crop_size: int = 38
     ) -> List[Dict[str, np.ndarray]]:
         """
-        Extracts localized bounding box crops centered around actual extreme cloudbursts/rainfall
-        recorded in India during 2025, ideal for training the downscaling diffusion core.
+        Extracts target-centered IMD crops for a coarse-proxy reconstruction experiment.
+        These samples are not independent NWP forecasts or 5 km target data.
         """
         crops = []
         if self.raw_data is None:
@@ -117,7 +117,7 @@ class IMDGriddedParser:
 
                 fine_target = day_grid[r_start:r_start+crop_size, c_start:c_start+crop_size]
 
-                # Create coarse 12 km simulated NWP field via Gaussian smoothing + subsampling
+                # Smooth and subsample the 0.25° target to form a coarse proxy.
                 from scipy.ndimage import gaussian_filter, zoom
                 coarse_sim = gaussian_filter(fine_target, sigma=2.0)
                 coarse_16 = zoom(coarse_sim, 16.0 / crop_size, order=1).astype(np.float32)
@@ -127,8 +127,8 @@ class IMDGriddedParser:
                     "lat_center": float(self.lats[r_max]),
                     "lon_center": float(self.lons[c_max]),
                     "peak_mm": float(max_val),
-                    "fine_target_5km": fine_target.astype(np.float32),
-                    "coarse_12km": coarse_16.astype(np.float32)
+                    "target_imd_0p25": fine_target.astype(np.float32),
+                    "coarse_proxy": coarse_16.astype(np.float32)
                 })
 
         return crops

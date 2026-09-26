@@ -122,8 +122,8 @@ export interface AgentChatMessage {
   content: string;
   tool_call?: {
     tool_name: string;
-    arguments: Record<string, any>;
-    result?: Record<string, any>;
+    arguments: Record<string, unknown>;
+    result?: Record<string, unknown>;
   };
   pending_approval?: {
     action_type: string;

@@ -26,7 +26,7 @@ function generateMatrices(coarsePeak: number, finePeak: number, shape: "circular
     for (let c = 0; c < fineSize; c++) {
       const dx = (c - fineSize / 2) / (fineSize / 2.8);
       const dy = (r - fineSize / 2) / (fineSize / 2.8);
-      let dist = Math.sqrt(dx * dx + dy * dy);
+      const dist = Math.sqrt(dx * dx + dy * dy);
       
       let pattern = Math.exp(-dist * 1.3);
       if (shape === "spiral") {

@@ -1,75 +1,133 @@
-"""
-Avarta Multi-Format NWP & Climatology Dataset Ingestion Service
-Supports ECMWF IFS HRES (0.1° / 9km), GFS (0.25°), and ERA5 30-Year Reanalysis Zarr/NetCDF stores.
+"""Explicit NetCDF ingestion for user-supplied ensemble and climate archives.
+
+No synthetic values or fabricated source labels are produced here. NCMRWF and
+ERA5 access is external; this adapter validates files after they are obtained.
 """
 
-from typing import Dict, List, Any, Optional, Tuple
+from __future__ import annotations
+
+import hashlib
+from pathlib import Path
+from typing import Any
+
 import numpy as np
+import xarray as xr
+
+
+DIM_ALIASES = {
+    "member": ("member", "number", "ensemble_member"),
+    "lead": ("lead", "step", "forecast_hour"),
+    "latitude": ("latitude", "lat"),
+    "longitude": ("longitude", "lon"),
+    "quantile": ("quantile", "percentile"),
+}
+
+
+def _rename_dimensions(array: xr.DataArray, required: tuple[str, ...]) -> xr.DataArray:
+    replacements = {}
+    for standard in required:
+        found = [name for name in DIM_ALIASES[standard] if name in array.dims]
+        if len(found) != 1:
+            raise ValueError(f"Expected one {standard} dimension; found {array.dims}")
+        if found[0] != standard:
+            replacements[found[0]] = standard
+    return array.rename(replacements)
+
+
+def _digest(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
 
 class NWPDatasetReader:
-    """
-    Ingests and normalizes spherical meteorological grids into standard Avarta tensor representations.
-    """
-    def __init__(self, target_lat_res: float = 0.1, target_lon_res: float = 0.1):
-        self.target_lat_res = target_lat_res
-        self.target_lon_res = target_lon_res
+    """Load small, explicit spatial subsets; no implicit global materialization."""
 
     def load_ensemble_forecast(
-        self,
-        variable: str = "total_precipitation",
-        ensemble_members: int = 50,
-        grid_shape: Tuple[int, int] = (64, 64)
-    ) -> Dict[str, Any]:
-        """
-        Loads or generates calibrated multi-member ensemble forecast fields.
-        Returns:
-            dict containing ensemble tensor [E, H, W], coordinate arrays, and metadata.
-        """
-        H, W = grid_shape
-        lats = np.linspace(-90.0, 90.0, H, dtype=np.float32)
-        lons = np.linspace(-180.0, 180.0, W, dtype=np.float32)
-
-        # Realistic synthetic background + perturbed ensemble members
-        base_field = np.maximum(0.0, np.random.exponential(scale=12.0, size=(H, W)).astype(np.float32))
-        
-        ensemble_members_data = []
-        for i in range(ensemble_members):
-            noise = np.random.normal(loc=0.0, scale=3.5, size=(H, W)).astype(np.float32)
-            member_field = np.maximum(0.0, base_field + noise)
-            ensemble_members_data.append(member_field)
-
-        ensemble_tensor = np.stack(ensemble_members_data, axis=0)  # [E, H, W]
-
-        return {
-            "variable": variable,
-            "units": "mm/24h" if "precipitation" in variable else "m/s",
-            "members": ensemble_members,
-            "lats": lats,
-            "lons": lons,
-            "data": ensemble_tensor,
-            "mean": np.mean(ensemble_tensor, axis=0),
-            "std": np.std(ensemble_tensor, axis=0),
-            "source_model": "ECMWF-IFS-ENS-0.1deg",
-        }
+        self, path: str | Path, variable: str,
+        domain: tuple[float, float, float, float],
+        lead_hours: tuple[float, float] | None = None,
+    ) -> dict[str, Any]:
+        source = Path(path)
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        with xr.open_dataset(source) as dataset:
+            if variable not in dataset:
+                raise KeyError(f"{variable} absent from {source}")
+            array = _rename_dimensions(dataset[variable],
+                                       ("member", "lead", "latitude", "longitude"))
+            if set(array.dims) != {"member", "lead", "latitude", "longitude"}:
+                raise ValueError("Select or remove extra dimensions before ingestion")
+            south, north, west, east = domain
+            if south >= north or west >= east:
+                raise ValueError("Invalid spatial domain")
+            latitudes = array.latitude.values
+            longitudes = array.longitude.values
+            array = array.isel(
+                latitude=np.flatnonzero((latitudes >= south) & (latitudes <= north)),
+                longitude=np.flatnonzero((longitudes >= west) & (longitudes <= east)),
+            )
+            if lead_hours is not None:
+                leads = array.lead.values
+                if np.issubdtype(leads.dtype, np.timedelta64):
+                    leads = leads / np.timedelta64(1, "h")
+                array = array.isel(lead=np.flatnonzero((leads >= lead_hours[0]) & (leads <= lead_hours[1])))
+            if 0 in array.shape:
+                raise ValueError("Selection contains no forecast cells")
+            array = array.transpose("member", "lead", "latitude", "longitude").load()
+            data = np.asarray(array.values, dtype=np.float32)
+            return {
+                "variable": variable,
+                "units": array.attrs.get("units", "unknown"),
+                "data": data,
+                "members": np.asarray(array.member.values).tolist(),
+                "leads": np.asarray(array.lead.values).astype(str).tolist(),
+                "lats": np.asarray(array.latitude.values, dtype=np.float32),
+                "lons": np.asarray(array.longitude.values, dtype=np.float32),
+                "source_file": str(source),
+                "source_sha256": _digest(source),
+                "source_model": dataset.attrs.get("source_model", "unverified_user_supplied"),
+            }
 
     def load_climatology_quantiles(
-        self,
-        variable: str = "total_precipitation",
-        num_quantiles: int = 100,
-        grid_shape: Tuple[int, int] = (64, 64)
-    ) -> np.ndarray:
-        """
-        Loads 30-year ERA5 climatological quantiles for the corresponding calendar day.
-        Shape: [num_quantiles, H, W]
-        """
-        H, W = grid_shape
-        # Climatological mean is typically lower than extreme forecast
-        base_clim = np.maximum(0.0, np.random.exponential(scale=6.0, size=(H, W)).astype(np.float32))
-        
-        quantiles = []
-        for q in np.linspace(0.01, 0.99, num_quantiles):
-            # Log-normal tail scaling for precipitation quantiles
-            q_field = base_clim * (1.0 + float(q) * 2.8)
-            quantiles.append(q_field)
-
-        return np.stack(quantiles, axis=0)  # [Q, H, W]
+        self, path: str | Path, variable: str,
+        domain: tuple[float, float, float, float],
+    ) -> dict[str, Any]:
+        source = Path(path)
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        with xr.open_dataset(source) as dataset:
+            if variable not in dataset:
+                raise KeyError(f"{variable} absent from {source}")
+            array = _rename_dimensions(dataset[variable],
+                                       ("quantile", "latitude", "longitude"))
+            if set(array.dims) != {"quantile", "latitude", "longitude"}:
+                raise ValueError("Select calendar day, lead and season before ingestion")
+            south, north, west, east = domain
+            latitudes, longitudes = array.latitude.values, array.longitude.values
+            array = array.isel(
+                latitude=np.flatnonzero((latitudes >= south) & (latitudes <= north)),
+                longitude=np.flatnonzero((longitudes >= west) & (longitudes <= east)),
+            )
+            if 0 in array.shape:
+                raise ValueError("Selection contains no climatology cells")
+            array = array.transpose("quantile", "latitude", "longitude").load()
+            probabilities = np.asarray(array["quantile"].values, dtype=np.float64)
+            if probabilities.max() > 1:
+                probabilities /= 100
+            if np.any(np.diff(probabilities) <= 0) or probabilities[0] <= 0 or probabilities[-1] >= 1:
+                raise ValueError("Quantile coordinates must increase within (0, 1)")
+            return {
+                "variable": variable,
+                "units": array.attrs.get("units", "unknown"),
+                "quantiles": np.asarray(array.values, dtype=np.float32),
+                "probabilities": probabilities,
+                "lats": np.asarray(array.latitude.values, dtype=np.float32),
+                "lons": np.asarray(array.longitude.values, dtype=np.float32),
+                "source_file": str(source),
+                "source_sha256": _digest(source),
+                "source_model": dataset.attrs.get("source_model", "unverified_user_supplied"),
+                "baseline_period": dataset.attrs.get("baseline_period", "unspecified"),
+            }

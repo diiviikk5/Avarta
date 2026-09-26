@@ -45,6 +45,29 @@ class TestKalmanTracker(unittest.TestCase):
         self.assertEqual(active_t2[0]["threat_id"], tracked_id)
         self.assertEqual(active_t2[0]["trajectory_length"], 2)
 
+    def test_assignment_is_global_and_output_matches_detection_order(self):
+        first = self.tracker.update_with_detections([
+            {"lat": 0, "lon": 0, "intensity": 10, "hazard_type": "rainfall"},
+            {"lat": 0, "lon": 2, "intensity": 10, "hazard_type": "rainfall"},
+        ], "2026-09-25T00:00:00Z")
+        second = self.tracker.update_with_detections([
+            {"lat": 0, "lon": 1.3, "intensity": 10, "hazard_type": "rainfall"},
+            {"lat": 0, "lon": 2.1, "intensity": 10, "hazard_type": "rainfall"},
+        ], "2026-09-25T03:00:00Z")
+        self.assertEqual([item["threat_id"] for item in second],
+                         [item["threat_id"] for item in first])
+        self.assertEqual([item["detection_index"] for item in second], [0, 1])
+
+    def test_missing_track_expires_without_ghost_output(self):
+        tracker = PersistentThreatTracker(max_missed_steps=1)
+        first = tracker.update_with_detections([
+            {"lat": 0, "lon": 0, "intensity": 10}
+        ], "2026-09-25T00:00:00Z")
+        self.assertEqual(tracker.update_with_detections([], "2026-09-25T03:00:00Z"), [])
+        self.assertIn(first[0]["threat_id"], tracker.active_tracks)
+        tracker.update_with_detections([], "2026-09-25T06:00:00Z")
+        self.assertNotIn(first[0]["threat_id"], tracker.active_tracks)
+
 
 if __name__ == "__main__":
     unittest.main()

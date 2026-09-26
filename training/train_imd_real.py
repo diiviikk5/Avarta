@@ -1,263 +1,230 @@
-"""
-Avarta Real-World IMD 2025 Training Pipeline
-Trains the ResidualDownscaler on actual 2025 India Meteorological Department (IMD)
-high-resolution 0.25° gridded rainfall data (Rainfall_ind2025_rfp25.grd).
+"""Chronological IMD 0.25° coarse-proxy reconstruction benchmark.
 
-Implements the exact SIH-26078 requirements:
-- Downscaling from coarse 12 km NWP to fine 5 km sub-grid
-- ExtremeTailPreservationLoss targeting the 90th-99th percentile deluge amplitudes
-- Preservation of localized peak intensities (e.g. 469.21 mm/day monsoon peaks)
+The coarse input is derived from the IMD target, not an independent NWP field.
+This experiment is neither a forecast nor genuine 5 km downscaling.
 """
 
-import os
-import sys
-import json
-import time
+from __future__ import annotations
+
 import argparse
-from typing import Dict, List, Any, Tuple
+import copy
+import json
+from datetime import date, timedelta
+from pathlib import Path
+
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-
-# Fix windows utf-8 encoding if needed
-if sys.platform.startswith("win"):
-    try:
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
-
-# Ensure root directory on path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, Dataset
 
 from models.residual_downscaler.diffusion_downscaler import ResidualDownscaler
 from services.ingestion.imd_gridded_parser import IMDGriddedParser
 from training.train_downscaler import ExtremeTailPreservationLoss
 
+HEAVY_RAIN_MM_DAY = 64.5
+
 
 class IMDRainfallDataset(Dataset):
-    """
-    PyTorch Dataset built directly on real IMD 2025 gridded rainfall records.
-    Pairs 16x16 coarse resolution inputs with 38x38 fine resolution ground truth targets.
-    """
-    def __init__(self, crops: List[Dict[str, Any]]):
+    def __init__(self, crops: list[dict]):
         self.crops = crops
 
     def __len__(self) -> int:
         return len(self.crops)
 
-    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
-        item = self.crops[idx]
-        fine_gt = item["fine_target_5km"]  # (38, 38)
-        coarse_in = item["coarse_12km"]     # (16, 16)
-        lat = item["lat_center"]
-        lon = item["lon_center"]
-        peak = item["peak_mm"]
-
-        # Multichannel NWP representation (channel 0: rain, 1: simulated moisture, 2: zonal flux, 3: meridional)
-        # Normalization: keep rainfall in mm, scale for stability
-        x_coarse = np.repeat(coarse_in[None, :, :], 4, axis=0).astype(np.float32)
-        x_coarse[1] *= 0.90
-        x_coarse[2] *= 1.05
-        x_coarse[3] *= 0.95
-
-        # Synthetic DEM orography elevation proxy based on Western Ghats / Himalayas coordinates
-        # Real geographical elevation proxy from lat/lon
-        orography_height = 0.2
-        if lat > 27.0:
-            orography_height = min(3.5, 0.5 + (lat - 27.0) * 0.4)
-        elif 8.0 < lat < 21.0 and 73.0 < lon < 76.0:
-            orography_height = 1.2  # Western Ghats escarpment
-        terrain = np.full((1, 38, 38), orography_height, dtype=np.float32)
-
-        # Threat state embedding vector [lat, lon, v_lat, v_lon, peak_mm, convective_idx, efi, confidence]
-        efi = min(1.0, max(0.5, peak / 200.0))
-        threat_vec = np.array([lat, lon, 0.0, 0.0, peak, peak / 24.0, efi, 0.95], dtype=np.float32)
-
+    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
+        item = self.crops[index]
+        coarse = item["coarse_proxy"].astype(np.float32)
+        target = item["target_imd_0p25"].astype(np.float32)
+        # All conditioning is available from the coarse input;
+        # true peak and target-derived intensity never enter the model.
+        metadata = np.array([
+            0, 0, 0, 0,
+            float(coarse.max()) / 500, float(coarse.mean()) / 500, 0, 0,
+        ], dtype=np.float32)
         return {
-            "x_12km": torch.from_numpy(x_coarse),
-            "terrain": torch.from_numpy(terrain),
-            "threat_vec": torch.from_numpy(threat_vec),
-            "y_5km_true": torch.from_numpy(fine_gt[None, :, :])
+            "coarse": torch.from_numpy(coarse[None]),
+            "terrain": torch.zeros((1, 38, 38), dtype=torch.float32),
+            "metadata": torch.from_numpy(metadata),
+            "target": torch.from_numpy(target[None]),
         }
 
 
-def run_real_imd_training(
-    grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
-    epochs: int = 5,
-    batch_size: int = 16,
-    lr: float = 1e-3,
-    min_peak_mm: float = 60.0,
-    device: str = "cpu",
-    output_dir: str = "checkpoints"
-) -> Dict[str, Any]:
-    """
-    Executes training on the real 2025 IMD rainfall dataset.
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs("data", exist_ok=True)
+def split_by_date(crops: list[dict], purge_days: int = 3) -> tuple[list[dict], list[dict], int]:
+    days = sorted({int(c["day_idx"]) for c in crops})
+    if len(days) < 6:
+        raise ValueError("At least six separate dates are required")
+    boundary = days[int(len(days) * 0.8)]
+    train = [c for c in crops if c["day_idx"] < boundary - purge_days]
+    validation = [c for c in crops if c["day_idx"] >= boundary]
+    if not train or not validation:
+        raise ValueError("Date split left no training or validation samples")
+    return train, validation, boundary
 
-    print("================================================================================")
-    print("      AVARTA REAL IMD 2025 DOWNSCALING & EXTREME-TAIL MODEL TRAINING           ")
-    print("================================================================================")
-    print(f"[*] Ingesting real binary IMD dataset from: {grd_path}")
 
-    parser = IMDGriddedParser(filepath=grd_path)
-    summary = parser.get_summary()
-    print(f"[*] Total days: {summary['total_days']} | Grid: {summary['grid_dimensions']}")
-    print(f"[*] All-India 2025 Peak Rainfall: {summary['all_time_peak_mm']} mm/day")
-    print(f"[*] Annual Mean: {summary['annual_mean_rainfall_mm']} mm/day")
-
-    print(f"[*] Extracting real deluge training crops (threshold: >={min_peak_mm} mm/day)...")
-    crops = parser.extract_extreme_training_crops(min_peak_mm=min_peak_mm, crop_size=38)
-    print(f"[+] Successfully extracted {len(crops)} real extreme cloudburst/monsoon training crops.")
-
-    # Train / Val Split (80% / 20%)
-    np.random.seed(42)
-    indices = np.random.permutation(len(crops))
-    split = int(0.8 * len(crops))
-    train_crops = [crops[i] for i in indices[:split]]
-    val_crops = [crops[i] for i in indices[split:]]
-
-    train_ds = IMDRainfallDataset(train_crops)
-    val_ds = IMDRainfallDataset(val_crops)
-
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
-
-    dev = torch.device(device if torch.cuda.is_available() and device == "cuda" else "cpu")
-    print(f"[*] Initializing ResidualDownscaler on device: {dev}")
-
-    model = ResidualDownscaler(in_channels=4, out_channels=1, hidden_dim=64).to(dev)
-    criterion = ExtremeTailPreservationLoss(quantile_threshold=0.90, alpha_tail=4.0, beta_physics=1.5)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
-
-    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"[+] Model Architecture Parameters: {total_params:,}")
-
-    history = {
-        "train_loss": [],
-        "val_loss": [],
-        "train_tail_loss": [],
-        "val_tail_loss": [],
-        "peak_preservation_ratio": []
+def metrics(predictions: list[np.ndarray], targets: list[np.ndarray]) -> dict:
+    peak_errors = [abs(float(p.max()) - float(t.max())) for p, t in zip(predictions, targets)]
+    errors = [float(np.mean(np.abs(p - t))) for p, t in zip(predictions, targets)]
+    hits = misses = false_alarms = 0
+    for pred, target in zip(predictions, targets):
+        p, t = pred >= HEAVY_RAIN_MM_DAY, target >= HEAVY_RAIN_MM_DAY
+        hits += int((p & t).sum())
+        misses += int((~p & t).sum())
+        false_alarms += int((p & ~t).sum())
+    return {
+        "samples": len(targets),
+        "mean_peak_absolute_error_mm_day": round(float(np.mean(peak_errors)), 3),
+        "mean_absolute_error_mm_day": round(float(np.mean(errors)), 3),
+        "heavy_rain_detection_recall": round(hits / (hits + misses), 4) if hits + misses else 0,
+        "heavy_rain_false_alarm_ratio": round(false_alarms / (hits + false_alarms), 4) if hits + false_alarms else 0,
+        "heavy_rain_footprint_iou": round(hits / (hits + misses + false_alarms), 4) if hits + misses + false_alarms else 0,
+        "observed_heavy_rain_cells": hits + misses,
+        "predicted_heavy_rain_cells": hits + false_alarms,
     }
 
-    start_time = time.time()
 
-    for epoch in range(1, epochs + 1):
+def run_real_imd_training(grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
+                          epochs: int = 60, batch_size: int = 16, lr: float = 1e-3,
+                          min_peak_mm: float = 60, device: str = "cpu",
+                          output_dir: str = "checkpoints", patience: int = 8) -> dict:
+    if epochs < 1 or patience < 1:
+        raise ValueError("epochs and patience must be positive")
+    torch.manual_seed(42)
+    np.random.seed(42)
+    source = IMDGriddedParser(filepath=grd_path)
+    crops = source.extract_extreme_training_crops(min_peak_mm=min_peak_mm, crop_size=38)
+    train, validation, boundary = split_by_date(crops)
+    train_loader = DataLoader(IMDRainfallDataset(train), batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(IMDRainfallDataset(validation), batch_size=batch_size)
+    dev = torch.device("cuda" if device == "cuda" and torch.cuda.is_available() else "cpu")
+    model = ResidualDownscaler(in_channels=1, out_channels=1, hidden_dim=16).to(dev)
+    loss_fn = ExtremeTailPreservationLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=lr * 0.02)
+    history = {"epoch": [], "train_loss": [], "validation_loss": [], "learning_rate": []}
+    best_state = copy.deepcopy(model.state_dict())
+    best_validation_loss = float("inf")
+    best_epoch = 0
+    stale_epochs = 0
+    for epoch in range(epochs):
         model.train()
-        train_losses = []
-        train_tails = []
-
+        losses = []
         for batch in train_loader:
-            x_12 = batch["x_12km"].to(dev)
-            terrain = batch["terrain"].to(dev)
-            threat = batch["threat_vec"].to(dev)
-            y_true = batch["y_5km_true"].to(dev)
-
+            coarse, terrain, metadata, target = (batch[k].to(dev) for k in ("coarse", "terrain", "metadata", "target"))
             optimizer.zero_grad()
-            out = model(x_12, terrain, threat)
-            y_pred = out["y_5km"]
-            if y_pred.shape[-2:] != y_true.shape[-2:]:
-                y_pred = torch.nn.functional.interpolate(y_pred, size=y_true.shape[-2:], mode="bilinear", align_corners=False)
-            loss, metrics = criterion(y_pred, y_true, terrain)
-
+            pred = model(coarse, terrain, metadata)["y_5km"]
+            if pred.shape[-2:] != target.shape[-2:]:
+                pred = F.interpolate(pred, size=target.shape[-2:], mode="bilinear", align_corners=False)
+            loss, _ = loss_fn(pred, target, terrain)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
             optimizer.step()
+            losses.append(float(loss.item()))
 
-            train_losses.append(metrics["total_loss"])
-            train_tails.append(metrics["tail_loss"])
-
-        # Validation phase
         model.eval()
-        val_losses = []
-        val_tails = []
-        pred_peaks = []
-        true_peaks = []
-
+        validation_losses = []
         with torch.no_grad():
             for batch in val_loader:
-                x_12 = batch["x_12km"].to(dev)
-                terrain = batch["terrain"].to(dev)
-                threat = batch["threat_vec"].to(dev)
-                y_true = batch["y_5km_true"].to(dev)
+                coarse, terrain, metadata, target = (batch[k].to(dev) for k in ("coarse", "terrain", "metadata", "target"))
+                pred = model(coarse, terrain, metadata)["y_5km"]
+                if pred.shape[-2:] != target.shape[-2:]:
+                    pred = F.interpolate(pred, size=target.shape[-2:], mode="bilinear", align_corners=False)
+                validation_loss, _ = loss_fn(pred, target, terrain)
+                validation_losses.append(float(validation_loss.item()))
 
-                out = model(x_12, terrain, threat)
-                y_pred = out["y_5km"]
-                if y_pred.shape[-2:] != y_true.shape[-2:]:
-                    y_pred = torch.nn.functional.interpolate(y_pred, size=y_true.shape[-2:], mode="bilinear", align_corners=False)
-                loss, metrics = criterion(y_pred, y_true, terrain)
+        train_loss = float(np.mean(losses))
+        validation_loss = float(np.mean(validation_losses))
+        history["epoch"].append(epoch + 1)
+        history["train_loss"].append(round(train_loss, 3))
+        history["validation_loss"].append(round(validation_loss, 3))
+        history["learning_rate"].append(round(float(optimizer.param_groups[0]["lr"]), 8))
+        if validation_loss < best_validation_loss - 1e-3:
+            best_validation_loss = validation_loss
+            best_epoch = epoch + 1
+            best_state = copy.deepcopy(model.state_dict())
+            stale_epochs = 0
+        else:
+            stale_epochs += 1
+        print(
+            f"Epoch {epoch + 1}/{epochs}: train={train_loss:.3f} "
+            f"validation={validation_loss:.3f} best={best_validation_loss:.3f}"
+        )
+        scheduler.step()
+        if stale_epochs >= patience:
+            print(f"Early stopping after epoch {epoch + 1}; best epoch was {best_epoch}")
+            break
 
-                val_losses.append(metrics["total_loss"])
-                val_tails.append(metrics["tail_loss"])
+    model.load_state_dict(best_state)
 
-                # Measure extreme amplitude preservation
-                for b in range(y_true.size(0)):
-                    true_peaks.append(float(torch.max(y_true[b]).cpu().item()))
-                    pred_peaks.append(float(torch.max(y_pred[b]).cpu().item()))
+    model.eval()
+    predictions, baselines, targets = [], [], []
+    with torch.no_grad():
+        for batch in val_loader:
+            coarse, terrain, metadata, target = (batch[k].to(dev) for k in ("coarse", "terrain", "metadata", "target"))
+            pred = model(coarse, terrain, metadata)["y_5km"]
+            if pred.shape[-2:] != target.shape[-2:]:
+                pred = F.interpolate(pred, size=target.shape[-2:], mode="bilinear", align_corners=False)
+            baseline = F.interpolate(coarse, size=target.shape[-2:], mode="bilinear", align_corners=False)
+            predictions.extend(np.maximum(pred.cpu().numpy()[:, 0], 0))
+            baselines.extend(baseline.cpu().numpy()[:, 0])
+            targets.extend(target.cpu().numpy()[:, 0])
 
-        avg_train = float(np.mean(train_losses))
-        avg_val = float(np.mean(val_losses))
-        avg_val_tail = float(np.mean(val_tails))
-        peak_ratio = float(np.mean(pred_peaks) / (np.mean(true_peaks) + 1e-6))
-
-        history["train_loss"].append(avg_train)
-        history["val_loss"].append(avg_val)
-        history["train_tail_loss"].append(float(np.mean(train_tails)))
-        history["val_tail_loss"].append(avg_val_tail)
-        history["peak_preservation_ratio"].append(peak_ratio)
-
-        print(f"Epoch [{epoch:02d}/{epochs:02d}] | Train Loss: {avg_train:.4f} | Val Loss: {avg_val:.4f} | Val Tail Loss: {avg_val_tail:.4f} | Peak Preservation: {peak_ratio*100:.1f}%")
-
-    elapsed = round(time.time() - start_time, 2)
-    checkpoint_path = os.path.join(output_dir, "imd2025_residual_downscaler.pt")
+    results = {
+        "experiment": "IMD 0.25° coarse-proxy reconstruction",
+        "model": "deterministic residual CNN",
+        "not_a_forecast": True,
+        "not_5km_downscaling": True,
+        "source": "IMD Pune 2025 daily 0.25° gridded rainfall",
+        "coarse_proxy": "Gaussian-smoothed target resampled from 38x38 to 16x16; no independent NWP input",
+        "validation": {
+            "method": "chronological date holdout with a three-day purge gap",
+            "first_validation_date": (date(2025, 1, 1) + timedelta(days=boundary)).isoformat(),
+            "train_samples": len(train), "validation_samples": len(validation),
+            "heavy_rain_threshold_mm_day": HEAVY_RAIN_MM_DAY,
+            "residual_cnn": metrics(predictions, targets),
+            "bilinear": metrics(baselines, targets),
+        },
+        "training": {
+            "epochs": len(history["epoch"]),
+            "maximum_epochs": epochs,
+            "epochs_completed": len(history["epoch"]),
+            "best_epoch": best_epoch,
+            "early_stopping_patience": patience,
+            "stopped_early": len(history["epoch"]) < epochs,
+            "batch_size": batch_size,
+            "optimizer": "AdamW",
+            "scheduler": "CosineAnnealingLR",
+            "history": history,
+        },
+    }
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     torch.save({
-        "epoch": epochs,
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
-        "summary": summary,
-        "val_loss": history["val_loss"][-1],
-        "peak_preservation_ratio": history["peak_preservation_ratio"][-1],
-        "training_time_sec": elapsed
-    }, checkpoint_path)
-    print(f"[+] Model checkpoint saved to: {checkpoint_path}")
-
-    # Save real metrics to JSON for web console & TUI integration
-    results = {
-        "dataset_name": "IMD Pune 0.25° Gridded Rainfall (2025)",
-        "source_file": summary["source_file"],
-        "dataset_summary": summary,
-        "training_stats": {
-            "num_extreme_crops": len(crops),
-            "train_samples": len(train_crops),
-            "val_samples": len(val_crops),
-            "epochs": epochs,
-            "batch_size": batch_size,
-            "trainable_parameters": total_params,
-            "training_time_seconds": elapsed,
-            "final_train_loss": round(history["train_loss"][-1], 4),
-            "final_val_loss": round(history["val_loss"][-1], 4),
-            "final_val_tail_loss": round(history["val_tail_loss"][-1], 4),
-            "peak_preservation_ratio": round(history["peak_preservation_ratio"][-1], 4),
-            "loss_history": history
-        }
-    }
-
-    metrics_file = "data/real_imd_training_results.json"
-    with open(metrics_file, "w") as f:
-        json.dump(results, f, indent=2)
-    print(f"[+] Real training metrics recorded to: {metrics_file}")
+        "results": results,
+        "epochs": len(history["epoch"]),
+        "best_epoch": best_epoch,
+        "history": history,
+    }, Path(output_dir) / "imd2025_residual_cnn.pt")
+    output = Path("data/real_imd_training_results.json")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+    web_output = Path("avarta/public/replay/training-benchmark.json")
+    web_output.parent.mkdir(parents=True, exist_ok=True)
+    web_output.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(results["validation"], indent=2))
     return results
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train Avarta on Real IMD 2025 Dataset")
-    parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
-    parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
-    parser.add_argument("--device", type=str, default="cpu", help="Device (cpu or cuda)")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--epochs", type=int, default=60)
+    parser.add_argument("--patience", type=int, default=8)
+    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     args = parser.parse_args()
-
-    run_real_imd_training(epochs=args.epochs, batch_size=args.batch_size, device=args.device)
+    run_real_imd_training(
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        device=args.device,
+        patience=args.patience,
+    )

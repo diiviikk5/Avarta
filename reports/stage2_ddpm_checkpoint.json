@@ -1,0 +1,22 @@
+{
+  "schema_version": "avarta.stage2-ddpm-checkpoint.v1",
+  "ready": true,
+  "scope": "trained_demonstration_fixture_not_operational_meteorological_weights",
+  "scientific_skill_claimed": false,
+  "artifact": "checkpoints/avarta_ddpm_stage2_demo.ckpt",
+  "sha256": "f7bb4fd07bfcab4361cefe2e8ff6b0a1df5f2944b0c8cc863cea72cb48d87fa4",
+  "parameters": 23713,
+  "epochs": 5,
+  "optimizer_steps": 30,
+  "training_history": {
+    "epoch_loss": [
+      1.275164,
+      1.170911,
+      1.128908,
+      1.152281,
+      1.107838
+    ]
+  },
+  "corpus_sha256": "eccdeb45c633c2b29a5537c053ff580ed65746434da5bff4d58dac02a6682ecb",
+  "reproduction_command": ".venv/bin/python scripts/prepare_stage2_evidence.py"
+}

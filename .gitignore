@@ -34,9 +34,12 @@ data/raw/*.nc
 data/raw/*.grib
 data/raw/*.grib2
 data/raw/*.grd
+data/raw/*.tif.gz
+data/raw/gefs_cache/
 data/raw/*.csv
 data/processed/*.zarr
 *.h5
+checkpoints/*.pt
 
 # OS & IDE
 .DS_Store

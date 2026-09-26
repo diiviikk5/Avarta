@@ -1,0 +1,398 @@
+/* Terminal / TUI Web Emulator Styling - Argus Pink Retheme */
+
+.terminalContainer {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 40px);
+  min-height: 650px;
+  background: #0c0c0e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: #ffffff;
+}
+
+/* Window Chrome Topbar */
+.terminalChrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #121216;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.windowControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dotRed {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff5f56;
+  border: 1px solid #e0443e;
+  cursor: pointer;
+}
+
+.dotYellow {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffbd2e;
+  border: 1px solid #dea123;
+  cursor: pointer;
+}
+
+.dotGreen {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #27c93f;
+  border: 1px solid #1aab29;
+  cursor: pointer;
+}
+
+.terminalTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.3px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  background: rgba(255, 180, 200, 0.12);
+  color: #ffb4c8;
+  border: 1px solid rgba(255, 180, 200, 0.25);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffb4c8;
+  box-shadow: 0 0 6px #ffb4c8;
+}
+
+.terminalToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.selectorSelect {
+  background: #18181b;
+  color: #e4e4e7;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.selectorSelect:hover, .selectorSelect:focus {
+  border-color: #ffb4c8;
+}
+
+.toolBtn {
+  background: #18181b;
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolBtn:hover {
+  background: #27272a;
+  color: #ffffff;
+  border-color: #ffb4c8;
+}
+
+/* Quick Action Palette Ribbon */
+.quickRibbon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #101014;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: thin;
+}
+
+.quickRibbon::-webkit-scrollbar {
+  height: 4px;
+}
+
+.quickRibbon::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.ribbonLabel {
+  font-size: 10px;
+  font-weight: 800;
+  color: #71717a;
+  letter-spacing: 1px;
+  margin-right: 4px;
+  text-transform: uppercase;
+}
+
+.quickChip {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.quickChip:hover {
+  background: #27272a;
+  color: #ffffff;
+  border-color: rgba(255, 180, 200, 0.4);
+  transform: translateY(-1px);
+}
+
+.quickChipActive {
+  background: #ffb4c8;
+  color: #000000;
+  border-color: #ffb4c8;
+  font-weight: 700;
+}
+
+/* Terminal Body Scroll Area */
+.terminalBody {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.45;
+  background: radial-gradient(circle at 50% 0%, #121216 0%, #0c0c0e 75%);
+  cursor: text;
+}
+
+.terminalWelcome {
+  margin-bottom: 20px;
+  color: #ffb4c8;
+}
+
+.welcomeAscii {
+  font-size: 11px;
+  line-height: 1.15;
+  color: #ffb4c8;
+  font-weight: 700;
+  white-space: pre;
+  margin-bottom: 8px;
+}
+
+.welcomeText {
+  color: #a1a1aa;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.historyBlock {
+  margin-bottom: 18px;
+  border-left: 2px solid rgba(255, 180, 200, 0.35);
+  padding-left: 10px;
+}
+
+.commandPromptLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.promptUser {
+  color: #ffb4c8;
+  font-weight: 700;
+}
+
+.promptAt {
+  color: #71717a;
+}
+
+.promptHost {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.promptPath {
+  color: #ffb4c8;
+}
+
+.promptDollar {
+  color: #a1a1aa;
+  margin-right: 6px;
+}
+
+.commandExecuted {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.commandMeta {
+  font-size: 10px;
+  color: #71717a;
+}
+
+/* Rendered Output Box */
+.terminalOutput {
+  background: rgba(18, 18, 22, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #e4e4e7;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.terminalOutput pre {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+}
+
+/* Active Command Prompt Input Bar */
+.inputBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #121216;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.promptPrefix {
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.cmdInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  caret-color: #ffb4c8;
+}
+
+.cmdInput::placeholder {
+  color: #71717a;
+  font-style: italic;
+}
+
+.runBtn {
+  background: #ffb4c8;
+  color: #000000;
+  border: 1px solid #ffb4c8;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.runBtn:hover:not(:disabled) {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+.runBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loadingSpinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 180, 200, 0.3);
+  border-top-color: #ffb4c8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Keyboard hint bar */
+.hintBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  background: #09090b;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  color: #71717a;
+  user-select: none;
+}
+
+.hintBar kbd {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: inherit;
+  color: #a1a1aa;
+  font-size: 9.5px;
+}
