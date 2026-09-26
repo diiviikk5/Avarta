@@ -179,7 +179,8 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
             durationMs: data.execution_time_ms,
           },
         ]);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to reach TUI service";
         setHistory((prev) => [
           ...prev,
           {
@@ -187,8 +188,8 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
             command: trimmed,
             caseName: activeCase,
             themeName: activeTheme,
-            html: `<div style="color: #ef4444; font-weight: bold;">Network or execution error: ${err?.message || "Failed to reach TUI service"}</div>`,
-            raw: `Error: ${err?.message}`,
+            html: `<div style="color: #ef4444; font-weight: bold;">Network or execution error: ${message}</div>`,
+            raw: `Error: ${message}`,
             timestamp: new Date().toLocaleTimeString(),
           },
         ]);
@@ -203,7 +204,8 @@ export default function TerminalConsole({ initialCase = "rainfall" }: { initialC
 
   // Initial greeting run on mount
   useEffect(() => {
-    runCommand("overview");
+    const initial = window.setTimeout(() => void runCommand("overview"), 0);
+    return () => window.clearTimeout(initial);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

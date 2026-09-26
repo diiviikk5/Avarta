@@ -37,6 +37,7 @@ import {
   Zap,
 } from "lucide-react";
 import styles from "./replay.module.css";
+import BenchmarkScorecard from "./BenchmarkScorecard";
 
 type ScenarioType = "cyclone" | "cloudburst" | "heatwave" | "pinn" | "command";
 
@@ -173,6 +174,7 @@ export default function PrototypeShowcase() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px", paddingBottom: "50px" }}>
+      <BenchmarkScorecard compact />
       {/* Flagship Hero Header */}
       <div
         style={{

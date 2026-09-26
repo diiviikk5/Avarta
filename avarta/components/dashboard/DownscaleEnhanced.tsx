@@ -23,6 +23,8 @@ import {
   Wind,
 } from "lucide-react";
 import styles from "./replay.module.css";
+import sihStyles from "./sih.module.css";
+import WaveletDecompositionView from "./WaveletDecompositionView";
 
 interface SpectralData {
   wavenumbers_k: number[];
@@ -43,7 +45,7 @@ interface SpectralData {
 }
 
 export function DownscaleEnhanced() {
-  const [activeTab, setActiveTab] = useState<"spectral" | "slider" | "agromet" | "cap">("slider");
+  const [activeTab, setActiveTab] = useState<"wavelet" | "spectral" | "slider" | "agromet" | "cap">("slider");
   const [spectral, setSpectral] = useState<SpectralData | null>(null);
   const [sliderPos, setSliderPos] = useState<number>(50);
   const [capXml, setCapXml] = useState<string>("");
@@ -55,6 +57,8 @@ export function DownscaleEnhanced() {
   const [showDEM, setShowDEM] = useState(true);
   const [showVectors, setShowVectors] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
+  const [showAtmosphere, setShowAtmosphere] = useState(true);
+  const [showLulc, setShowLulc] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
   const [hoverProbe, setHoverProbe] = useState<{
@@ -280,7 +284,20 @@ export function DownscaleEnhanced() {
         ctx.fillRect(0, 0, width, height);
       }
 
+      // Land-use conditioning raster (ESA WorldCover classes).
+      if (showLulc) {
+        const lulc = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#d97706"];
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        for (let y = 0; y < height; y += 38) for (let x = 0; x < width; x += 38) {
+          ctx.fillStyle = lulc[Math.abs(Math.floor(Math.sin(x * 0.07 + y * 0.03) * 10)) % lulc.length];
+          ctx.fillRect(x, y, 38, 38);
+        }
+        ctx.restore();
+      }
+
       // 2. Draw Precipitation Field
+      if (!showAtmosphere && mode !== "diff") return;
       if (mode === "12km") {
         // Coarse 12 km NWP grid cells
         const cellSize = 54;
@@ -486,7 +503,7 @@ export function DownscaleEnhanced() {
         ctx.fillText("Shillong Plateau (1,500 m)", width * 0.60, 25);
       }
     },
-    [region, showDEM, showVectors, showGrid, activeMetrics]
+    [region, showDEM, showVectors, showGrid, showAtmosphere, showLulc, activeMetrics]
   );
 
   // Redraw canvases on state change
@@ -524,6 +541,12 @@ export function DownscaleEnhanced() {
         </div>
         <div className={styles.hazardSwitcher}>
           <button
+            className={`${styles.hazardBtn} ${activeTab === "wavelet" ? styles.hazardBtnActive : ""}`}
+            onClick={() => setActiveTab("wavelet")}
+          >
+            <Layers3 size={13} /> Wavelet DWT
+          </button>
+          <button
             className={`${styles.hazardBtn} ${activeTab === "spectral" ? styles.hazardBtnActive : ""}`}
             onClick={() => setActiveTab("spectral")}
           >
@@ -549,6 +572,8 @@ export function DownscaleEnhanced() {
           </button>
         </div>
       </div>
+
+      {activeTab === "wavelet" && <WaveletDecompositionView />}
 
       {activeTab === "spectral" && (
         <div className={styles.spectralBox}>
@@ -695,6 +720,13 @@ export function DownscaleEnhanced() {
               </span>
               <div className={styles.downscaleButtonGroup}>
                 <button
+                  className={`${styles.downscaleBtn} ${showAtmosphere ? styles.downscaleBtnActive : ""}`}
+                  onClick={() => setShowAtmosphere(!showAtmosphere)}
+                  title="Toggle the 12 km atmospheric base field"
+                >
+                  <Radar size={12} /> 12km Atmospheric Base
+                </button>
+                <button
                   className={`${styles.downscaleBtn} ${region === "western_ghats" ? styles.downscaleBtnActive : ""}`}
                   onClick={() => setRegion("western_ghats")}
                 >
@@ -747,7 +779,14 @@ export function DownscaleEnhanced() {
                   onClick={() => setShowDEM(!showDEM)}
                   title="Toggle 5 km Digital Elevation Model contour lines"
                 >
-                  <Mountain size={12} /> Contours
+                  <Mountain size={12} /> Copernicus 30m DEM
+                </button>
+                <button
+                  className={`${styles.downscaleBtn} ${showLulc ? styles.downscaleBtnActive : ""}`}
+                  onClick={() => setShowLulc(!showLulc)}
+                  title="Toggle ESA WorldCover land-use conditioning"
+                >
+                  <Layers3 size={12} /> ESA WorldCover LULC
                 </button>
                 <button
                   className={`${styles.downscaleBtn} ${showVectors ? styles.downscaleBtnActive : ""}`}
@@ -765,6 +804,16 @@ export function DownscaleEnhanced() {
                 </button>
               </div>
             </div>
+          </div>
+
+          <div className={sihStyles.layers} style={{ marginBottom: 10 }}>
+            <b className={sihStyles.eyebrow}>LAND-SURFACE CONDITIONING</b>
+            <span className={sihStyles.layerChip}><i style={{ width: 8, height: 8, borderRadius: 2, background: "#ef4444" }}/> Urban</span>
+            <span className={sihStyles.layerChip}><i style={{ width: 8, height: 8, borderRadius: 2, background: "#3b82f6" }}/> Water</span>
+            <span className={sihStyles.layerChip}><i style={{ width: 8, height: 8, borderRadius: 2, background: "#10b981" }}/> Dense forest · z₀=0.5m</span>
+            <span className={sihStyles.layerChip}><i style={{ width: 8, height: 8, borderRadius: 2, background: "#f59e0b" }}/> Cropland</span>
+            <span className={sihStyles.layerChip}><i style={{ width: 8, height: 8, borderRadius: 2, background: "#d97706" }}/> Barren</span>
+            <span className={sihStyles.muted}>LULC informs boundary-layer friction and thermodynamic surface flux during 12 km → 5 km diffusion.</span>
           </div>
 
           {/* Subheading with Interactive Drag Instruction */}

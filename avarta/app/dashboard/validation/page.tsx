@@ -1,6 +1,7 @@
 import { getBenchmark, getReplay } from "@/lib/replay";
 import { ValidationSection } from "@/components/dashboard/ReplayDashboard";
 import PageHeading from "@/components/dashboard/PageHeading";
+import BenchmarkScorecard from "@/components/dashboard/BenchmarkScorecard";
 
 export default async function ValidationPage() {
   const [replay, benchmark] = await Promise.all([getReplay(), getBenchmark()]);
@@ -12,6 +13,7 @@ export default async function ValidationPage() {
         blurb="Retrospective verification against IMD and CHIRPS, plus the separate residual-CNN benchmark."
       />
       <ValidationSection replay={replay} benchmark={benchmark} />
+      <BenchmarkScorecard />
     </>
   );
 }

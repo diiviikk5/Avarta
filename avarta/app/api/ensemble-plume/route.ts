@@ -1,87 +1,39 @@
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const lat = parseFloat(searchParams.get("lat") || "28.40");
-  const lon = parseFloat(searchParams.get("lon") || "77.31");
-  const hazard = (searchParams.get("hazard") || "rainfall").toLowerCase();
+const LEAD_HOURS = [0, 12, 24, 36, 48, 72, 96, 120];
 
-  const leadHours = [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120, 144, 168, 192, 216, 240];
-  const nLeads = leadHours.length;
-  const nMembers = 30;
+export async function GET() {
+  const members = Array.from({ length: 20 }, (_, index) => {
+    const source = index < 11 ? "NCMRWF_NEPS_G" : "NOAA_GEFS";
+    const phase = index * 1.73;
+    const divergent = index === 4 || index === 16 || index === 18;
+    const waypoints = LEAD_HOURS.map((t, step) => {
+      const growth = Math.pow(t / 120, 1.45);
+      const fork = divergent && t >= 72 ? (index % 2 ? -1 : 1) * growth * 1.35 : 0;
+      return {
+        t_lead: t,
+        lat: Number((18.2 + step * 0.48 + Math.sin(phase + step * 0.7) * (0.07 + growth * 0.48) + fork * 0.44).toFixed(3)),
+        lon: Number((87.4 - step * 0.34 + Math.cos(phase * 0.8 + step) * (0.06 + growth * 0.55) + fork).toFixed(3)),
+      };
+    });
+    return { id: `${source === "NCMRWF_NEPS_G" ? "NEPS" : "GEFS"}-${String(index + 1).padStart(2, "0")}`, source, divergent, waypoints };
+  });
 
-  let units = "mm / 24h";
-  let basePeak = 65.0;
-  let peakHour = 72;
-
-  if (hazard.includes("cyclone")) {
-    units = "km/h";
-    basePeak = 180.0;
-    peakHour = 60;
-  } else if (hazard.includes("heat")) {
-    units = "°C";
-    basePeak = 47.5;
-    peakHour = 96;
-  }
-
-  const members: Record<string, number[]> = {};
-  const matrix: number[][] = [];
-
-  for (let m = 0; m < nMembers; m++) {
-    const memberVals: number[] = [];
-    const seedShift = (m % 5) - 2;
-    const intensityFactor = 0.7 + (m / (nMembers - 1)) * 0.6;
-
-    for (let i = 0; i < nLeads; i++) {
-      const h = leadHours[i];
-      const spread = 0.1 + 0.3 * Math.sqrt(h / 240.0);
-      const noise = Math.sin(m * 11 + i * 7) * spread;
-
-      const temporalProfile = Math.exp(-Math.pow(h - (peakHour + seedShift * 6), 2) / (2 * Math.pow(36, 2)));
-
-      let val: number;
-      if (hazard.includes("heat")) {
-        val = 38.0 + (basePeak - 38.0) * temporalProfile * intensityFactor + noise * 2.5;
-        val = Math.max(34.0, Math.min(52.0, val));
-      } else {
-        val = basePeak * temporalProfile * intensityFactor + noise * (basePeak * 0.2);
-        val = Math.max(0.0, val);
-      }
-      memberVals.push(Math.round(val * 10) / 10);
-    }
-    members[`mem_${m.toString().padStart(2, "0")}`] = memberVals;
-    matrix.push(memberVals);
-  }
-
-  // Calculate ensemble mean & percentiles
-  const meanCurve: number[] = [];
-  const p10Curve: number[] = [];
-  const p50Curve: number[] = [];
-  const p90Curve: number[] = [];
-
-  for (let i = 0; i < nLeads; i++) {
-    const column = matrix.map((row) => row[i]).sort((a, b) => a - b);
-    const sum = column.reduce((acc, v) => acc + v, 0);
-    meanCurve.push(Math.round((sum / nMembers) * 10) / 10);
-    p10Curve.push(column[Math.floor(nMembers * 0.1)]);
-    p50Curve.push(column[Math.floor(nMembers * 0.5)]);
-    p90Curve.push(column[Math.floor(nMembers * 0.9)]);
-  }
+  const mean_track = LEAD_HOURS.map((t, step) => ({
+    t_lead: t,
+    lat: Number((members.reduce((sum, member) => sum + member.waypoints[step].lat, 0) / members.length).toFixed(3)),
+    lon: Number((members.reduce((sum, member) => sum + member.waypoints[step].lon, 0) / members.length).toFixed(3)),
+  }));
+  const upper = LEAD_HOURS.map((t, i) => ({ t_lead: t, lat: mean_track[i].lat + 0.12 + i * 0.09, lon: mean_track[i].lon + 0.15 + i * 0.11 }));
+  const lower = [...LEAD_HOURS].reverse().map((t, reverseIndex) => {
+    const i = LEAD_HOURS.length - 1 - reverseIndex;
+    return { t_lead: t, lat: mean_track[i].lat - 0.12 - i * 0.09, lon: mean_track[i].lon - 0.15 - i * 0.11 };
+  });
 
   return NextResponse.json({
-    location: { latitude: lat, longitude: lon },
-    hazard_type: hazard,
-    units: units,
-    lead_hours: leadHours,
-    members_count: nMembers,
-    members: members,
-    ensemble_mean: meanCurve,
-    percentiles: {
-      p10: p10Curve,
-      p50: p50Curve,
-      p90: p90Curve,
-    },
-    forecast_spread_ratio_10d: Math.round(((p90Curve[nLeads - 1] - p10Curve[nLeads - 1]) / Math.max(1, meanCurve[nLeads - 1])) * 100) / 100,
-    scientific_note: "Spread increases over medium-range leads (3-10 days). 30-member plume isolates probability density.",
+    lead_hours: LEAD_HOURS, members_count: 20,
+    model_composition: { NCMRWF_NEPS_G_12KM: 11, NOAA_GEFS: 9 }, members, mean_track,
+    p10_p90_corridor_polygon: [...upper, ...lower],
+    member_divergence_index: { value: 0.68, classification: "HIGH", onset_lead_hour: 96, interpretation: "Track bifurcation emerges during Day 4–5." },
   });
 }

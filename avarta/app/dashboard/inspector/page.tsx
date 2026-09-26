@@ -1,6 +1,7 @@
 import { getReplay } from "@/lib/replay";
 import { InspectorSection } from "@/components/dashboard/ClientPages";
 import PageHeading from "@/components/dashboard/PageHeading";
+import ThreatObjectInspector from "@/components/dashboard/ThreatObjectInspector";
 
 function toNumber(value: string | string[] | undefined, fallback: number) {
   const parsed = Number(Array.isArray(value) ? value[0] : value);
@@ -26,6 +27,7 @@ export default async function InspectorPage({
         initialLat={toNumber(params.lat, 28.4)}
         initialLon={toNumber(params.lon, 77.31)}
       />
+      <ThreatObjectInspector />
     </>
   );
 }

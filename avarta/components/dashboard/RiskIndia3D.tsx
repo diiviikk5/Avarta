@@ -6,6 +6,8 @@ import type { ReplayCase } from "@/lib/replay";
 import { impactsFor, regionRiskRows, type RegionRiskRow } from "@/lib/forecast";
 import { INDIA_OUTLINE } from "@/lib/india-outline";
 import styles from "./replay.module.css";
+import sihStyles from "./sih.module.css";
+import InfrastructureImpactOverlay from "./InfrastructureImpactOverlay";
 
 const BAND_COLOR: Record<string, string> = {
   LOW: "#43a854",
@@ -22,6 +24,12 @@ const LAT_MAX = 38;
 const W = 620;
 const H = 660;
 const PAD = 30;
+
+interface LiveRegionRaw {
+  name: string; state?: string; zone?: string; latitude: number; longitude: number;
+  rain_sum_24h_mm?: number; rainfall_mm?: number; score: number; band: string;
+  hazard_alert?: string; temperature_c?: number; max_temp_c?: number; wind_gust_kmh?: number;
+}
 
 const project = (lat: number, lon: number) => ({
   x: PAD + ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * (W - PAD * 2),
@@ -52,17 +60,18 @@ export default function RiskIndia3D({
   selectedName?: string;
   onSelectedNameChange?: (name: string) => void;
 }) {
-  const isCaseLive = replay.hazard_type === "live" || replay.id?.includes("live");
   const [internalLiveMode, setInternalLiveMode] = useState<boolean>(true);
   const liveMode = propLiveMode !== undefined ? propLiveMode : internalLiveMode;
   const setLiveMode = (val: boolean) => {
     setInternalLiveMode(val);
     onLiveModeChange?.(val);
   };
-  const [liveRegions, setLiveRegions] = useState<any[]>([]);
-  const [liveSource, setLiveSource] = useState<string>("");
+  const [liveRegions, setLiveRegions] = useState<LiveRegionRaw[]>([]);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<string>("");
   const [loadingLive, setLoadingLive] = useState(false);
+  const [showAtmosphere, setShowAtmosphere] = useState(true);
+  const [showDem, setShowDem] = useState(true);
+  const [showLulc, setShowLulc] = useState(true);
 
   // Fetch live operational data across all 30 regions
   const fetchLiveRisk = async () => {
@@ -70,9 +79,8 @@ export default function RiskIndia3D({
     try {
       const res = await fetch("/api/live-risk");
       if (res.ok) {
-        const data = await res.json();
+        const data = await res.json() as { regions?: LiveRegionRaw[]; updated_at?: string };
         setLiveRegions(data.regions || []);
-        setLiveSource(data.source || "ECMWF / GFS Live Assimilation");
         setLiveUpdatedAt(data.updated_at || new Date().toISOString());
       }
     } catch {
@@ -83,23 +91,23 @@ export default function RiskIndia3D({
   };
 
   useEffect(() => {
-    void fetchLiveRisk();
+    const initial = window.setTimeout(() => void fetchLiveRisk(), 0);
     const interval = setInterval(() => {
       void fetchLiveRisk();
     }, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => { window.clearTimeout(initial); clearInterval(interval); };
   }, []);
 
   const rows: RegionRiskRow[] = useMemo(() => {
     if (liveMode && liveRegions.length > 0) {
-      return liveRegions.map((lr: any) => ({
+      return liveRegions.map((lr) => ({
         name: lr.name,
         state: lr.state,
         zone: lr.zone,
         latitude: lr.latitude,
         longitude: lr.longitude,
         rainfall: lr.rain_sum_24h_mm ?? lr.rainfall_mm ?? 0,
-        sigma: (lr.rain_sum_24h_mm - 5.0) / 10.0,
+        sigma: ((lr.rain_sum_24h_mm ?? lr.rainfall_mm ?? 0) - 5.0) / 10.0,
         score: lr.score,
         band: lr.band,
         hazard_alert: lr.hazard_alert,
@@ -112,7 +120,7 @@ export default function RiskIndia3D({
   }, [replay, liveMode, liveRegions]);
 
   const [internalSelectedName, setInternalSelectedName] = useState<string>("");
-  const selectedName = propSelectedName !== undefined ? propSelectedName : internalSelectedName;
+  const selectedName = propSelectedName !== undefined ? propSelectedName : (internalSelectedName || rows[0]?.name || "");
   const setSelectedName = (val: string | ((prev: string) => string)) => {
     const nextVal = typeof val === "function" ? val(selectedName) : val;
     setInternalSelectedName(nextVal);
@@ -123,12 +131,6 @@ export default function RiskIndia3D({
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
-
-  useEffect(() => {
-    if (rows.length > 0 && !selectedName) {
-      setSelectedName(rows[0].name);
-    }
-  }, [rows, selectedName]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -142,17 +144,16 @@ export default function RiskIndia3D({
     if (tourPaused || reducedMotion || rows.length === 0) return;
     const timer = setInterval(() => {
       setSelectedName((current) => {
-        const index = rows.findIndex((r: any) => r.name === current);
+        const index = rows.findIndex((r) => r.name === current);
         return rows[(index + 1) % rows.length].name;
       });
     }, 3800);
     return () => clearInterval(timer);
   }, [tourPaused, reducedMotion, rows]);
 
-  const selected: any =
-    rows.find((r: any) => r.name === selectedName) ?? rows[0];
+  const selected = rows.find((r) => r.name === selectedName) ?? rows[0];
 
-  const pick = (row: any) => {
+  const pick = (row: RegionRiskRow) => {
     setSelectedName(row.name);
     setTourPaused(true);
     onSelect(row.latitude, row.longitude);
@@ -236,6 +237,14 @@ export default function RiskIndia3D({
         )}
       </div>
 
+      <div className={sihStyles.layers} style={{ marginBottom: 12 }}>
+        <b className={sihStyles.eyebrow}>MAP LAYERS</b>
+        <label className={sihStyles.layerChip}><input type="checkbox" checked={showAtmosphere} onChange={(event) => setShowAtmosphere(event.target.checked)}/> 12km Atmospheric Base</label>
+        <label className={sihStyles.layerChip}><input type="checkbox" checked={showDem} onChange={(event) => setShowDem(event.target.checked)}/> Copernicus 30m DEM</label>
+        <label className={sihStyles.layerChip}><input type="checkbox" checked={showLulc} onChange={(event) => setShowLulc(event.target.checked)}/> ESA WorldCover LULC</label>
+        <span className={sihStyles.muted}>LULC conditions boundary-layer friction, runoff and surface heat flux.</span>
+      </div>
+
       <div
         className={styles.risk3dWrap}
         onMouseEnter={() => setTourPaused(true)}
@@ -292,6 +301,13 @@ export default function RiskIndia3D({
           ))}
           <path d={topPath} fill="url(#risk3dLand)" stroke="rgba(255, 180, 200, 0.35)" strokeWidth="1.4" />
 
+          {showDem && <g clipPath="url(#risk3dClip)" opacity=".28">{Array.from({ length: 10 }, (_, i) => <path key={i} d={`M80 ${120 + i * 46} C210 ${80 + i * 50}, 360 ${170 + i * 34}, 560 ${100 + i * 49}`} fill="none" stroke="#d8b4fe" strokeWidth="1"/>)}</g>}
+          {showLulc && <g clipPath="url(#risk3dClip)" opacity=".25">
+            <rect x="80" y="70" width="180" height="170" fill="#10b981"/><rect x="260" y="90" width="170" height="180" fill="#f59e0b"/>
+            <rect x="390" y="230" width="150" height="170" fill="#ef4444"/><rect x="185" y="325" width="170" height="170" fill="#d97706"/>
+            <path d="M430 90 C480 180 440 270 520 360" fill="none" stroke="#3b82f6" strokeWidth="26"/>
+          </g>}
+
           {/* animated light sweep across the landmass */}
           {!reducedMotion && (
             <g clipPath="url(#risk3dClip)">
@@ -300,7 +316,7 @@ export default function RiskIndia3D({
           )}
 
           {/* region beams + pins */}
-          {rows.map((row) => {
+          {showAtmosphere && rows.map((row) => {
             const p = project(row.latitude, row.longitude);
             const color = BAND_COLOR[row.band] ?? "#43a854";
             const active = selected?.name === row.name;
@@ -386,6 +402,7 @@ export default function RiskIndia3D({
           </a>
         </div>
       )}
+      <InfrastructureImpactOverlay />
     </div>
   );
 }

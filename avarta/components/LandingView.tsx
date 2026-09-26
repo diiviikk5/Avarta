@@ -566,7 +566,7 @@ export default function LandingView() {
               <span className="font-mono text-xs text-[#ffb4c8]">03 / 06</span>
             </div>
             <h2 className="text-3xl sm:text-5xl font-medium text-white tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-              "What Happens Here" <br />
+              &ldquo;What Happens Here&rdquo; <br />
               <span className="text-[#ffb4c8]">decision briefing copilot.</span>
             </h2>
             <p className="text-zinc-300 text-sm sm:text-base max-w-2xl leading-relaxed">

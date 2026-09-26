@@ -37,7 +37,7 @@ async function runTuiCommand(
   caseName: string = "rainfall",
   themeName: string = "forest",
   width: number = 85
-): Promise<{ status: string; html?: string; raw?: string; [key: string]: any }> {
+): Promise<{ status: string; html?: string; raw?: string; [key: string]: unknown }> {
   const { pythonPath, scriptPath, rootDir } = getExecutionPaths();
 
   return new Promise((resolve) => {
@@ -87,7 +87,7 @@ async function runTuiCommand(
         try {
           const parsed = JSON.parse(stdout.trim());
           resolve(parsed);
-        } catch (jsonErr) {
+        } catch {
           resolve({
             status: "ok",
             command: cmd,
@@ -123,9 +123,10 @@ export async function POST(request: Request) {
 
     const result = await runTuiCommand(cmd, caseName, themeName, width);
     return NextResponse.json(result);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Invalid request payload";
     return NextResponse.json(
-      { status: "error", error: err?.message || "Invalid request payload" },
+      { status: "error", error: message },
       { status: 400 }
     );
   }

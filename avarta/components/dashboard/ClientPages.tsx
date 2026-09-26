@@ -105,6 +105,7 @@ function OverviewInner({ initialReplay }: { initialReplay: ReplayCase }) {
   const [picked, setPicked] = useState<{ lat: number; lon: number } | null>({ lat: defaultLat, lon: defaultLon });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset local controls when the selected replay changes
     setFrameIndex(caseData.frames.length - 1);
     setPicked({ lat: defaultLat, lon: defaultLon });
   }, [caseData.id, defaultLat, defaultLon, caseData.frames.length]);
@@ -685,6 +686,7 @@ function InspectorInner({
   const [picked, setPicked] = useState<{ lat: number; lon: number }>({ lat: defaultLat, lon: defaultLon });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset inspector controls when the selected replay changes
     setFrameIndex(caseData.frames.length - 1);
     setPicked({ lat: defaultLat, lon: defaultLon });
   }, [caseData.id, defaultLat, defaultLon, caseData.frames.length]);
