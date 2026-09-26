@@ -1,10 +1,17 @@
+import inspect
 import json
 from pathlib import Path
 
 import numpy as np
 
 from services.replay.august_2025 import LEADS, _three_hour_intervals
-from training.train_imd_real import IMDRainfallDataset, split_by_date
+from training.train_imd_real import IMDRainfallDataset, run_real_imd_training, split_by_date
+
+
+def test_real_training_defaults_to_bounded_sixty_epoch_campaign():
+    parameters = inspect.signature(run_real_imd_training).parameters
+    assert parameters["epochs"].default == 60
+    assert parameters["patience"].default == 8
 
 
 def test_accumulation_windows_reconstruct_eight_three_hour_steps():

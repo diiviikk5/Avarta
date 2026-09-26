@@ -95,7 +95,10 @@ Download the official **2025 IMD 0.25° daily rainfall binary** from the [IMD Pu
 
 ```bash
 .venv/bin/python -m services.replay.august_2025
-OMP_NUM_THREADS=4 .venv/bin/python -m training.train_imd_real --epochs 2
+# Fast pipeline check:
+OMP_NUM_THREADS=4 .venv/bin/python -m training.train_imd_real --epochs 2 --patience 2
+# Full campaign (early-stops when validation stalls):
+OMP_NUM_THREADS=4 .venv/bin/python -m training.train_imd_real --epochs 60 --patience 8
 .venv/bin/python -m pytest -q
 
 # Run unified platform on ONE single port (Landing Page + Replay Lab + 9 Sub-tools + APIs):

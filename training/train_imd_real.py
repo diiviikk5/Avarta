@@ -7,6 +7,7 @@ This experiment is neither a forecast nor genuine 5 km downscaling.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from datetime import date, timedelta
 from pathlib import Path
@@ -82,9 +83,11 @@ def metrics(predictions: list[np.ndarray], targets: list[np.ndarray]) -> dict:
 
 
 def run_real_imd_training(grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
-                          epochs: int = 2, batch_size: int = 16, lr: float = 1e-3,
+                          epochs: int = 60, batch_size: int = 16, lr: float = 1e-3,
                           min_peak_mm: float = 60, device: str = "cpu",
-                          output_dir: str = "checkpoints") -> dict:
+                          output_dir: str = "checkpoints", patience: int = 8) -> dict:
+    if epochs < 1 or patience < 1:
+        raise ValueError("epochs and patience must be positive")
     torch.manual_seed(42)
     np.random.seed(42)
     source = IMDGriddedParser(filepath=grd_path)
@@ -96,7 +99,12 @@ def run_real_imd_training(grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
     model = ResidualDownscaler(in_channels=1, out_channels=1, hidden_dim=16).to(dev)
     loss_fn = ExtremeTailPreservationLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
-    history = []
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=lr * 0.02)
+    history = {"epoch": [], "train_loss": [], "validation_loss": [], "learning_rate": []}
+    best_state = copy.deepcopy(model.state_dict())
+    best_validation_loss = float("inf")
+    best_epoch = 0
+    stale_epochs = 0
     for epoch in range(epochs):
         model.train()
         losses = []
@@ -111,8 +119,41 @@ def run_real_imd_training(grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
             optimizer.step()
             losses.append(float(loss.item()))
-        history.append(round(float(np.mean(losses)), 3))
-        print(f"Epoch {epoch + 1}/{epochs}: loss {history[-1]:.3f}")
+
+        model.eval()
+        validation_losses = []
+        with torch.no_grad():
+            for batch in val_loader:
+                coarse, terrain, metadata, target = (batch[k].to(dev) for k in ("coarse", "terrain", "metadata", "target"))
+                pred = model(coarse, terrain, metadata)["y_5km"]
+                if pred.shape[-2:] != target.shape[-2:]:
+                    pred = F.interpolate(pred, size=target.shape[-2:], mode="bilinear", align_corners=False)
+                validation_loss, _ = loss_fn(pred, target, terrain)
+                validation_losses.append(float(validation_loss.item()))
+
+        train_loss = float(np.mean(losses))
+        validation_loss = float(np.mean(validation_losses))
+        history["epoch"].append(epoch + 1)
+        history["train_loss"].append(round(train_loss, 3))
+        history["validation_loss"].append(round(validation_loss, 3))
+        history["learning_rate"].append(round(float(optimizer.param_groups[0]["lr"]), 8))
+        if validation_loss < best_validation_loss - 1e-3:
+            best_validation_loss = validation_loss
+            best_epoch = epoch + 1
+            best_state = copy.deepcopy(model.state_dict())
+            stale_epochs = 0
+        else:
+            stale_epochs += 1
+        print(
+            f"Epoch {epoch + 1}/{epochs}: train={train_loss:.3f} "
+            f"validation={validation_loss:.3f} best={best_validation_loss:.3f}"
+        )
+        scheduler.step()
+        if stale_epochs >= patience:
+            print(f"Early stopping after epoch {epoch + 1}; best epoch was {best_epoch}")
+            break
+
+    model.load_state_dict(best_state)
 
     model.eval()
     predictions, baselines, targets = [], [], []
@@ -142,10 +183,28 @@ def run_real_imd_training(grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
             "residual_cnn": metrics(predictions, targets),
             "bilinear": metrics(baselines, targets),
         },
-        "training": {"epochs": epochs, "batch_size": batch_size, "loss": history},
+        "training": {
+            "epochs": len(history["epoch"]),
+            "maximum_epochs": epochs,
+            "epochs_completed": len(history["epoch"]),
+            "best_epoch": best_epoch,
+            "early_stopping_patience": patience,
+            "stopped_early": len(history["epoch"]) < epochs,
+            "batch_size": batch_size,
+            "optimizer": "AdamW",
+            "scheduler": "CosineAnnealingLR",
+            "history": history,
+        },
     }
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    torch.save({"model_state_dict": model.state_dict(), "results": results}, Path(output_dir) / "imd2025_residual_cnn.pt")
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "results": results,
+        "epochs": len(history["epoch"]),
+        "best_epoch": best_epoch,
+        "history": history,
+    }, Path(output_dir) / "imd2025_residual_cnn.pt")
     output = Path("data/real_imd_training_results.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
@@ -158,8 +217,14 @@ def run_real_imd_training(grd_path: str = "data/raw/Rainfall_ind2025_rfp25.grd",
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--epochs", type=int, default=2)
+    parser.add_argument("--epochs", type=int, default=60)
+    parser.add_argument("--patience", type=int, default=8)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     args = parser.parse_args()
-    run_real_imd_training(epochs=args.epochs, batch_size=args.batch_size, device=args.device)
+    run_real_imd_training(
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        device=args.device,
+        patience=args.patience,
+    )

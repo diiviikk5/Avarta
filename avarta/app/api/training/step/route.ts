@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     try {
       const { stdout } = await execAsync(`"${venvPython}" "${scriptPath}" step ${step}`, {
         cwd: repoRoot,
-        timeout: 10000,
+        timeout: 30000,
       });
       const data = JSON.parse(stdout);
       return NextResponse.json({

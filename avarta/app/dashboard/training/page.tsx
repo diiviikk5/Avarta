@@ -6,8 +6,8 @@ export default function TrainingPage() {
     <>
       <PageHeading
         eyebrow="05 // NEURAL ARCHITECTURE &amp; ML LAB"
-        title="AI Core &amp; Live Training Engine"
-        blurb="Audit real-time PyTorch forward-backward passes, icosahedral message-passing GNNs, generative diffusion denoising, and verifiable model checkpoints."
+        title="AI Core Readiness Lab"
+        blurb="Inspect measured checkpoint history, run real PyTorch gradient probes, explore the spherical ensemble GNN, and audit the Stage 2 diffusion path without confusing architecture tests with trained skill."
       />
       <TrainingLab />
     </>

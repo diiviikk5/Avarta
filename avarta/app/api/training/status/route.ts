@@ -16,7 +16,10 @@ export async function GET() {
     try {
       const { stdout } = await execAsync(`"${venvPython}" "${scriptPath}" status`, {
         cwd: repoRoot,
-        timeout: 5000,
+        // Cold-starting PyTorch and the GNN architecture probe can exceed five
+        // seconds on CPU-only judge machines; do not silently downgrade real
+        // checkpoint metadata to the filesystem fallback while it is loading.
+        timeout: 30000,
       });
       const data = JSON.parse(stdout);
       return NextResponse.json({

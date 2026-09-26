@@ -61,9 +61,14 @@ def get_checkpoint_metadata() -> Dict[str, Any]:
 
         meta["total_parameters"] = total_params
         meta["layers"] = layers_info
-        meta["epochs"] = ckpt.get("epochs", 5)
-        meta["history"] = ckpt.get("history", {})
-        meta["final_peak_recovery"] = ckpt.get("final_peak_recovery", 0.72)
+        history = ckpt.get("history", {})
+        meta["history"] = history
+        epochs = ckpt.get("epochs")
+        if epochs is None and isinstance(history, dict):
+            epochs = len(history.get("epoch", [])) or None
+        meta["epochs"] = epochs
+        if "final_peak_recovery" in ckpt:
+            meta["final_peak_recovery"] = ckpt["final_peak_recovery"]
     except Exception as err:
         meta["error"] = str(err)
 
@@ -158,6 +163,9 @@ def run_live_training_step(step_idx: int = 1, hazard: str = "rainfall") -> Dict[
     return {
         "step": step_idx,
         "hazard": hazard,
+        "experiment_scope": "independent_seeded_synthetic_gradient_probe",
+        "persistent_optimizer_state": False,
+        "convergence_claimed": False,
         "elapsed_ms": round(elapsed_ms, 2),
         "total_loss": round(total_loss.item(), 3),
         "loss_components": {

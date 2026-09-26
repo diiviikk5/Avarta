@@ -1,30 +1,25 @@
 "use client";
 
-import { useEffect, useState, useRef, useTransition } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   Activity,
-  Cpu,
   Layers,
   Network,
   Play,
   Pause,
   RotateCcw,
   ShieldCheck,
-  Sparkles,
   Database,
-  FileCode,
-  Terminal as TerminalIcon,
   CheckCircle2,
   AlertTriangle,
   Zap,
   BarChart3,
   ArrowUpRight,
-  Maximize2,
-  Eye,
   Sliders,
 } from "lucide-react";
-import styles from "./replay.module.css";
+
+const TOTAL_PROBES = 50;
 
 interface LossPoint {
   step: number;
@@ -41,6 +36,38 @@ interface LayerMeta {
   dtype: string;
 }
 
+interface CheckpointMeta {
+  checkpoint_exists?: boolean;
+  total_parameters?: number;
+  epochs?: number;
+  history?: {
+    epoch?: number[];
+    train_loss?: number[];
+    val_loss?: number[];
+    validation_loss?: number[];
+    peak_recovery_ratio?: number[];
+  };
+  layers?: LayerMeta[];
+}
+
+interface MLStatus {
+  source?: string;
+  checkpoint?: CheckpointMeta;
+  diffusion?: {
+    total_timesteps?: number;
+    parameters?: number;
+    objective_terms?: string[];
+    trained_checkpoint?: boolean;
+    validated_5km_skill?: boolean;
+  };
+  gnn?: {
+    parameters?: number;
+    architecture?: string;
+    member_permutation_invariance_max_error?: number;
+    meteorological_skill_claimed?: boolean;
+  };
+}
+
 // Precomputed Level-2 icosahedral geodesic mesh (162 vertices, 480 edges, ~14 anomaly nodes)
 const GEODESIC_MESH = (() => {
   const phi = (1 + Math.sqrt(5)) / 2;
@@ -49,7 +76,7 @@ const GEODESIC_MESH = (() => {
     [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
     [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
   ];
-  let nodes: [number, number, number][] = rawVerts.map(([x, y, z]) => {
+  const nodes: [number, number, number][] = rawVerts.map(([x, y, z]) => {
     const l = Math.hypot(x, y, z);
     return [x / l, y / l, z / l];
   });
@@ -128,7 +155,10 @@ function SphericalGNNViewer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [autoRotate, setAutoRotate] = useState(true);
   const autoRotateRef = useRef(true);
-  autoRotateRef.current = autoRotate;
+
+  useEffect(() => {
+    autoRotateRef.current = autoRotate;
+  }, [autoRotate]);
 
   const anglesRef = useRef({ x: 0.28, y: 0.45 });
   const isDraggingRef = useRef(false);
@@ -470,43 +500,168 @@ function SphericalGNNViewer() {
   );
 }
 
+function CheckpointTrainingHistory({ checkpoint }: { checkpoint: CheckpointMeta | null }) {
+  const history = checkpoint?.history;
+  const epochs = history?.epoch ?? [];
+  const train = history?.train_loss ?? [];
+  const validation = history?.val_loss?.length
+    ? history.val_loss
+    : history?.validation_loss ?? [];
+  const hasHistory = Boolean(epochs.length && train.length === epochs.length && validation.length === epochs.length);
+  const completed = hasHistory ? checkpoint?.epochs ?? epochs.length : 0;
+  const maximumEpochs = 60;
+  const values = [...train, ...validation].filter(Number.isFinite);
+  const minimum = values.length ? Math.min(...values) : 0;
+  const maximum = values.length ? Math.max(...values) : 1;
+  const xFor = (index: number) => 28 + (index / Math.max(1, epochs.length - 1)) * 444;
+  const yFor = (value: number) => 150 - ((value - minimum) / Math.max(1, maximum - minimum)) * 112;
+  const trainPath = train.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
+  const validationPath = validation.map((value, index) => `${xFor(index)},${yFor(value)}`).join(" ");
+
+  return (
+    <section className="rounded-3xl overflow-hidden border border-white/15 bg-[linear-gradient(135deg,rgba(255,180,200,0.09),rgba(9,9,11,0.96)_42%,rgba(16,185,129,0.06))]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_.85fr]">
+        <div className="p-6 sm:p-7 border-b lg:border-b-0 lg:border-r border-white/10">
+          <div className="flex items-center justify-between gap-4 mb-5">
+            <div>
+              <span className="text-[10px] font-mono tracking-[0.18em] text-[#ffb4c8]">SAVED CHECKPOINT · MEASURED HISTORY</span>
+              <h3 className="text-xl sm:text-2xl font-bold text-white mt-2">{hasHistory ? "What actually trained" : "Awaiting checkpoint history"}</h3>
+            </div>
+            <span className={`px-3 py-1.5 rounded-full border text-[10px] font-mono ${hasHistory ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-300" : "border-amber-400/25 bg-amber-400/10 text-amber-300"}`}>
+              {hasHistory ? `${completed} EPOCHS ON DISK` : "HISTORY UNAVAILABLE"}
+            </span>
+          </div>
+
+          <div className="h-48 rounded-2xl bg-black/45 border border-white/10 p-3">
+            {hasHistory ? (
+              <svg viewBox="0 0 500 180" className="w-full h-full" role="img" aria-label="Actual checkpoint train and validation loss by epoch">
+                {[38, 76, 114, 150].map((y) => <line key={y} x1="28" y1={y} x2="472" y2={y} stroke="rgba(255,255,255,.08)" strokeDasharray="4 5" />)}
+                <polyline points={trainPath} fill="none" stroke="#ffb4c8" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+                <polyline points={validationPath} fill="none" stroke="#34d399" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+                {epochs.map((epoch, index) => (
+                  <g key={epoch}>
+                    <circle cx={xFor(index)} cy={yFor(train[index])} r="4" fill="#ffb4c8" />
+                    <circle cx={xFor(index)} cy={yFor(validation[index])} r="4" fill="#34d399" />
+                    <text x={xFor(index)} y="171" textAnchor="middle" fontSize="10" fill="#71717a">E{epoch}</text>
+                  </g>
+                ))}
+              </svg>
+            ) : (
+              <div className="h-full grid place-items-center text-center px-8">
+                <p className="text-xs text-zinc-500 leading-relaxed">No loss curve is drawn because the checkpoint API did not return measured epoch history.</p>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-5 mt-3 text-[10px] font-mono text-zinc-400">
+            <span className="flex items-center gap-2"><i className="w-3 h-[3px] bg-[#ffb4c8] rounded-full" /> Train loss</span>
+            <span className="flex items-center gap-2"><i className="w-3 h-[3px] bg-emerald-400 rounded-full" /> Validation loss</span>
+            <span>Checkpoint: best_downscaler.pt</span>
+          </div>
+        </div>
+
+        <div className="p-6 sm:p-7 flex flex-col justify-between gap-6">
+          <div>
+            <span className="text-[10px] font-mono tracking-[0.18em] text-zinc-500">NEXT REAL TRAINING CAMPAIGN</span>
+            <div className="flex items-end justify-between mt-3">
+              <div><strong className="text-4xl font-bold text-white">60</strong><span className="text-zinc-500 text-sm ml-2">max epochs</span></div>
+              <span className="text-amber-300 text-[10px] font-mono">NOT RUNNING</span>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-4">
+              <div className="h-full bg-gradient-to-r from-[#ffb4c8] to-emerald-400 rounded-full" style={{ width: `${Math.min(100, (completed / maximumEpochs) * 100)}%` }} />
+            </div>
+            <div className="flex justify-between text-[10px] font-mono mt-2 text-zinc-500">
+              <span>{completed} existing checkpoint epochs</span><span>{maximumEpochs} epoch cap</span>
+            </div>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10"><span className="text-zinc-400">Early stopping</span><strong className="text-white font-mono">patience = 8</strong></div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10"><span className="text-zinc-400">Learning-rate schedule</span><strong className="text-white font-mono">cosine decay</strong></div>
+            <div className="flex items-center justify-between p-3 rounded-xl bg-white/[0.04] border border-white/10"><span className="text-zinc-400">Promotion rule</span><strong className="text-amber-300 font-mono">best validation epoch</strong></div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-zinc-500 m-0">
+            More epochs are not automatically better. The trainer can run up to 60 and stops when held-out validation no longer improves.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DiffusionFieldPreview({ timestep }: { timestep: number }) {
+  const progress = 1 - timestep / 100;
+  const rows = 10;
+  const columns = 18;
+  const cells = Array.from({ length: rows * columns }, (_, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const x = (column - columns * 0.58) / columns;
+    const y = (row - rows * 0.48) / rows;
+    const core = Math.exp(-(x * x * 52 + y * y * 36));
+    const band = Math.exp(-Math.pow(y + x * 0.38, 2) * 42) * 0.45;
+    const noise = (Math.sin(index * 12.9898 + timestep * 0.17) + 1) / 2;
+    return Math.max(0, Math.min(1, noise * (1 - progress) * 0.85 + (core + band) * progress));
+  });
+  const color = (value: number) => {
+    if (value > 0.82) return "#ff9fbd";
+    if (value > 0.62) return "#f43f5e";
+    if (value > 0.42) return "#8b5cf6";
+    if (value > 0.22) return "#2563eb";
+    return "#111827";
+  };
+  return (
+    <div className="relative rounded-2xl bg-black/65 border border-white/10 p-4 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_65%_45%,rgba(244,63,94,.14),transparent_42%)]" />
+      <div className="relative flex items-center justify-between mb-3 text-[10px] font-mono">
+        <span className="text-zinc-400">LATENT FIELD · ARCHITECTURE VISUALIZATION</span>
+        <span className="text-[#ffb4c8]">SIGNAL {(progress * 100).toFixed(0)}%</span>
+      </div>
+      <div className="relative grid gap-[2px]" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+        {cells.map((value, index) => (
+          <span key={index} className="aspect-square rounded-[2px] transition-colors duration-300" style={{ background: color(value), opacity: 0.35 + value * 0.65 }} />
+        ))}
+      </div>
+      <div className="relative flex justify-between mt-3 text-[9px] font-mono text-zinc-600">
+        <span>NOISE PRIOR</span><span>COARSE + TERRAIN CONDITION</span><span>SCENARIO FIELD</span>
+      </div>
+    </div>
+  );
+}
+
 export default function TrainingLab() {
-  // State for live training simulator
+  // State for independent forward/backward differentiability probes.
   const [isRunning, setIsRunning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [totalLoss, setTotalLoss] = useState(3842.15);
-  const [mseLoss, setMseLoss] = useState(1840.2);
-  const [tailLoss, setTailLoss] = useState(571.9);
-  const [moistureLoss, setMoistureLoss] = useState(0.0004);
-  const [nonNegLoss, setNonNegLoss] = useState(0.012);
-  const [continuityLoss, setContinuityLoss] = useState(0.000003);
-  const [gradNorm, setGradNorm] = useState(3421.5);
-  const [learningRate, setLearningRate] = useState(0.00098);
-  const [predictedPeak, setPredictedPeak] = useState(62.4);
-  const [targetPeak] = useState(162.4);
-  const [lossHistory, setLossHistory] = useState<LossPoint[]>([
-    { step: 1, total: 4512.3, mse: 2150.0, tail: 674.9, moisture: 0.001 },
-    { step: 2, total: 4180.5, mse: 1980.2, tail: 628.6, moisture: 0.0008 },
-    { step: 3, total: 3842.1, mse: 1840.2, tail: 571.9, moisture: 0.0004 },
-  ]);
-  const [lastElapsedMs, setLastElapsedMs] = useState(18.4);
+  const [hasLiveProbe, setHasLiveProbe] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalLoss, setTotalLoss] = useState(0);
+  const [mseLoss, setMseLoss] = useState(0);
+  const [tailLoss, setTailLoss] = useState(0);
+  const [moistureLoss, setMoistureLoss] = useState(0);
+  const [nonNegLoss, setNonNegLoss] = useState(0);
+  const [continuityLoss, setContinuityLoss] = useState(0);
+  const [gradNorm, setGradNorm] = useState(0);
+  const [learningRate, setLearningRate] = useState(0);
+  const [predictedPeak, setPredictedPeak] = useState(0);
+  const [targetPeak, setTargetPeak] = useState(0);
+  const [lossHistory, setLossHistory] = useState<LossPoint[]>([]);
+  const [lastElapsedMs, setLastElapsedMs] = useState(0);
+  const [probeError, setProbeError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"loop" | "gnn" | "diffusion" | "matrix" | "weights">("loop");
-  const [checkpointMeta, setCheckpointMeta] = useState<any>(null);
+  const [checkpointMeta, setCheckpointMeta] = useState<CheckpointMeta | null>(null);
+  const [mlStatus, setMlStatus] = useState<MLStatus | null>(null);
   const [diffusionStep, setDiffusionStep] = useState(4); // 0 to 4 (t=100 down to t=0)
 
-  // Training progress and percentage remaining calculations
-  const TOTAL_STEPS = 50;
-  const currentStepInEpoch = ((currentStep - 1) % TOTAL_STEPS) + 1;
-  const completedPercent = Math.min(100, Math.round((currentStepInEpoch / TOTAL_STEPS) * 100));
+  // This is a queue of independent probes, not a persistent training epoch.
+  const currentProbe = Math.min(TOTAL_PROBES, Math.max(0, currentStep));
+  const completedPercent = Math.min(100, Math.round((currentProbe / TOTAL_PROBES) * 100));
   const remainingPercent = Math.max(0, 100 - completedPercent);
-  const stepsLeft = Math.max(0, TOTAL_STEPS - currentStepInEpoch);
-  const epochNumber = Math.floor((currentStep - 1) / TOTAL_STEPS) + 1;
+  const probesLeft = Math.max(0, TOTAL_PROBES - currentProbe);
 
   // Fetch status on load
   useEffect(() => {
     fetch("/api/training/status")
       .then((res) => res.json())
-      .then((data) => {
+      .then((data: MLStatus) => {
+        setMlStatus(data);
         if (data.checkpoint) {
           setCheckpointMeta(data.checkpoint);
         }
@@ -515,8 +670,9 @@ export default function TrainingLab() {
   }, []);
 
   // Live training loop step function
-  const executeStep = async (stepNum?: number) => {
+  const executeStep = useCallback(async (stepNum?: number) => {
     const nextStep = stepNum ?? currentStep + 1;
+    setProbeError(null);
     try {
       const res = await fetch("/api/training/step", {
         method: "POST",
@@ -525,7 +681,9 @@ export default function TrainingLab() {
       });
       const data = await res.json();
       if (data.success) {
+        setHasLiveProbe(true);
         setCurrentStep(data.step);
+        if (data.step >= TOTAL_PROBES) setIsRunning(false);
         setTotalLoss(data.total_loss);
         setMseLoss(data.loss_components.mse_loss);
         setTailLoss(data.loss_components.tail_loss);
@@ -535,6 +693,7 @@ export default function TrainingLab() {
         setGradNorm(data.gradient_norm);
         setLearningRate(data.learning_rate);
         setPredictedPeak(data.predicted_peak_mm);
+        setTargetPeak(data.target_peak_mm);
         setLastElapsedMs(data.elapsed_ms);
 
         setLossHistory((prev) => {
@@ -550,22 +709,34 @@ export default function TrainingLab() {
           ];
           return next;
         });
+      } else {
+        setProbeError(data.error ?? "The PyTorch probe did not complete.");
+        setIsRunning(false);
       }
     } catch (e) {
       console.warn("Step execution error:", e);
+      setProbeError("The local PyTorch runtime could not be reached.");
+      setIsRunning(false);
     }
+  }, [currentStep]);
+
+  const resetProbes = () => {
+    setIsRunning(false);
+    setCurrentStep(0);
+    setHasLiveProbe(false);
+    setLossHistory([]);
+    setProbeError(null);
   };
 
-  // Interval timer for running loop
+  // Run probes sequentially so slow PyTorch passes never overlap.
   useEffect(() => {
-    let interval: any = null;
-    if (isRunning) {
-      interval = setInterval(() => {
-        executeStep();
-      }, 1600);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, currentStep]);
+    if (!isRunning) return;
+    if (currentStep >= TOTAL_PROBES) return;
+    const timeout = window.setTimeout(() => {
+      void executeStep();
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [isRunning, currentStep, executeStep]);
 
   const DIFFUSION_STEPS = [
     { t: 100, label: "T = 100", title: "Gaussian Noise Prior", psd: "Not measured", peak: "Not measured", desc: "Architecture view: initialize from isotropic noise N(0, I)." },
@@ -574,6 +745,7 @@ export default function TrainingLab() {
     { t: 25, label: "T = 25", title: "Fine-scale Denoising", psd: "Not measured", peak: "Not measured", desc: "Architecture view: recover stochastic spatial detail through reverse diffusion." },
     { t: 0, label: "T = 0", title: "Multi-objective Output", psd: "Not measured", peak: "Not measured", desc: "Training objective combines tail, FFT spectrum, coarse consistency, peak and optional physics losses. No trained DDPM checkpoint exists yet." },
   ];
+  const activeDiffusion = DIFFUSION_STEPS[diffusionStep];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-2 sm:px-4 py-4 text-white">
@@ -592,7 +764,7 @@ export default function TrainingLab() {
               }`}
             >
               <Zap size={13} className={activeTab === "loop" ? "text-rose-600" : "text-[#ffb4c8]"} />
-              Live Training
+              Training Reality
             </button>
             <button
               type="button"
@@ -649,7 +821,7 @@ export default function TrainingLab() {
             <div className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 flex items-center gap-1.5 font-mono text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-zinc-500">CKPT:</span>
-              <span className="text-white font-semibold">best_downscaler.pt (174k)</span>
+              <span className="text-white font-semibold">best_downscaler.pt ({checkpointMeta?.total_parameters != null ? checkpointMeta.total_parameters.toLocaleString() : "metadata unavailable"})</span>
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 flex items-center gap-1.5 font-mono text-[11px]">
               <span className="text-zinc-500">ENGINE:</span>
@@ -657,16 +829,17 @@ export default function TrainingLab() {
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-[#ffb4c8]/25 flex items-center gap-1.5 font-mono text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#ffb4c8] animate-pulse" />
-              <span className="text-zinc-400">SMOKE TEST:</span>
-              <span className="text-[#ffb4c8] font-bold">{remainingPercent}%</span>
+              <span className="text-zinc-400">REAL EPOCHS:</span>
+              <span className="text-[#ffb4c8] font-bold">{checkpointMeta?.epochs != null ? `${checkpointMeta.epochs} COMPLETE` : "UNAVAILABLE"}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* TAB 1: LIVE TRAINING SIMULATOR */}
+      {/* TAB 1: checkpoint truth + independent gradient probes */}
       {activeTab === "loop" && (
         <div className="space-y-6">
+          <CheckpointTrainingHistory checkpoint={checkpointMeta} />
           {/* Controls & Quick Telemetry */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Interactive Loop Controller */}
@@ -679,7 +852,7 @@ export default function TrainingLab() {
                 </p>
               </div>
 
-              {/* Training Progress & Remaining Workload % */}
+              {/* Independent probe queue */}
               <div className="p-4 rounded-2xl bg-black/60 border border-white/10 space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center gap-2">
@@ -687,7 +860,7 @@ export default function TrainingLab() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ffb4c8] opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                     </span>
-                    <span className="text-zinc-300 font-semibold">SMOKE-TEST SEQUENCE</span>
+                    <span className="text-zinc-300 font-semibold">AUTOGRAD PROBE QUEUE</span>
                   </div>
                   <div className="text-right">
                     <span className="text-sm sm:text-base font-bold font-mono text-[#ffb4c8]">
@@ -710,9 +883,9 @@ export default function TrainingLab() {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400 pt-0.5">
-                  <span>Epoch #{epochNumber} · Step {currentStepInEpoch} of {TOTAL_STEPS}</span>
+                  <span>Probe {currentProbe} of {TOTAL_PROBES} · independent seeded batch</span>
                   <span className="text-emerald-400 font-medium">
-                    {stepsLeft > 0 ? `${stepsLeft} steps remaining` : "Epoch Target Complete"}
+                    {probesLeft > 0 ? `${probesLeft} probes remaining` : "Probe Queue Complete"}
                   </span>
                 </div>
               </div>
@@ -720,41 +893,46 @@ export default function TrainingLab() {
               <div className="flex flex-wrap gap-3 items-center">
                 <button
                   onClick={() => setIsRunning(!isRunning)}
+                  disabled={!isRunning && currentStep >= TOTAL_PROBES}
                   className={`px-5 py-2.5 rounded-full font-sans font-semibold text-xs transition-all flex items-center gap-2 ${
                     isRunning
                       ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
-                      : "bg-white text-black hover:bg-white/90 shadow-md"
+                      : "bg-white text-black hover:bg-white/90 shadow-md disabled:opacity-50"
                   }`}
                 >
                   {isRunning ? <Pause size={14} /> : <Play size={14} />}
-                  {isRunning ? "Pause Smoke Tests" : "Auto-Run Smoke Tests"}
+                  {isRunning ? "Pause Probes" : "Auto-Run Probes"}
                 </button>
 
                 <button
-                  onClick={() => executeStep()}
-                  disabled={isRunning}
+                  onClick={() => void executeStep()}
+                  disabled={isRunning || currentStep >= TOTAL_PROBES}
                   className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-medium transition-all disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <Zap size={13} className="text-[#ffb4c8]" />
-                  Run 1 Backprop Step
+                  Run 1 Gradient Probe
                 </button>
 
                 <button
-                  onClick={() => {
-                    setCurrentStep(1);
-                    executeStep(1);
-                  }}
+                  onClick={resetProbes}
                   className="p-2.5 rounded-full bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white border border-white/10 transition-all"
-                  title="Reset Loop"
+                  title="Reset Probe Queue"
                 >
                   <RotateCcw size={14} />
                 </button>
               </div>
 
+              {probeError && (
+                <div role="alert" className="flex items-start gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-[11px] text-rose-200">
+                  <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                  <span>{probeError}</span>
+                </div>
+              )}
+
               <div className="pt-2 border-t border-white/10 grid grid-cols-3 gap-2 text-xs font-mono">
                 <div>
                   <span className="text-zinc-500 block text-[10px]">CURRENT ITERATION</span>
-                  <strong className="text-xs sm:text-sm text-white font-bold">Step #{currentStep}</strong>
+                  <strong className="text-xs sm:text-sm text-white font-bold">{currentStep > 0 ? `Probe #${currentStep}` : "Not run"}</strong>
                 </div>
                 <div>
                   <span className="text-zinc-500 block text-[10px]">TEST SEQUENCE</span>
@@ -762,7 +940,7 @@ export default function TrainingLab() {
                 </div>
                 <div>
                   <span className="text-zinc-500 block text-[10px]">STEP LATENCY</span>
-                  <strong className="text-xs sm:text-sm text-emerald-400 font-bold">{lastElapsedMs} ms</strong>
+                  <strong className="text-xs sm:text-sm text-emerald-400 font-bold">{hasLiveProbe ? `${lastElapsedMs} ms` : "—"}</strong>
                 </div>
               </div>
             </div>
@@ -772,9 +950,9 @@ export default function TrainingLab() {
               <div className="rounded-3xl p-5 bg-zinc-900/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between">
                 <span className="font-mono text-[10px] text-zinc-400">TOTAL PINN LOSS</span>
                 <div className="my-2">
-                  <span className="text-2xl font-bold text-white font-mono">{totalLoss.toFixed(1)}</span>
+                  <span className="text-2xl font-bold text-white font-mono">{hasLiveProbe ? totalLoss.toFixed(1) : "—"}</span>
                   <span className="text-[10px] text-emerald-400 block flex items-center gap-1 mt-0.5">
-                    <Activity size={11} /> Measured this pass
+                    <Activity size={11} /> {hasLiveProbe ? "Measured this pass" : "Run a probe"}
                   </span>
                 </div>
                 <div className="text-[10px] text-zinc-500 font-mono">L = L_mse + 3.5 L_tail</div>
@@ -783,7 +961,7 @@ export default function TrainingLab() {
               <div className="rounded-3xl p-5 bg-zinc-900/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between">
                 <span className="font-mono text-[10px] text-zinc-400">EXTREME TAIL LOSS</span>
                 <div className="my-2">
-                  <span className="text-2xl font-bold text-[#ffb4c8] font-mono">{tailLoss.toFixed(1)}</span>
+                  <span className="text-2xl font-bold text-[#ffb4c8] font-mono">{hasLiveProbe ? tailLoss.toFixed(1) : "—"}</span>
                   <span className="text-[10px] text-zinc-400 block mt-0.5">&gt;90th percentile focus</span>
                 </div>
                 <div className="text-[10px] text-zinc-500 font-mono">Prevents peak blur</div>
@@ -792,20 +970,20 @@ export default function TrainingLab() {
               <div className="rounded-3xl p-5 bg-zinc-900/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between">
                 <span className="font-mono text-[10px] text-zinc-400">GRADIENT NORM (L2)</span>
                 <div className="my-2">
-                  <span className="text-2xl font-bold text-white font-mono">{gradNorm.toFixed(0)}</span>
-                  <span className="text-[10px] text-emerald-400 block mt-0.5">Stable backprop</span>
+                  <span className="text-2xl font-bold text-white font-mono">{hasLiveProbe ? gradNorm.toFixed(0) : "—"}</span>
+                  <span className="text-[10px] text-emerald-400 block mt-0.5">{hasLiveProbe ? "Backprop completed" : "Awaiting gradient"}</span>
                 </div>
-                <div className="text-[10px] text-zinc-500 font-mono">lr = {learningRate}</div>
+                <div className="text-[10px] text-zinc-500 font-mono">lr = {hasLiveProbe ? learningRate : "run a probe"}</div>
               </div>
 
               <div className="rounded-3xl p-5 bg-zinc-900/80 border border-white/15 backdrop-blur-xl flex flex-col justify-between">
                 <span className="font-mono text-[10px] text-zinc-400">PEAK RECOVERY RATIO</span>
                 <div className="my-2">
                   <span className="text-2xl font-bold text-[#ffb4c8] font-mono">
-                    {Math.min(98.5, Math.round((predictedPeak / targetPeak) * 100))}%
+                    {hasLiveProbe && targetPeak > 0 ? `${Math.round((predictedPeak / targetPeak) * 100)}%` : "—"}
                   </span>
                   <span className="text-[10px] text-zinc-300 block mt-0.5">
-                    {predictedPeak.toFixed(0)} / {targetPeak.toFixed(0)} mm
+                    {hasLiveProbe ? `${predictedPeak.toFixed(0)} / ${targetPeak.toFixed(0)} mm` : "awaiting probe"}
                   </span>
                 </div>
                 <div className="text-[10px] text-zinc-500 font-mono">Synthetic batch diagnostic</div>
@@ -892,7 +1070,7 @@ export default function TrainingLab() {
                     <span className="text-white block font-semibold">MSE Base Term</span>
                     <span className="text-[10px] text-zinc-500">|| y_pred - y_true ||²</span>
                   </div>
-                  <strong className="text-white">{mseLoss.toFixed(1)}</strong>
+                  <strong className="text-white">{hasLiveProbe ? mseLoss.toFixed(1) : "—"}</strong>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex justify-between items-center">
@@ -900,7 +1078,7 @@ export default function TrainingLab() {
                     <span className="text-[#ffb4c8] block font-semibold">Extreme Tail Penalty (P90)</span>
                     <span className="text-[10px] text-zinc-500">I[y &gt;= Q90] · (p - y)²</span>
                   </div>
-                  <strong className="text-[#ffb4c8]">{tailLoss.toFixed(1)}</strong>
+                  <strong className="text-[#ffb4c8]">{hasLiveProbe ? tailLoss.toFixed(1) : "—"}</strong>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex justify-between items-center">
@@ -908,7 +1086,7 @@ export default function TrainingLab() {
                     <span className="text-white block font-semibold">Moisture Flux Divergence</span>
                     <span className="text-[10px] text-zinc-500">-∇ · (q v) constraint</span>
                   </div>
-                  <strong className="text-emerald-400">{moistureLoss.toFixed(4)}</strong>
+                  <strong className="text-emerald-400">{hasLiveProbe ? moistureLoss.toFixed(4) : "—"}</strong>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex justify-between items-center">
@@ -916,7 +1094,7 @@ export default function TrainingLab() {
                     <span className="text-white block font-semibold">Non-Negativity Barrier</span>
                     <span className="text-[10px] text-zinc-500">ReLU(-P_pred)²</span>
                   </div>
-                  <strong className="text-emerald-400">{nonNegLoss.toFixed(4)}</strong>
+                  <strong className="text-emerald-400">{hasLiveProbe ? nonNegLoss.toFixed(4) : "—"}</strong>
                 </div>
 
                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex justify-between items-center">
@@ -924,7 +1102,7 @@ export default function TrainingLab() {
                     <span className="text-white block font-semibold">Mass Continuity Residual</span>
                     <span className="text-[10px] text-zinc-500">∂u/∂x + ∂v/∂y ≈ 0</span>
                   </div>
-                  <strong className="text-zinc-400">{continuityLoss.toExponential(1)}</strong>
+                  <strong className="text-zinc-400">{hasLiveProbe ? continuityLoss.toExponential(1) : "—"}</strong>
                 </div>
               </div>
             </div>
@@ -983,88 +1161,156 @@ export default function TrainingLab() {
       {/* TAB 3: GENERATIVE DIFFUSION DENOISING */}
       {activeTab === "diffusion" && (
         <div className="space-y-6">
-          <div className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15 backdrop-blur-xl space-y-6">
-            <div className="flex justify-between items-center text-xs flex-wrap gap-2">
-              <span className="font-mono text-[#ffb4c8] font-bold">STAGE 2: CONDITIONAL DIFFUSION DOWNSCALER (DDPM)</span>
-              <span className="bg-amber-500/10 text-amber-300 border border-amber-500/20 px-3 py-1 rounded-full text-[10px] font-mono">
-                ARCHITECTURE READY · WEIGHTS UNTRAINED
-              </span>
+          <section className="rounded-3xl overflow-hidden border border-white/15 bg-[linear-gradient(135deg,rgba(59,130,246,.10),rgba(9,9,11,.97)_38%,rgba(244,63,94,.10))]">
+            <div className="p-6 sm:p-8 border-b border-white/10">
+              <div className="flex justify-between items-center text-xs flex-wrap gap-3">
+                <span className="font-mono text-[#ffb4c8] font-bold tracking-[0.12em]">STAGE 2 · PROBABILISTIC DOWNSCALING</span>
+                <span className="bg-amber-500/10 text-amber-300 border border-amber-500/25 px-3 py-1.5 rounded-full text-[10px] font-mono">
+                  ARCHITECTURE TESTED · CHECKPOINT REQUIRED
+                </span>
+              </div>
+              <div className="mt-5 max-w-3xl">
+                <h3 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">Conditional DDPM Scenario Workbench</h3>
+                <p className="text-sm text-zinc-300 leading-relaxed mt-3">
+                  Explore how the implemented 100-step diffusion pipeline turns a coarse ensemble state into fine-grid rainfall scenarios. This is an architecture visualization—not a forecast—because trained DDPM weights and paired 12 km → 5 km observations are not present yet.
+                </p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div className="space-y-4">
-                <h3 className="text-2xl sm:text-3xl font-bold text-white">Reverse Denoising Step-by-Step</h3>
-                <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                  The conditional diffusion candidate is designed to learn a distribution of fine-scale rainfall conditioned on topography and NWP synoptics. Its new objective explicitly scores extreme tails, Fourier detail, coarse conservation, peaks, and atmospheric consistency; real skill still requires paired training data.
-                </p>
-
-                {/* Scrubber Controls */}
-                <div className="space-y-2 pt-2">
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-zinc-400">Diffusion Timestep:</span>
-                    <strong className="text-[#ffb4c8]">{DIFFUSION_STEPS[diffusionStep].label}</strong>
+            <div className="grid grid-cols-1 lg:grid-cols-[.85fr_1.15fr] gap-0">
+              <div className="p-6 sm:p-8 border-b lg:border-b-0 lg:border-r border-white/10 space-y-6">
+                <div>
+                  <div className="flex justify-between items-end gap-4 font-mono">
+                    <div>
+                      <span className="text-[10px] text-zinc-500 block">ACTIVE REVERSE STEP</span>
+                      <strong className="text-2xl text-white block mt-1">{activeDiffusion.label}</strong>
+                    </div>
+                    <span className="text-xs text-[#ffb4c8] text-right">{activeDiffusion.title}</span>
                   </div>
                   <input
+                    aria-label="Diffusion architecture timestep"
                     type="range"
                     min="0"
                     max="4"
                     value={diffusionStep}
-                    onChange={(e) => setDiffusionStep(Number(e.target.value))}
-                    className="w-full accent-[#ffb4c8] cursor-pointer"
+                    onChange={(event) => setDiffusionStep(Number(event.target.value))}
+                    className="w-full accent-[#ffb4c8] cursor-pointer mt-5"
                   />
-                  <div className="flex justify-between text-[10px] font-mono text-zinc-500">
-                    <span>T=100 (Noise)</span>
-                    <span>T=50 (Orographic)</span>
-                    <span>T=0 (Clean 5km)</span>
+                  <div className="flex justify-between text-[9px] font-mono text-zinc-600 mt-2">
+                    <span>T=100 · NOISE</span><span>T=50 · CONDITION</span><span>T=0 · OUTPUT</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4">
+                    <span className="text-[9px] text-zinc-500 font-mono">NOISE REMAINING</span>
+                    <strong className="text-2xl text-white block mt-1">{activeDiffusion.t}%</strong>
+                  </div>
+                  <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-4">
+                    <span className="text-[9px] text-zinc-500 font-mono">SIGNAL STRUCTURE</span>
+                    <strong className="text-2xl text-[#ffb4c8] block mt-1">{100 - activeDiffusion.t}%</strong>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-black/40 border border-white/10 p-4">
+                  <p className="text-xs text-zinc-300 leading-relaxed m-0">{activeDiffusion.desc}</p>
+                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/10 text-[10px] font-mono">
+                    <div><span className="text-zinc-600 block">FOURIER SKILL</span><strong className="text-amber-300 mt-1 block">{activeDiffusion.psd}</strong></div>
+                    <div><span className="text-zinc-600 block">PEAK SKILL</span><strong className="text-amber-300 mt-1 block">{activeDiffusion.peak}</strong></div>
                   </div>
                 </div>
               </div>
 
-              {/* Step Detail Card */}
-              <div className="p-6 rounded-2xl bg-black/60 border border-white/15 space-y-4 font-mono text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">ACTIVE TIMESTEP:</span>
-                  <span className="text-white font-bold">{DIFFUSION_STEPS[diffusionStep].label}</span>
+              <div className="p-6 sm:p-8 space-y-4">
+                <DiffusionFieldPreview timestep={activeDiffusion.t} />
+                <div className="flex items-start gap-3 rounded-2xl bg-amber-500/[0.07] border border-amber-500/20 p-4">
+                  <AlertTriangle size={16} className="text-amber-300 mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-amber-100/75 leading-relaxed m-0">
+                    The field responds to the timestep control, but it is deterministic UI artwork. No rainfall value, spectrum score, or local peak is reported until a trained checkpoint is evaluated on held-out events.
+                  </p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">PROCESS STAGE:</span>
-                  <span className="text-[#ffb4c8] font-bold">{DIFFUSION_STEPS[diffusionStep].title}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">FOURIER RETENTION:</span>
-                  <span className="text-emerald-400 font-bold">{DIFFUSION_STEPS[diffusionStep].psd}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">LOCAL PEAK:</span>
-                  <span className="text-white font-bold">{DIFFUSION_STEPS[diffusionStep].peak}</span>
-                </div>
-                <p className="text-zinc-400 text-[11px] pt-2 border-t border-white/10 font-sans">
-                  {DIFFUSION_STEPS[diffusionStep].desc}
-                </p>
               </div>
             </div>
+          </section>
 
-            {/* PSD Spectral Energy Bar */}
-            <div className="pt-4 border-t border-white/10 space-y-3">
-              <span className="font-mono text-xs text-zinc-400 block">2D Fourier Radial PSD High-Frequency Energy Retention:</span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-1">
-                  <span className="text-[10px] font-mono text-zinc-500">STANDARD BILINEAR</span>
-                  <strong className="text-lg text-zinc-400 font-mono block">1.7% Power</strong>
-                  <span className="text-[10px] text-rose-400">Severe spectral smoothing</span>
-                </div>
-                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-1">
-                  <span className="text-[10px] font-mono text-zinc-500">RESIDUAL CNN EXPERIMENT</span>
-                  <strong className="text-lg text-white font-mono block">11.7% Power</strong>
-                  <span className="text-[10px] text-zinc-400">Moderate improvement</span>
-                </div>
-                <div className="p-4 rounded-2xl bg-rose-500/10 border border-[#ffb4c8]/30 space-y-1">
-                  <span className="text-[10px] font-mono text-[#ffb4c8]">HAND-CONSTRUCTED DIFFUSION-LIKE FIXTURE</span>
-                  <strong className="text-lg text-[#ffb4c8] font-mono block">50.7% Power</strong>
-                  <span className="text-[10px] text-amber-300">Synthetic objective target, not model skill</span>
-                </div>
+          <section className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15 space-y-5">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <span className="text-[10px] font-mono tracking-[0.16em] text-sky-300">END-TO-END GENERATION PATH</span>
+                <h4 className="text-xl font-bold text-white mt-2">From ensemble fields to auditable scenarios</h4>
               </div>
+              <span className="text-[10px] text-zinc-500 font-mono">DESIGN CONTRACT · NOT RUNTIME TELEMETRY</span>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+              {[
+                { number: "01", title: "12 km ensemble", description: "EPS rainfall + synoptic channels", Icon: Database },
+                { number: "02", title: "Physical context", description: "Terrain, humidity and u/v wind", Icon: Layers },
+                { number: "03", title: "Reverse process", description: `${mlStatus?.diffusion?.total_timesteps ?? 100} denoising timesteps`, Icon: Sliders },
+                { number: "04", title: "Scenario ensemble", description: "p10 / p50 / p90 + exceedance", Icon: BarChart3 },
+                { number: "05", title: "Safety audit", description: "Conservation, peaks and physics", Icon: ShieldCheck },
+              ].map(({ number, title, description, Icon }) => (
+                <div key={number} className="relative rounded-2xl bg-white/[0.035] border border-white/10 p-4 min-h-36">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-zinc-600">{number}</span>
+                    <Icon size={16} className="text-[#ffb4c8]" />
+                  </div>
+                  <strong className="text-sm text-white block mt-6">{title}</strong>
+                  <span className="text-[11px] text-zinc-500 leading-relaxed block mt-2">{description}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_.9fr] gap-6">
+            <section className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-9 h-9 rounded-xl bg-[#ffb4c8]/10 border border-[#ffb4c8]/20 grid place-items-center"><Activity size={17} className="text-[#ffb4c8]" /></div>
+                <div><span className="text-[10px] font-mono text-zinc-500">MULTI-OBJECTIVE TRAINING</span><h4 className="text-lg font-bold text-white">Loss function stack</h4></div>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { label: "Tail-weighted denoising", weight: 2, description: "Protect rare high-rainfall pixels" },
+                  { label: "Coarse conservation", weight: 0.5, description: "Preserve area-integrated rainfall" },
+                  { label: "FFT spectral fidelity", weight: 0.25, description: "Penalize lost fine-scale energy" },
+                  { label: "Peak preservation", weight: 0.25, description: "Retain extreme local maxima" },
+                  { label: "Physics consistency", weight: 0.2, description: "Optional moisture-flux constraints" },
+                ].map(({ label, weight, description }) => (
+                  <div key={label}>
+                    <div className="flex justify-between gap-3 text-xs"><span className="text-zinc-300">{label}</span><strong className="text-white font-mono">λ {weight.toFixed(2)}</strong></div>
+                    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden mt-2"><div className="h-full rounded-full bg-gradient-to-r from-sky-500 to-[#ffb4c8]" style={{ width: `${Math.min(100, weight * 50)}%` }} /></div>
+                    <span className="text-[10px] text-zinc-600 mt-1 block">{description}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-3xl p-6 sm:p-8 bg-zinc-900/80 border border-white/15 flex flex-col">
+              <div className="flex items-center justify-between gap-3">
+                <div><span className="text-[10px] font-mono text-zinc-500">STAGE 2 READINESS</span><h4 className="text-lg font-bold text-white mt-1">Evidence gates</h4></div>
+                <strong className="text-3xl text-amber-300 font-mono">2 / 5</strong>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-5">
+                <div className="rounded-xl bg-white/[0.035] border border-white/10 p-3"><span className="text-[9px] text-zinc-500 font-mono">PARAMETERS</span><strong className="text-lg text-white block mt-1">{(mlStatus?.diffusion?.parameters ?? 23713).toLocaleString()}</strong></div>
+                <div className="rounded-xl bg-white/[0.035] border border-white/10 p-3"><span className="text-[9px] text-zinc-500 font-mono">OBJECTIVES</span><strong className="text-lg text-white block mt-1">{mlStatus?.diffusion?.objective_terms?.length ?? 5}</strong></div>
+              </div>
+              <div className="space-y-2 mt-5 text-xs">
+                {[
+                  { ready: true, label: "Architecture forward/backward tests" },
+                  { ready: true, label: "DDPM sampling + diagnostics contract" },
+                  { ready: false, label: "Trained DDPM checkpoint" },
+                  { ready: false, label: "Paired 12 km → 5 km training corpus" },
+                  { ready: false, label: "Held-out multi-event skill report" },
+                ].map(({ ready, label }) => (
+                  <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.025] border border-white/[0.07]">
+                    {ready ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0" /> : <span className="w-[15px] h-[15px] rounded-full border border-amber-400/50 shrink-0" />}
+                    <span className={ready ? "text-zinc-300" : "text-zinc-500"}>{label}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/dashboard/downscaling" className="mt-5 inline-flex items-center justify-between gap-3 rounded-xl bg-white text-black px-4 py-3 text-xs font-semibold hover:bg-zinc-200 transition-colors">
+                Open quantitative downscaling lab <ArrowUpRight size={14} />
+              </Link>
+            </section>
           </div>
         </div>
       )}
