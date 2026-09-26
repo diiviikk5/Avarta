@@ -272,95 +272,85 @@ export default function TrainingLab() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-2 sm:px-4 py-4 text-white">
-      {/* Top Banner / System Telemetry */}
-      <div className="rounded-3xl p-6 sm:p-8 bg-zinc-950/90 border border-white/15 backdrop-blur-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10 relative z-10">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-mono text-xs text-emerald-400 font-semibold tracking-wider uppercase">
-                PyTorch Neural Core Online · Problem Statement #26078
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-white flex items-center gap-3">
-              AI Core &amp; Live Training Lab
-              <span className="text-xs px-3 py-1 rounded-full bg-white/10 text-[#ffb4c8] border border-[#ffb4c8]/30 font-mono font-normal">
-                v0.3.0 Research
-              </span>
-            </h1>
+      {/* Top Controls & System Telemetry */}
+      <div className="rounded-3xl p-4 sm:p-5 bg-zinc-950/90 border border-white/15 backdrop-blur-2xl relative">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Tab Selector - Fully responsive flex-wrap ensuring no buttons are cut off */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("loop")}
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 ${
+                activeTab === "loop"
+                  ? "bg-white text-black font-semibold shadow-md"
+                  : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Zap size={13} className={activeTab === "loop" ? "text-rose-600" : "text-[#ffb4c8]"} />
+              Live Training
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("gnn")}
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 ${
+                activeTab === "gnn"
+                  ? "bg-white text-black font-semibold shadow-md"
+                  : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Network size={13} className={activeTab === "gnn" ? "text-rose-600" : "text-[#ffb4c8]"} />
+              Spherical GNN
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("diffusion")}
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 ${
+                activeTab === "diffusion"
+                  ? "bg-white text-black font-semibold shadow-md"
+                  : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Sliders size={13} className={activeTab === "diffusion" ? "text-rose-600" : "text-[#ffb4c8]"} />
+              Diffusion DDPM
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("matrix")}
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 ${
+                activeTab === "matrix"
+                  ? "bg-white text-black font-semibold shadow-md"
+                  : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <ShieldCheck size={13} className={activeTab === "matrix" ? "text-rose-600" : "text-[#ffb4c8]"} />
+              Evidence Matrix
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("weights")}
+              className={`px-3.5 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 ${
+                activeTab === "weights"
+                  ? "bg-white text-black font-semibold shadow-md"
+                  : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Database size={13} className={activeTab === "weights" ? "text-rose-600" : "text-[#ffb4c8]"} />
+              Checkpoint Weights
+            </button>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-right font-mono text-xs">
-              <span className="text-zinc-500 block text-[10px]">TRAINED CHECKPOINT</span>
-              <span className="text-white font-semibold">best_downscaler.pt (174k params)</span>
+          {/* Telemetry Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 flex items-center gap-1.5 font-mono text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-zinc-500">CKPT:</span>
+              <span className="text-white font-semibold">best_downscaler.pt (174k)</span>
             </div>
-            <div className="px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/10 text-right font-mono text-xs">
-              <span className="text-zinc-500 block text-[10px]">DEVICE / GRAPH</span>
-              <span className="text-emerald-400 font-semibold">PyTorch autograd · CPU/CUDA</span>
+            <div className="px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 flex items-center gap-1.5 font-mono text-[11px]">
+              <span className="text-zinc-500">ENGINE:</span>
+              <span className="text-emerald-400 font-semibold">PyTorch Autograd</span>
             </div>
           </div>
-        </div>
-
-        {/* Tab Selector */}
-        <div className="flex items-center gap-2 pt-6 overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => setActiveTab("loop")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "loop"
-                ? "bg-white text-black font-semibold shadow-md"
-                : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10"
-            }`}
-          >
-            <Zap size={14} className={activeTab === "loop" ? "text-rose-600" : "text-[#ffb4c8]"} />
-            Live Training Simulator
-          </button>
-          <button
-            onClick={() => setActiveTab("gnn")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "gnn"
-                ? "bg-white text-black font-semibold shadow-md"
-                : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10"
-            }`}
-          >
-            <Network size={14} className={activeTab === "gnn" ? "text-rose-600" : "text-[#ffb4c8]"} />
-            Stage 1: Spherical Icosahedral GNN
-          </button>
-          <button
-            onClick={() => setActiveTab("diffusion")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "diffusion"
-                ? "bg-white text-black font-semibold shadow-md"
-                : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10"
-            }`}
-          >
-            <Sliders size={14} className={activeTab === "diffusion" ? "text-rose-600" : "text-[#ffb4c8]"} />
-            Stage 2: Generative Diffusion Denoising
-          </button>
-          <button
-            onClick={() => setActiveTab("matrix")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "matrix"
-                ? "bg-white text-black font-semibold shadow-md"
-                : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10"
-            }`}
-          >
-            <ShieldCheck size={14} className={activeTab === "matrix" ? "text-rose-600" : "text-[#ffb4c8]"} />
-            Judge Transparency &amp; Evidence Matrix
-          </button>
-          <button
-            onClick={() => setActiveTab("weights")}
-            className={`px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === "weights"
-                ? "bg-white text-black font-semibold shadow-md"
-                : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10"
-            }`}
-          >
-            <Database size={14} className={activeTab === "weights" ? "text-rose-600" : "text-[#ffb4c8]"} />
-            Real Checkpoint Inspector
-          </button>
         </div>
       </div>
 
