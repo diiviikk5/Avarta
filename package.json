@@ -1,0 +1,14 @@
+{
+  "name": "avarta-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Avarta Atmospheric Intelligence Platform - Unified Single-Port Application",
+  "scripts": {
+    "dev": "npm --prefix avarta run dev",
+    "dev:8000": "npm --prefix avarta run dev -- -p 8000",
+    "build": "npm --prefix avarta run build",
+    "start": "npm --prefix avarta run start",
+    "start:8000": "npm --prefix avarta run start -- -p 8000",
+    "test": "PYTHONPATH=. .venv/bin/pytest tests/"
+  }
+}

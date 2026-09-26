@@ -9,27 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initStatsCounter();
   initBgVideo();
   initNavLinks();
-  initSmartDashboardRouting();
   initCaseSwitcher();
   initTerminalSimulator();
   initBriefingGenerator();
 });
-
-/**
- * Smart Dashboard Routing
- * If user serves the static index.html on port 8000 or file://,
- * automatically maps all dashboard sub-tools directly to the active Next.js app on port 3000.
- */
-function initSmartDashboardRouting() {
-  const currentPort = window.location.port;
-  const isStaticPort = currentPort !== '3000';
-  if (isStaticPort) {
-    document.querySelectorAll('a[href^="/dashboard"]').forEach((link) => {
-      const href = link.getAttribute('href');
-      link.href = `http://localhost:3000${href}`;
-    });
-  }
-}
 
 /**
  * Mobile Hamburger Menu & Overlay Toggle

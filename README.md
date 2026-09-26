@@ -71,10 +71,16 @@ Download the official **2025 IMD 0.25° daily rainfall binary** from the [IMD Pu
 .venv/bin/python -m services.replay.august_2025
 OMP_NUM_THREADS=4 .venv/bin/python -m training.train_imd_real --epochs 2
 .venv/bin/python -m pytest -q
-cd avarta && npm run dev
+
+# Run unified platform on ONE single port (Landing Page + Replay Lab + 9 Sub-tools + APIs):
+npm run dev              # Default: http://localhost:3000/
+# or
+python run_app.py        # Default: http://localhost:3000/
+# or on port 8000 if preferred:
+python run_app.py --port 8000   # http://localhost:8000/
 ```
 
-Open `http://localhost:3000/dashboard`. The committed JSON artifacts let the UI run without downloading the raw grids. Rebuilding the case fetches GEFS `.idx` files and only the required APCP GRIB byte ranges from the [NOAA GEFS public archive](https://noaa-gefs-pds.s3.amazonaws.com/). Cached GRIB messages stay under ignored `data/raw/gefs_cache/`. The pipeline also retrieves the [official CHIRPS GeoTIFF](https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_daily/tifs/p05/2025/) into ignored `data/raw/`; use `--no-chirps` only when intentionally omitting that check, and check source terms before redistribution.
+Open `http://localhost:3000` (or `http://localhost:8000`). All 30 routes—including the video landing page (`/`), Replay Lab (`/dashboard`), Downscaling Lab (`/dashboard/downscaling`), All-India 3D Risk Grid (`/dashboard/risk`), Mission Control TUI (`/dashboard/terminal`), and all 17 NWP REST APIs—are unified on this **single port**. No second server or port is required. Committed JSON artifacts let the UI run without downloading raw grids. Rebuilding the case fetches GEFS `.idx` files and only the required APCP GRIB byte ranges from the [NOAA GEFS public archive](https://noaa-gefs-pds.s3.amazonaws.com/). Cached GRIB messages stay under ignored `data/raw/gefs_cache/`. The pipeline also retrieves the [official CHIRPS GeoTIFF](https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_daily/tifs/p05/2025/) into ignored `data/raw/`; use `--no-chirps` only when intentionally omitting that check, and check source terms before redistribution.
 
 `python avarta_tui.py` opens an interactive, color-coded Rich terminal dashboard when run in a terminal. It includes the computed rainfall grid, 3-hour track timeline, held-out model benchmark, source provenance, and draft alert disposition. For scripts or quick inspection, use `--map`, `--timeline`, `--benchmark`, `--datasets`, `--alerts`, or `--no-interactive`. `--demo` is explicitly fictional. The familiar `--live` and `--lens` flags remain as aliases for the **archived** timeline and the honest coarse-proxy benchmark; they no longer imply live inference or 5 km output. Use `--theme forest|midnight|amber|cyan|mono` (additional legacy theme names remain accepted). `--train` runs the real IMD experiment only when the official raw file is present. `python run_pipeline.py` rebuilds the historical replay.
 
