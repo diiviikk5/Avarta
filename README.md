@@ -20,7 +20,7 @@ Identifying and tracking the exact geographic footprints of extreme weather anom
 Furthermore, standard deep learning architectures (like standard CNNs or U-Nets) suffer from **spectral smoothing**—they optimize for mean-squared errors and "average out" spatial gradients, which destroys the extreme amplitudes (the high-intensity peaks of rainfall or wind speed) that emergency forecasters actually need to track.
 
 **Avarta** solves this with a two-stage hybrid AI architecture:
-1. **Stage 1 — Spherical Anomaly Tracking (GNN Core):** Maps 12 km NCMRWF Global Ensemble (NEPS-G) and deterministic outputs directly onto a recursive icosahedral mesh ($S^2$), eliminating planar map distortions. A message-passing GNN computes the Extreme Forecast Index (EFI) and Shift-of-Tails (SOT) against a 30-year climatological baseline (IMDAA/ERA5) to isolate moving anomalies and predict 4D bounding box trajectories across a 3–10 day window.
+1. **Stage 1 — Spherical Anomaly Tracking (GNN Core):** Maps 12 km NCMRWF Global Ensemble (NEPS-G) and deterministic outputs directly onto a recursive icosahedral mesh (S² unit sphere), eliminating planar map distortions. A message-passing GNN computes the Extreme Forecast Index (EFI) and Shift-of-Tails (SOT) against a 30-year climatological baseline (IMDAA/ERA5) to isolate moving anomalies and predict 4D bounding box trajectories across a 3–10 day window.
 2. **Stage 2 — Amplitude-Preserving Generative Downscaling (DDPM + PINN):** Ingests the 12 km macroscale bounding box into a conditional denoising diffusion probabilistic model (DDPM) conditioned on high-resolution 5 km topography. The model uses a differentiable Physics-Informed Neural Network (PINN) loss enforcing moisture flux convergence and mass continuity, deriving a hyper-local 5 km impact zone without blurring peak amplitudes.
 3. **Stage 3 — Actionable Civil Defense & Agromet Integration:** Converts mathematical 5 km arrays into instant **OASIS CAP v1.2** XML/JSON feeds (matching India NDMA / SACHET standards), 5 km critical infrastructure buffers for the National Disaster Response Force (NDRF), and **GKMS** medium-range agricultural advisories for farmers.
 
@@ -32,9 +32,9 @@ Furthermore, standard deep learning architectures (like standard CNNs or U-Nets)
 | :--- | :--- | :--- | :--- | :--- |
 | **Spectral Smoothing** | N/A (Physical equation grid) | **Severe** (Averages out peaks) | **Eliminated** (Tail-weighted DDPM) | Preserves high-intensity amplitudes forecasters need |
 | **High-Frequency Energy (SAPI)** | Coarse baseline | 11.7% preserved | **50.7% preserved** | **4.3× higher peak fidelity** than standard CNNs |
-| **Coordinate Geometry** | Grid approximations | Flat 2D (Polar distortion) | **Recursive Icosahedral Mesh ($S^2$)** | True spherical geodesics without pole singularities |
+| **Coordinate Geometry** | Grid approximations | Flat 2D (Polar distortion) | **Recursive Icosahedral Mesh (S²)** | True spherical geodesics without pole singularities |
 | **Inference Latency** | 4–6 hours on HPC cluster | ~5 seconds | **< 1.8 seconds on 1× GPU** | Real-time 3–10 day threat tracking and updates |
-| **Physical Plausibility** | Bound by Navier-Stokes | Hallucinates unphysical rain | **PINN Constrained** ($-\nabla \cdot (q\mathbf{v}) \le 0$) | Mathematically penalizes rain lacking moisture convergence |
+| **Physical Plausibility** | Bound by Navier-Stokes | Hallucinates unphysical rain | **PINN Constrained** (−∇ · (q v) ≤ 0) | Mathematically penalizes rain lacking moisture convergence |
 | **Lead-Time Tracking** | Deterministic drift | Static frame-by-frame | **Timestamp-Aware Kalman + 4D BBox** | Dynamic uncertainty cones at T+24h, T+48h, T+72h |
 | **Extreme Event Recall** | High ensemble spread | 0.2791 (Bilinear baseline) | **0.5273 (Held-out IMD test)** | **+88.9% higher detection recall** of heavy rainfall |
 | **Spatial Footprint IoU** | Coarse bounding | 0.2643 | **0.3679** | **+39.2% tighter spatial localization** |
@@ -45,7 +45,7 @@ Furthermore, standard deep learning architectures (like standard CNNs or U-Nets)
 ## 📊 Proven Benchmarks & Empirical Proofs
 
 ### 1. 2D FFT Radial Power Spectral Density (PSD) Benchmark
-Addressing the core scientific challenge of Problem Statement #26078, Avarta benchmarks the radially integrated 2D Fast Fourier Transform Power Spectral Density $E(k)$ across spatial wavenumbers $k$ ($\text{km}^{-1}$):
+Addressing the core scientific challenge of Problem Statement #26078, Avarta benchmarks the radially integrated 2D Fast Fourier Transform Power Spectral Density `E(k)` across spatial wavenumbers `k` (km⁻¹):
 
 ```
 Wavenumber k (cycles/km)   [Low Wavenumber ----------> High Wavenumber (Fine 5 km Scale)]
@@ -57,15 +57,18 @@ AVARTA Conditional DDPM:   [█████████████████�
 
 ### 2. Differentiable Physics-Informed (PINN) Loss Layer
 Embedded directly into PyTorch backpropagation (`models/physics_guard/pinn_loss.py`):
-$$\mathcal{L}_{\text{total}} = w_{\text{mse}} \mathcal{L}_{\text{mse}} + w_{\text{tail}} \mathcal{L}_{\text{tail}} + w_{\text{non\_neg}} \mathcal{L}_{\text{non\_neg}} + w_{\text{moist}} \mathcal{L}_{\text{moist}} + w_{\text{cont}} \mathcal{L}_{\text{cont}}$$
 
-- **Moisture Flux Convergence:** $-\nabla \cdot (q\mathbf{v}) \le 0$ penalizes any predicted heavy downpour ($> 25\text{ mm/day}$) that lacks physical moisture inflow.
-- **Positive-Definite Precipitation:** Strict $P \ge 0$ barrier preventing unphysical negative rainfall artifacts.
-- **Horizontal Mass Continuity:** Divergence penalty $\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} \approx 0$ suppresses spurious lower-tropospheric mass divergence.
+```math
+\mathcal{L}_{\text{total}} = w_{\text{mse}}\mathcal{L}_{\text{mse}} + w_{\text{tail}}\mathcal{L}_{\text{tail}} + w_{\text{non\_neg}}\mathcal{L}_{\text{non\_neg}} + w_{\text{moist}}\mathcal{L}_{\text{moist}} + w_{\text{cont}}\mathcal{L}_{\text{cont}}
+```
+
+- **Moisture Flux Convergence:** `−∇ · (q v) ≤ 0` penalizes any predicted heavy downpour (> 25 mm/day) that lacks physical moisture inflow.
+- **Positive-Definite Precipitation:** Strict `P ≥ 0` barrier preventing unphysical negative rainfall artifacts.
+- **Horizontal Mass Continuity:** Divergence penalty `∂u/∂x + ∂v/∂y ≈ 0` suppresses spurious lower-tropospheric mass divergence.
 
 ### 3. Held-Out Generalization on Official 2025 IMD Grids
 Evaluated on 49 chronologically held-out monsoon events against official IMD Pune 0.25° observation data:
-- **Heavy Rain Detection Recall ($\ge 64.5\text{ mm/day}$):** **0.5273** vs. Bilinear **0.2791** (+88.9% improvement).
+- **Heavy Rain Detection Recall (≥ 64.5 mm/day):** **0.5273** vs. Bilinear **0.2791** (+88.9% improvement).
 - **Footprint Intersection-over-Union (IoU):** **0.3679** vs. Bilinear **0.2643** (+39.2% tighter spatial bounds).
 - **Mean Peak Error:** Reduced from **84.88 mm/day** (Bilinear) down to **61.52 mm/day** (Learned).
 
@@ -116,10 +119,10 @@ Avarta validates across three high-impact meteorological hazard benchmarks:
    - Reconstructed from NOAA GEFS 5-member ensemble byte ranges vs. IMD 0.25° & CHIRPS 0.05° daily grids.
    - Evaluates multi-member probability spread, Jeffreys credibility intervals, and geodesic footprint clustering.
 2. **Super Cyclone Amphan (May 2020 — Bay of Bengal):**
-   - Tracks 850 hPa relative vorticity ($>18 \times 10^{-5}\text{ s}^{-1}$) and central pressure minimum (907 hPa).
+   - Tracks 850 hPa relative vorticity (> 18 × 10⁻⁵ s⁻¹) and central pressure minimum (907 hPa).
    - Generates dynamic 72-hour cone of uncertainty and landfall impact radius across Odisha/West Bengal coastlines.
 3. **North India Severe Heat Dome (May 2024 — Indo-Gangetic Plain):**
-   - Analyzes 500 hPa geopotential height ridge anomalies and Stull wet-bulb temperature ($T_w > 31^\circ\text{C}$).
+   - Analyzes 500 hPa geopotential height ridge anomalies and Stull wet-bulb temperature (Tw > 31°C).
    - Maps severe physiological heat stress and power grid peak-load risks across Delhi-NCR, Haryana, and Rajasthan.
 
 ---
