@@ -230,5 +230,5 @@ Avarta adheres to strict scientific honesty (`docs/DATASETS_AND_TRAINING.md`):
 ---
 
 ## 👥 Team Avarta
-Developed for the **Smart India Hackathon (SIH 2024)**  
+Developed for the **Smart India Hackathon (SIH 2026)**  
 *Problem Statement #26078 — Ministry of Earth Sciences (MoES) / NCMRWF*
