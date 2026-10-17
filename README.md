@@ -1,7 +1,7 @@
 # 🌀 AVARTA (आवर्त)
 ### AI-Driven Spatio-Temporal Tracking & Physics-Informed Downscaling of Extreme Weather Anomalies in Medium-Range Forecasts
 
-[![Smart India Hackathon 2024](https://img.shields.io/badge/SIH%202024-Problem%20%2326078-blue.svg)](https://sih.gov.in/)
+[![Smart India Hackathon 2026](https://img.shields.io/badge/SIH%2026-Problem%20%2326078-blue.svg)](https://sih.gov.in/)
 [![Organization](https://img.shields.io/badge/MoES-NCMRWF-0052cc.svg)](https://www.ncmrwf.gov.in/)
 [![Category](https://img.shields.io/badge/Category-Software%20%7C%20Smart%20Automation-success.svg)]()
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)]()
